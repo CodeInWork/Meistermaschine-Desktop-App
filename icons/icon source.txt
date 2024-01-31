@@ -1,2 +1,13 @@
-wind: 	<a href="https://www.flaticon.com/de/kostenlose-icons/wind" title="wind Icons">Wind Icons erstellt von Darius Dan - Flaticon</a>
-storm: 	<a href="https://www.flaticon.com/de/kostenlose-icons/sturm" title="sturm Icons">Sturm Icons erstellt von Darius Dan - Flaticon</a>
+Wind: 	<a href="https://www.flaticon.com/de/kostenlose-icons/wind" title="wind Icons">Wind Icons erstellt von Darius Dan - Flaticon</a>
+Storm: 	<a href="https://www.flaticon.com/de/kostenlose-icons/sturm" title="sturm Icons">Sturm Icons erstellt von Darius Dan - Flaticon</a>
+Fight: 	<a href="https://www.flaticon.com/de/kostenlose-icons/kampfen" title="kämpfen Icons">Kämpfen Icons erstellt von Freepik - Flaticon</a>
+Höhle:	<a href="https://www.flaticon.com/de/kostenlose-icons/hohle" title="höhle Icons">Höhle Icons erstellt von Freepik - Flaticon</a>
+City:	<a href="https://www.flaticon.com/de/kostenlose-icons/dorf" title="dorf Icons">Dorf Icons erstellt von Freepik - Flaticon</a>
+Landscape:	<a href="https://www.flaticon.com/de/kostenlose-icons/fluss" title="fluss Icons">Fluss Icons erstellt von Freepik - Flaticon</a>
+Pub:	<a href="https://www.flaticon.com/de/kostenlose-icons/kneipe" title="kneipe Icons">Kneipe Icons erstellt von Freepik - Flaticon</a>
+Sun:	<a href="https://www.flaticon.com/de/kostenlose-icons/sonne" title="sonne Icons">Sonne Icons erstellt von Freepik - Flaticon</a>
+Night:	<a href="https://www.flaticon.com/de/kostenlose-icons/star" title="star Icons">Star Icons erstellt von Freepik - Flaticon</a>
+Snow:	<a href="https://www.flaticon.com/de/kostenlose-icons/schnee" title="schnee Icons">Schnee Icons erstellt von Freepik - Flaticon</a>
+Wave:	<a href="https://www.flaticon.com/de/kostenlose-icons/ozean" title="ozean Icons">Ozean Icons erstellt von Freepik - Flaticon</a>
+
+emojis:	https://emoji.aranja.com/
