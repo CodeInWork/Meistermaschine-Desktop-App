@@ -1,0 +1,2 @@
+wind: 	<a href="https://www.flaticon.com/de/kostenlose-icons/wind" title="wind Icons">Wind Icons erstellt von Darius Dan - Flaticon</a>
+storm: 	<a href="https://www.flaticon.com/de/kostenlose-icons/sturm" title="sturm Icons">Sturm Icons erstellt von Darius Dan - Flaticon</a>

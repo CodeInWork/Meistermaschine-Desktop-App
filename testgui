@@ -1,0 +1,41 @@
+import tkinter as tk
+
+masterframe_width =1000
+masterframe_height = 600
+
+mm_frame_width=masterframe_width*8/10
+mm_frame_height=masterframe_height*5/6
+
+sd_frame_width=masterframe_width*2/10
+sd_frame_height=masterframe_height
+
+sf_frame_width=masterframe_width*8/10
+sf_frame_height=masterframe_height*1/10
+
+
+root = tk.Tk()
+root.geometry("1000x600+50+50")
+root.columnconfigure(0, weight=2)
+root.columnconfigure(1, weight=1)
+root.rowconfigure(0, weight=2)
+root.rowconfigure(1, weight=1)
+
+#Meistermaschine frame
+mm_frame = tk.Frame(root,bg="dimgray", width=mm_frame_width, height=mm_frame_height)
+mm_frame.grid(row=0,column=0,sticky="news")
+
+#SD-card frame
+sd_frame = tk.Frame(root,bg="limegreen", width=sd_frame_width, height=sd_frame_height)
+sd_frame.grid(row=0,column=1,sticky="news", rowspan=2)
+#Songfile frame
+sf_frame = tk.Frame(root,bg="lightskyblue", width=sf_frame_width, height=sf_frame_height)
+sf_frame.grid(row=1,column=0,sticky="news")
+
+for column_idx in range(4):
+    sf_frame.columnconfigure(column_idx, weight=1)
+    btn = tk.Button(sf_frame)
+    btn.grid(row=0, column=column_idx, sticky="news", padx=60, pady=30)
+
+
+
+root.mainloop()
