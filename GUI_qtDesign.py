@@ -7,6 +7,7 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets
+import os
 
 # app colors
 green = "rgb(97, 195, 144)"
@@ -33,11 +34,37 @@ class Ui_MainWindow(object):
         self.musicBtn_color = pale_green
         self.settingIcon_lst = ["pub","dorf","landschaft","hohle","kampf"]
         self.settingBtn_color = yellow
-        self.wheatherIcon_lst = ["nacht","welle","wind","sturm","schnee"]
-        self.wheatherBtn_color = pale_blue
+        self.weatherIcon_lst = ["nacht","welle","wind","sturm","schnee"]
+        self.weatherBtn_color = pale_blue
         self.specialIcon_lst = ["icon_square","icon_plus","icon_triangle","icon_minus","icon_star"]
         self.specialBtn_color = [pale_pink, pale_blue, yellow, pale_green, pale_pink]
         
+        self.default_soundFile_path = f"{os.getcwd()}\\sounds"
+
+        self.musicBtn_1_playlist = []
+        self.musicBtn_2_playlist = []
+        self.musicBtn_3_playlist = []
+        self.musicBtn_4_playlist = []
+        self.musicBtn_5_playlist = []
+
+        self.settingBtn_1_playlist = []
+        self.settingBtn_2_playlist = []
+        self.settingBtn_3_playlist = []
+        self.settingBtn_4_playlist = []
+        self.settingBtn_5_playlist = []
+
+        self.weatherBtn_1_playlist = []
+        self.weatherBtn_2_playlist = []
+        self.weatherBtn_3_playlist = []
+        self.weatherBtn_4_playlist = []
+        self.weatherBtn_5_playlist = []
+
+        self.specialBtn_1_playlist = []
+        self.specialBtn_2_playlist = []
+        self.specialBtn_3_playlist = []
+        self.specialBtn_4_playlist = []
+        self.specialBtn_5_playlist = []
+
         # slider style sheet
         CSS = f"""QSlider::handle:horizontal {{
             background: {blue};
@@ -132,15 +159,27 @@ class Ui_MainWindow(object):
         self.SDframe.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.SDframe.setObjectName("SDframe")
 
-        self.fileTreeListView = QtWidgets.QListView(parent=self.SDframe)
+        self.fileModel = QtGui.QFileSystemModel()
+        self.fileModel.setRootPath(self.default_soundFile_path)
+        #self.fileTreeListView = QtWidgets.QListView(parent=self.SDframe)
+        self.fileTreeListView = QtWidgets.QTreeView(parent=self.SDframe)
+        self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
+        self.fileTreeListView.setHeaderHidden(True)
+        self.fileTreeListView.setDragEnabled(True)
         self.fileTreeListView.setGeometry(QtCore.QRect(10, 50, 180, 361))
         self.fileTreeListView.setStyleSheet(f"background-color:{dark_gray}")
         self.fileTreeListView.setObjectName("fileTreeListView")
+        self.fileTreeListView.setModel(self.fileModel)
+        self.fileTreeListView.setRootIndex(self.fileModel.index(self.default_soundFile_path))
+        self.fileTreeListView.show()
+        self.fileTreeListView.doubleClicked[QtCore.QModelIndex].connect(self.on_fileTree_doubleClicked)
+        
 
         self.getRootFolderButton = QtWidgets.QPushButton(parent=self.SDframe)
         self.getRootFolderButton.setGeometry(QtCore.QRect(10, 10, 111, 24))
         self.getRootFolderButton.setStyleSheet(f"background-color:{green}")
         self.getRootFolderButton.setObjectName("getRootFolderButton")
+        self.getRootFolderButton.clicked.connect(lambda: self.getRootFolderDialog())
 
         self.saveToSDButton = QtWidgets.QPushButton(parent=self.SDframe)
         self.saveToSDButton.setGeometry(QtCore.QRect(110, 500, 81, 24))
@@ -189,6 +228,7 @@ class Ui_MainWindow(object):
         # music Buttons
         self.musicBtn_lst = [QtWidgets.QPushButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
         for btn in self.musicBtn_lst:
+            btn.setAcceptDrops(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
             btn.setStyleSheet(f"background-color:{self.musicBtn_color}")
@@ -214,19 +254,19 @@ class Ui_MainWindow(object):
             btn.setObjectName(f"settingBtn_{self.settingBtn_lst.index(btn)+1}")
             self.mainButtonGridLayout.addWidget(btn, self.settingBtn_lst.index(btn), 1, 1, 1)
 
-        # wheather Buttons
-        self.wheatherBtn_lst = [QtWidgets.QPushButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
-        for btn in self.wheatherBtn_lst:
+        # weather Buttons
+        self.weatherBtn_lst = [QtWidgets.QPushButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
+        for btn in self.weatherBtn_lst:
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
-            btn.setStyleSheet(f"background-color:{self.wheatherBtn_color}")
+            btn.setStyleSheet(f"background-color:{self.weatherBtn_color}")
             btn.setText("")
             icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(f"icons/{self.wheatherIcon_lst[self.wheatherBtn_lst.index(btn)]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+            icon.addPixmap(QtGui.QPixmap(f"icons/{self.weatherIcon_lst[self.weatherBtn_lst.index(btn)]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
             btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
-            btn.setObjectName(f"wheatherBtn_{self.wheatherBtn_lst.index(btn)+1}")
-            self.mainButtonGridLayout.addWidget(btn, self.wheatherBtn_lst.index(btn), 2, 1, 1)
+            btn.setObjectName(f"weatherBtn_{self.weatherBtn_lst.index(btn)+1}")
+            self.mainButtonGridLayout.addWidget(btn, self.weatherBtn_lst.index(btn), 2, 1, 1)
 
         # special Buttons
         self.specialBtn_lst = [QtWidgets.QPushButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
@@ -361,6 +401,50 @@ class Ui_MainWindow(object):
         
         self.muffle_label.setText(_translate("MainWindow", "Muffle:"))
 
+    #############################################################################################################################
+    # event handlers
+        
+    def on_fileTree_doubleClicked(self, index)->None:
+        filePath = self.fileModel.filePath(index)
+        if os.path.isdir(filePath):
+            #self.fileTreeListView.setRootIndex(self.fileModel.index(filePath))
+            self.fileTreeListView.expand(index)
+            #setRootIndex(self.fileModel.index(filePath))
+
+    def getRootFolderDialog(self)->None:
+        path = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Folder")
+        if path:
+           self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
+
     def sliderTest(self, value):
         self.currentSoundFilesListWidget.addItem(str(value))
+
+    class DragDropListModel(QtGui.QAbstractListModel):
+        def supportedDropActions(self):
+            return QtCore.Qt.DropAction
+        
+    class Button(QtGui.QPushButton):
+        def __init__(self, parent):
+            super(Button, self).__init__(parent)
+            self.setAcceptDrops(True)
+            #self.setDragDropMode(QAbstractItemView.InternalMove)
+
+        def dragEnterEvent(self, event):
+            if event.mimeData().hasUrls():
+                event.acceptProposedAction()
+            else:
+                super(Button, self).dragEnterEvent(event)
+
+        def dragMoveEvent(self, event):
+            super(Button, self).dragMoveEvent(event)
+
+        def dropEvent(self, event):
+            if event.mimeData().hasUrls():
+                for url in event.mimeData().urls():
+                    print str(url.toLocalFile())
+                event.acceptProposedAction()
+            else:
+                super(Button,self).dropEvent(event)
+        
+    
 
