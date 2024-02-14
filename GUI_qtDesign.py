@@ -47,6 +47,12 @@ class Ui_MainWindow(object):
             border-radius: 4px;
         }}"""
 
+        # ComboBox Style sheet
+        CSS2 = f"""QListWidget::item{{
+            color: {white};
+            background-color: {dark_gray};
+        }}"""
+
         # main window 
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1000, 600)
@@ -98,7 +104,8 @@ class Ui_MainWindow(object):
 
         self.currentSoundFilesListWidget = QtWidgets.QListWidget(parent=self.Sound_frame)
         self.currentSoundFilesListWidget.setGeometry(QtCore.QRect(620, 20, 141, 71))
-        self.currentSoundFilesListWidget.setStyleSheet(f"background-color:{dark_gray}")
+        #self.currentSoundFilesListWidget.setStyleSheet(f"background-color:{dark_gray}")
+        self.currentSoundFilesListWidget.setStyleSheet(CSS2)
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
 
         self.soundProgressBar = QtWidgets.QProgressBar(parent=self.Sound_frame)
