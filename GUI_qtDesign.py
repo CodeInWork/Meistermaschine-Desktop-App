@@ -9,6 +9,8 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 import os
 
+import MusicPlayer as mp
+
 # app colors
 green = "rgb(97, 195, 144)"
 pale_green = "rgb(153, 255, 202)"
@@ -20,7 +22,7 @@ pale_pink = "rgb(255, 152, 231)"
 
 
 black = "rgb(0,0,0)"
-dark_gray = "rgb(88, 88, 88)"
+dark_gray = "rgb(80, 80, 80)"
 gray = "rgb(149, 149, 149)"
 white = "rgb(255,255,255)"
 
@@ -41,6 +43,13 @@ class Ui_MainWindow(object):
         
         self.default_soundFile_path = f"{os.getcwd()}\\sounds"
 
+        # Create Player Objects for Button Columns
+        self.musicPlayer = mp.MusicPlayer()
+        self.settingPlayer = mp.MusicPlayer()
+        self.weatherPlayer = mp.MusicPlayer()
+        self.specialPlayer = mp.MusicPlayer()
+
+        # Init playlists
         self.musicBtn_1_playlist = []
         self.musicBtn_2_playlist = []
         self.musicBtn_3_playlist = []
@@ -74,6 +83,55 @@ class Ui_MainWindow(object):
             border-radius: 4px;
         }}"""
 
+        # List View Style sheet
+        CSS2 = f"""QListWidget::item{{
+            color: {white};
+            background-color: transparent;
+        }}
+        QListWidget {{
+            background-color: {dark_gray};
+        }}
+        QListWidget::item:selected {{
+            background-color: {blue};
+        }}
+        """
+
+        # List View Style sheet
+        CSS3 = f"""QTreeView::item{{
+            color: {white};
+            background-color: transparent;
+        }}
+        QTreeView {{
+            background-color: {dark_gray};
+            show-decoration-selected: 1;
+        }}
+        QTreeView::QScrollBar:horizontal {{
+            border: 2px solid {gray};
+            background: {dark_gray};
+        }}
+        """
+
+        # Progress Bar Style Sheet
+        CSS4 = f"""QProgressBar {{
+            border: 2px solid {gray};
+            border-radius: 5px;
+            background-color: {gray};
+        }}
+        QProgressBar::chunk {{
+            background-color:{blue};
+            width: 20px;
+        }}"""
+
+        # Push Button Style Sheets
+        # music button
+        CSS_PB_music = f"""QPushButton {{
+            background-color: {self.musicBtn_color};
+        }}
+        QPushButton:checked{{
+                    background-color: {dark_gray};
+                    border: none; 
+                }}
+        """
 
         # main window 
         MainWindow.setObjectName("MainWindow")
@@ -144,9 +202,11 @@ class Ui_MainWindow(object):
         #self.currentSoundFilesListWidget.setStyleSheet(f"background-color:{dark_gray}")
         self.currentSoundFilesListWidget.setStyleSheet(CSS2)
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
+        self.currentSoundFilesListWidget.addItem("test")
 
         self.soundProgressBar = QtWidgets.QProgressBar(parent=self.Sound_frame)
         self.soundProgressBar.setGeometry(QtCore.QRect(390, 27, 160, 16))
+        self.soundProgressBar.setStyleSheet(CSS4)
         self.soundProgressBar.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.soundProgressBar.setProperty("value", 24)
         self.soundProgressBar.setObjectName("progressBar")
@@ -169,10 +229,15 @@ class Ui_MainWindow(object):
         self.fileTreeListView.setHeaderHidden(True)
         self.fileTreeListView.setDragEnabled(True)
         self.fileTreeListView.setGeometry(QtCore.QRect(10, 50, 180, 361))
-        self.fileTreeListView.setStyleSheet(f"background-color:{dark_gray}")
+        #self.fileTreeListView.setStyleSheet(f"background-color:{dark_gray}")
+        self.fileTreeListView.setStyleSheet(CSS3)
         self.fileTreeListView.setObjectName("fileTreeListView")
         self.fileTreeListView.setModel(self.fileModel)
         self.fileTreeListView.setRootIndex(self.fileModel.index(self.default_soundFile_path))
+        self.fileTreeListView.setColumnHidden(1, True)  # hide file size
+        self.fileTreeListView.setColumnHidden(2, True)  # hide file type
+        self.fileTreeListView.setColumnHidden(3, True)  # hide file date
+        self.fileTreeListView.setColumnWidth(0, 400)
         self.fileTreeListView.show()
         self.fileTreeListView.doubleClicked[QtCore.QModelIndex].connect(self.on_fileTree_doubleClicked)
         
@@ -231,9 +296,11 @@ class Ui_MainWindow(object):
         self.musicBtn_lst = [QtWidgets.QPushButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
         for btn in self.musicBtn_lst:
             btn.setAcceptDrops(True)
+            btn.setCheckable(True)
+            btn.setToolTip("Music button")
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
-            btn.setStyleSheet(f"background-color:{self.musicBtn_color}")
+            btn.setStyleSheet(CSS_PB_music)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"icons/{self.musicIcon_lst[self.musicBtn_lst.index(btn)]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -421,32 +488,32 @@ class Ui_MainWindow(object):
     def sliderTest(self, value):
         self.currentSoundFilesListWidget.addItem(str(value))
 
-    class DragDropListModel(QtGui.QAbstractListModel):
-        def supportedDropActions(self):
-            return QtCore.Qt.DropAction
+''' class DragDropListModel(QtGui.QAbstractListModel):
+    def supportedDropActions(self):
+        return QtCore.Qt.DropAction'''
         
-    class Button(QtGui.QPushButton):
-        def __init__(self, parent):
-            super(Button, self).__init__(parent)
-            self.setAcceptDrops(True)
-            #self.setDragDropMode(QAbstractItemView.InternalMove)
+class Button(QtWidgets.QPushButton):
+    def __init__(self, parent):
+        super(Button, self).__init__(parent)
+        self.setAcceptDrops(True)
+        #self.setDragDropMode(QAbstractItemView.InternalMove)
 
-        def dragEnterEvent(self, event):
-            if event.mimeData().hasUrls():
-                event.acceptProposedAction()
-            else:
-                super(Button, self).dragEnterEvent(event)
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super(Button, self).dragEnterEvent(event)
 
-        def dragMoveEvent(self, event):
-            super(Button, self).dragMoveEvent(event)
+    def dragMoveEvent(self, event):
+        super(Button, self).dragMoveEvent(event)
 
-        def dropEvent(self, event):
-            if event.mimeData().hasUrls():
-                for url in event.mimeData().urls():
-                    print str(url.toLocalFile())
-                event.acceptProposedAction()
-            else:
-                super(Button,self).dropEvent(event)
+    def dropEvent(self, event):
+        if event.mimeData().hasUrls():
+            for url in event.mimeData().urls():
+                print(str(url.toLocalFile()))
+            event.acceptProposedAction()
+        else:
+            super(Button,self).dropEvent(event)
         
     
 
