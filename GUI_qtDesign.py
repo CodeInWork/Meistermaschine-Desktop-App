@@ -204,7 +204,7 @@ class Ui_MainWindow(object):
         self.currentSoundFilesListWidget.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
         self.currentSoundFilesListWidget.setStyleSheet(CSS2)
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
-        self.currentSoundFilesListWidget.doubleClicked[QtCore.QModelIndex].connect(self.on_currentSoundFilesListWidget_doubleClicked)
+        #self.currentSoundFilesListWidget.doubleClicked[QtCore.QModelIndex].connect(self.on_currentSoundFilesListWidget_doubleClicked)
         self.currentSoundFilesListWidget.addItem("test")
         self.currentSoundFilesListWidget.addItem("test2")
 
