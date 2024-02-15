@@ -74,6 +74,12 @@ class Ui_MainWindow(object):
             border-radius: 4px;
         }}"""
 
+        # Combobox style sheet
+        CBS = f"""QCombobox: {{
+            background-color: {dark_gray};
+            color: {white};
+        }}"""
+
         # main window 
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1000, 600)
@@ -140,7 +146,8 @@ class Ui_MainWindow(object):
 
         self.currentSoundFilesListWidget = QtWidgets.QListWidget(parent=self.Sound_frame)
         self.currentSoundFilesListWidget.setGeometry(QtCore.QRect(620, 20, 141, 71))
-        self.currentSoundFilesListWidget.setStyleSheet(f"background-color:{dark_gray}")
+        #self.currentSoundFilesListWidget.setStyleSheet(f"background-color:{dark_gray}")
+        self.currentSoundFilesListWidget.setStyleSheet(CBS)
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
 
         self.soundProgressBar = QtWidgets.QProgressBar(parent=self.Sound_frame)
@@ -164,15 +171,18 @@ class Ui_MainWindow(object):
         #self.fileTreeListView = QtWidgets.QListView(parent=self.SDframe)
         self.fileTreeListView = QtWidgets.QTreeView(parent=self.SDframe)
         self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
+        #self.fileTreeListView.setExpandsOnDoubleClick(True)
         self.fileTreeListView.setHeaderHidden(True)
         self.fileTreeListView.setDragEnabled(True)
         self.fileTreeListView.setGeometry(QtCore.QRect(10, 50, 180, 361))
-        self.fileTreeListView.setStyleSheet(f"background-color:{dark_gray}")
+        self.fileTreeListView.setStyleSheet(f"background-color: {dark_gray}")
+        self.fileTreeListView.setStyleSheet(f"background-color: {dark_gray}")
         self.fileTreeListView.setObjectName("fileTreeListView")
         self.fileTreeListView.setModel(self.fileModel)
         self.fileTreeListView.setRootIndex(self.fileModel.index(self.default_soundFile_path))
         self.fileTreeListView.show()
         self.fileTreeListView.doubleClicked[QtCore.QModelIndex].connect(self.on_fileTree_doubleClicked)
+        #self.fileTreeListView.doubleClicked.connect(lambda: self.on_fileTree_doubleClicked())
         
 
         self.getRootFolderButton = QtWidgets.QPushButton(parent=self.SDframe)
@@ -226,19 +236,20 @@ class Ui_MainWindow(object):
         font.setPointSize(16)     
           
         # music Buttons
-        self.musicBtn_lst = [QtWidgets.QPushButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
+        self.musicBtn_lst = [self.create_acceptDropButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
         for btn in self.musicBtn_lst:
-            btn.setAcceptDrops(True)
+            curBtnIndex = self.musicBtn_lst.index(btn)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
             btn.setStyleSheet(f"background-color:{self.musicBtn_color}")
             btn.setText("")
             icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(f"icons/{self.musicIcon_lst[self.musicBtn_lst.index(btn)]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+            icon.addPixmap(QtGui.QPixmap(f"icons/{self.musicIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
             btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
-            btn.setObjectName(f"musicBtn_{self.musicBtn_lst.index(btn)+1}")
-            self.mainButtonGridLayout.addWidget(btn, self.musicBtn_lst.index(btn), 0, 1, 1)
+            btn.setObjectName(f"musicBtn_{curBtnIndex+1}")
+            btn.clicked.connect(lambda checked, idx = curBtnIndex: self.on_musicBtnclicked(idx))
+            self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 0, 1, 1)
 
         # setting Buttons
         self.settingBtn_lst = [QtWidgets.QPushButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
@@ -364,10 +375,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Meistermaschine "))
-        # audio control (sound_frame)
-        #self.pauseButton.setText(_translate("MainWindow", "Pause"))
-        #self.stopButton.setText(_translate("MainWindow", "Stop"))
-        #self.playButton.setText(_translate("MainWindow", "Play"))
+
         self.masterVolumeLabel.setText(_translate("MainWindow", "Master Volume"))
         
         # SD card control (SD_frame)
@@ -375,76 +383,73 @@ class Ui_MainWindow(object):
         self.saveToSDButton.setText(_translate("MainWindow", "Save to SD"))
         self.SDcardsLabel.setText(_translate("MainWindow", "SD cards"))
         self.refreshButton.setText(_translate("MainWindow", "Refresh"))
-
-        # main interface buttons (interface_fram)
-        #self.musicBtn_3.setText(_translate("MainWindow", "3"))
-        #self.musicBtn_4.setText(_translate("MainWindow", "4"))
-        #self.musicBtn_5.setText(_translate("MainWindow", "5"))
-
-        #self.settingBtn_1.setText(_translate("MainWindow", "6"))
-        #self.musicBtn_7.setText(_translate("MainWindow", "7"))
-        #self.musicBtn_8.setText(_translate("MainWindow", "8"))
-        #self.musicBtn_9.setText(_translate("MainWindow", "9"))
-        #self.musicBtn_10.setText(_translate("MainWindow", "10"))
-
-        #self.musicBtn_11.setText(_translate("MainWindow", "11"))
-        #self.musicBtn_12.setText(_translate("MainWindow", "12"))
-        #self.musicBtn_13.setText(_translate("MainWindow", "13"))
-        #self.musicBtn_14.setText(_translate("MainWindow", "14"))
-        #self.musicBtn_15.setText(_translate("MainWindow", "15"))
-        
-        #self.musicBtn_16.setText(_translate("MainWindow", "16"))
-        #self.musicBtn_17.setText(_translate("MainWindow", "17"))
-        #self.musicBtn_18.setText(_translate("MainWindow", "18"))
-        #self.musicBtn_19.setText(_translate("MainWindow", "19"))
-        #self.musicBtn_20.setText(_translate("MainWindow", "20"))
         
         self.muffle_label.setText(_translate("MainWindow", "Muffle:"))
 
     #############################################################################################################################
     # event handlers
         
-    def on_fileTree_doubleClicked(self, index)->None:
+    def on_fileTree_doubleClicked(self)->None:
+        index = self.fileTreeListView.currentIndex()
         filePath = self.fileModel.filePath(index)
         if os.path.isdir(filePath):
-            #self.fileTreeListView.setRootIndex(self.fileModel.index(filePath))
-            self.fileTreeListView.expand(index)
-            #setRootIndex(self.fileModel.index(filePath))
+            self.fileTreeListView.expand(index.parent())
+
 
     def getRootFolderDialog(self)->None:
         path = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Folder")
         if path:
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
 
+    def on_musicBtnclicked(self, idx)->None:
+        musicBtn = self.musicBtn_lst[idx]
+        self.displayPlaylist(musicBtn.playlist)
+
     def sliderTest(self, value):
         self.currentSoundFilesListWidget.addItem(str(value))
 
-    class DragDropListModel(QtGui.QAbstractListModel):
+    def displayPlaylist(self, playlist)->None:
+        self.currentSoundFilesListWidget.clear()
+        for path in playlist:
+            head_tail = os.path.split(path)
+            filename = os.path.splitext(head_tail[1])
+            self.currentSoundFilesListWidget.addItem(filename[0])
+
+    '''class DragDropListModel(QtGui.QAbstractListModel):
         def supportedDropActions(self):
-            return QtCore.Qt.DropAction
-        
-    class Button(QtGui.QPushButton):
-        def __init__(self, parent):
-            super(Button, self).__init__(parent)
-            self.setAcceptDrops(True)
-            #self.setDragDropMode(QAbstractItemView.InternalMove)
-
-        def dragEnterEvent(self, event):
-            if event.mimeData().hasUrls():
-                event.acceptProposedAction()
-            else:
-                super(Button, self).dragEnterEvent(event)
-
-        def dragMoveEvent(self, event):
-            super(Button, self).dragMoveEvent(event)
-
-        def dropEvent(self, event):
-            if event.mimeData().hasUrls():
-                for url in event.mimeData().urls():
-                    print str(url.toLocalFile())
-                event.acceptProposedAction()
-            else:
-                super(Button,self).dropEvent(event)
-        
+            return QtCore.Qt.DropAction'''
     
+    # method to create Button overriding QtPushButton to handle drop events and access outer methods (e.g. displayPlaylist())
+    def create_acceptDropButton(self, parent):
+        outer_self = self
+        
+        # override for QPushButton to accept drag and drop events
+        class AcceptDropButton(QtWidgets.QPushButton):
+            def __init__(self, parent):
+                super(AcceptDropButton, self).__init__(parent)
+                
+                self.setAcceptDrops(True)
+                self.playlist = []
+
+            def dragEnterEvent(self, event):
+                if event.mimeData().hasUrls():
+                    event.acceptProposedAction()
+                else:
+                    super(AcceptDropButton, self).dragEnterEvent(event)
+
+            def dragMoveEvent(self, event):
+                super(AcceptDropButton, self).dragMoveEvent(event)
+
+            def dropEvent(self, event):
+                if event.mimeData().hasUrls():
+                    for url in event.mimeData().urls():
+                        self.playlist.append(str(url.toLocalFile()))
+                    event.acceptProposedAction()
+                    outer_self.displayPlaylist(self.playlist)
+                else:
+                    super(AcceptDropButton,self).dropEvent(event)   
+
+        return AcceptDropButton(parent) 
+        
+
 
