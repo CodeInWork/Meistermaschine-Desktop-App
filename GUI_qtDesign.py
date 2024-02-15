@@ -161,6 +161,7 @@ class Ui_MainWindow(object):
         self.pauseButton.setIcon(icon)
         self.pauseButton.setIconSize(QtCore.QSize(50, 50))
         self.pauseButton.setObjectName("pauseButton")
+        self.pauseButton.clicked.connect(lambda: self.on_pauseBtnClicked())
         
         self.stopButton = QtWidgets.QPushButton(parent=self.Sound_frame)
         self.stopButton.setGeometry(QtCore.QRect(290, 30, 75, 51))
@@ -171,6 +172,7 @@ class Ui_MainWindow(object):
         self.stopButton.setIcon(icon)
         self.stopButton.setIconSize(QtCore.QSize(50, 50))
         self.stopButton.setObjectName("stopButton")
+        self.stopButton.clicked.connect(lambda: self.on_stopBtnClicked())
 
         self.playButton = QtWidgets.QPushButton(parent=self.Sound_frame)
         self.playButton.setGeometry(QtCore.QRect(50, 30, 75, 51))
@@ -181,6 +183,7 @@ class Ui_MainWindow(object):
         self.playButton.setIcon(icon)
         self.playButton.setIconSize(QtCore.QSize(50, 50))
         self.playButton.setObjectName("playButton")
+        self.playButton.clicked.connect(lambda: self.on_playBtnClicked())
 
         self.masterVolumeSlider = QtWidgets.QSlider(parent=self.Sound_frame)
         self.masterVolumeSlider.setGeometry(QtCore.QRect(390, 60, 160, 18))
@@ -204,9 +207,7 @@ class Ui_MainWindow(object):
         self.currentSoundFilesListWidget.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
         self.currentSoundFilesListWidget.setStyleSheet(CSS2)
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
-        #self.currentSoundFilesListWidget.doubleClicked[QtCore.QModelIndex].connect(self.on_currentSoundFilesListWidget_doubleClicked)
-        self.currentSoundFilesListWidget.addItem("test")
-        self.currentSoundFilesListWidget.addItem("test2")
+        self.currentSoundFilesListWidget.doubleClicked.connect(self.on_currentSoundFilesListWidget_doubleClicked)
 
         self.soundProgressBar = QtWidgets.QProgressBar(parent=self.Sound_frame)
         self.soundProgressBar.setGeometry(QtCore.QRect(390, 27, 160, 16))
@@ -250,7 +251,7 @@ class Ui_MainWindow(object):
         self.getRootFolderButton.setGeometry(QtCore.QRect(10, 10, 111, 24))
         self.getRootFolderButton.setStyleSheet(f"background-color:{green}")
         self.getRootFolderButton.setObjectName("getRootFolderButton")
-        self.getRootFolderButton.clicked.connect(lambda: self.getRootFolderDialog())
+        self.getRootFolderButton.clicked.connect(lambda: self.on_rootFolderDialogBtnClicked())
 
         self.saveToSDButton = QtWidgets.QPushButton(parent=self.SDframe)
         self.saveToSDButton.setGeometry(QtCore.QRect(110, 500, 81, 24))
@@ -301,7 +302,6 @@ class Ui_MainWindow(object):
         for btn in self.musicBtn_lst:
             curBtnIndex = self.musicBtn_lst.index(btn)
             btn.setCheckable(True)
-            btn.setToolTip("Music button")
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
             btn.setStyleSheet(CSS_PB_music)
@@ -459,24 +459,78 @@ class Ui_MainWindow(object):
             self.fileTreeListView.expand(index.parent())
 
 
-    def getRootFolderDialog(self)->None:
+    def on_rootFolderDialogBtnClicked(self)->None:
         path = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Folder")
         if path:
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
 
     def on_musicBtnclicked(self, idx)->None:
-        musicBtn = self.musicBtn_lst[idx]
-        self.displayPlaylist(musicBtn.playlist)
+        musicBtn = self.setActiveButton(idx, self.musicBtn_lst)
+        self.uncheckInactiveButtons(self.musicBtn_lst)
+        activeSong = musicBtn.getActiveSong()
+        if activeSong:
+            self.musicPlayer.playsong(activeSong)
+        
+        self.displayPlaylist(musicBtn)    
+
+    def on_stopBtnClicked(self)->None:
+        self.musicPlayer.stopsong()
+
+    def on_pauseBtnClicked(self)->None:
+        self.musicPlayer.pausesong()
+
+    def on_playBtnClicked(self)->None:
+        status = self.musicPlayer.status
+        if status == "-Paused":
+            self.musicPlayer.unpausesong()
+        elif status == "-Stopped":
+            activeBtn = self.getActiveButton(self.musicBtn_lst)
+            activeSong = activeBtn.getActiveSong()
+            if activeSong:
+                self.musicPlayer.playsong(activeSong)
+
+    def on_currentSoundFilesListWidget_doubleClicked(self)->None:
+        selection = self.currentSoundFilesListWidget.selectedItems()
+        if not selection: return
+        for item in selection:
+            self.currentSoundFilesListWidget.takeItem(self.currentSoundFilesListWidget.row(item))
+
+    #############################################################################################################################
+    # helper functions
+    def uncheckInactiveButtons(self, btn_list)->None:
+        for btn in btn_list:
+            if not btn._isActive:
+                btn.setChecked(False)
+
+    def setActiveButton(self, btn_idx, btn_list)->object:
+        for btn in btn_list:
+            btn._isActive = False
+        btn_list[btn_idx]._isActive = True
+        return btn_list[btn_idx]
+    
+    def getActiveButton(self, btn_list)->object:
+        for btn in btn_list:
+            if btn._isActive == True: 
+                return btn
+            
+    def getFilenameFromPath(self, path: str)->str:
+        head_tail = os.path.split(path)
+        file = os.path.splitext(head_tail[1])
+        return file[0]
 
     def sliderTest(self, value):
         self.currentSoundFilesListWidget.addItem(str(value))
 
-    def displayPlaylist(self, playlist)->None:
+    def displayPlaylist(self, btn)->None:
+        if not btn: return
         self.currentSoundFilesListWidget.clear()
-        for path in playlist:
-            head_tail = os.path.split(path)
-            filename = os.path.splitext(head_tail[1])
-            self.currentSoundFilesListWidget.addItem(filename[0])
+        for path in btn.playlist:
+            filename = self.getFilenameFromPath(path)
+            self.currentSoundFilesListWidget.addItem(filename)
+
+        self.currentSoundFilesListWidget.setCurrentRow(btn.activeSongIdx)
+        #if btn.activeSongIdx >= 0 & btn.activeSongIdx < self.currentSoundFilesListWidget.count():
+            
 
     '''class DragDropListModel(QtGui.QAbstractListModel):
         def supportedDropActions(self):
@@ -493,10 +547,31 @@ class Ui_MainWindow(object):
                 
                 self.setAcceptDrops(True)
                 self.playlist = []
+                self._isActive = False
+                self.activeSongIdx = -1
+
+            def getActiveSong(self)->str | None:
+                if not len(self.playlist):
+                    return None
+                elif self.activeSongIdx == -1:
+                    self.setActiveSong(0)
+                    return self.playlist[0]
+                elif self.activeSongIdx<len(self.playlist):
+                    return self.playlist[self.activeSongIdx]
+
+            def setActiveSong(self, idx)->None:
+                self.activeSongIdx = idx
+
+            def getActiveSongTitle(self)->str | None:
+                activeSong = self.getActiveSong()
+                if activeSong:
+                    filename = outer_self.getFilenameFromPath(activeSong)
+                    return filename
 
             def dragEnterEvent(self, event):
                 if event.mimeData().hasUrls():
                     event.acceptProposedAction()
+                    outer_self.displayPlaylist(self)
                 else:
                     super(AcceptDropButton, self).dragEnterEvent(event)
 
@@ -508,9 +583,20 @@ class Ui_MainWindow(object):
                     for url in event.mimeData().urls():
                         self.playlist.append(str(url.toLocalFile()))
                     event.acceptProposedAction()
-                    outer_self.displayPlaylist(self.playlist)
+                    activeBtn = outer_self.getActiveButton(outer_self.musicBtn_lst)
+                    outer_self.displayPlaylist(activeBtn)
                 else:
                     super(AcceptDropButton,self).dropEvent(event)   
+
+            def dragLeaveEvent(self, event) -> None:
+                activeBtn = outer_self.getActiveButton(outer_self.musicBtn_lst)
+                outer_self.displayPlaylist(activeBtn)
+                return super().leaveEvent(event)
+            
+            def enterEvent(self, event: QtGui.QEnterEvent | None) -> None:
+                if len(self.playlist):
+                    self.setToolTip(self.getActiveSongTitle())
+                return super().enterEvent(event)
 
         return AcceptDropButton(parent) 
         
