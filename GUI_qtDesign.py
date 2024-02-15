@@ -9,6 +9,8 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 import os
 
+import MusicPlayer as mp
+
 # app colors
 green = "rgb(97, 195, 144)"
 pale_green = "rgb(153, 255, 202)"
@@ -20,7 +22,7 @@ pale_pink = "rgb(255, 152, 231)"
 
 
 black = "rgb(0,0,0)"
-dark_gray = "rgb(88, 88, 88)"
+dark_gray = "rgb(80, 80, 80)"
 gray = "rgb(149, 149, 149)"
 white = "rgb(255,255,255)"
 
@@ -41,6 +43,13 @@ class Ui_MainWindow(object):
         
         self.default_soundFile_path = f"{os.getcwd()}\\sounds"
 
+        # Create Player Objects for Button Columns
+        self.musicPlayer = mp.MusicPlayer()
+        self.settingPlayer = mp.MusicPlayer()
+        self.weatherPlayer = mp.MusicPlayer()
+        self.specialPlayer = mp.MusicPlayer()
+
+        # Init playlists
         self.musicBtn_1_playlist = []
         self.musicBtn_2_playlist = []
         self.musicBtn_3_playlist = []
@@ -74,11 +83,55 @@ class Ui_MainWindow(object):
             border-radius: 4px;
         }}"""
 
-        # Combobox style sheet
-        CBS = f"""QCombobox: {{
-            background-color: {dark_gray};
+        # List View Style sheet
+        CSS2 = f"""QListWidget::item{{
             color: {white};
+            background-color: transparent;
+        }}
+        QListWidget {{
+            background-color: {dark_gray};
+        }}
+        QListWidget::item:selected {{
+            background-color: {blue};
+        }}
+        """
+
+        # List View Style sheet
+        CSS3 = f"""QTreeView::item{{
+            color: {white};
+            background-color: transparent;
+        }}
+        QTreeView {{
+            background-color: {dark_gray};
+            show-decoration-selected: 1;
+        }}
+        QTreeView::QScrollBar:horizontal {{
+            border: 2px solid {gray};
+            background: {dark_gray};
+        }}
+        """
+
+        # Progress Bar Style Sheet
+        CSS4 = f"""QProgressBar {{
+            border: 2px solid {gray};
+            border-radius: 5px;
+            background-color: {gray};
+        }}
+        QProgressBar::chunk {{
+            background-color:{blue};
+            width: 20px;
         }}"""
+
+        # Push Button Style Sheets
+        # music button
+        CSS_PB_music = f"""QPushButton {{
+            background-color: {self.musicBtn_color};
+        }}
+        QPushButton:checked{{
+                    background-color: {dark_gray};
+                    border: none; 
+                }}
+        """
 
         # main window 
         MainWindow.setObjectName("MainWindow")
@@ -146,12 +199,18 @@ class Ui_MainWindow(object):
 
         self.currentSoundFilesListWidget = QtWidgets.QListWidget(parent=self.Sound_frame)
         self.currentSoundFilesListWidget.setGeometry(QtCore.QRect(620, 20, 141, 71))
-        #self.currentSoundFilesListWidget.setStyleSheet(f"background-color:{dark_gray}")
-        self.currentSoundFilesListWidget.setStyleSheet(CBS)
+        self.currentSoundFilesListWidget.setDragEnabled(True)
+        self.currentSoundFilesListWidget.viewport().setAcceptDrops(True)
+        self.currentSoundFilesListWidget.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
+        self.currentSoundFilesListWidget.setStyleSheet(CSS2)
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
+        self.currentSoundFilesListWidget.doubleClicked[QtCore.QModelIndex].connect(self.on_currentSoundFilesListWidget_doubleClicked)
+        self.currentSoundFilesListWidget.addItem("test")
+        self.currentSoundFilesListWidget.addItem("test2")
 
         self.soundProgressBar = QtWidgets.QProgressBar(parent=self.Sound_frame)
         self.soundProgressBar.setGeometry(QtCore.QRect(390, 27, 160, 16))
+        self.soundProgressBar.setStyleSheet(CSS4)
         self.soundProgressBar.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.soundProgressBar.setProperty("value", 24)
         self.soundProgressBar.setObjectName("progressBar")
@@ -168,18 +227,20 @@ class Ui_MainWindow(object):
 
         self.fileModel = QtGui.QFileSystemModel()
         self.fileModel.setRootPath(self.default_soundFile_path)
-        #self.fileTreeListView = QtWidgets.QListView(parent=self.SDframe)
         self.fileTreeListView = QtWidgets.QTreeView(parent=self.SDframe)
         self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
         #self.fileTreeListView.setExpandsOnDoubleClick(True)
         self.fileTreeListView.setHeaderHidden(True)
         self.fileTreeListView.setDragEnabled(True)
         self.fileTreeListView.setGeometry(QtCore.QRect(10, 50, 180, 361))
-        self.fileTreeListView.setStyleSheet(f"background-color: {dark_gray}")
-        self.fileTreeListView.setStyleSheet(f"background-color: {dark_gray}")
+        self.fileTreeListView.setStyleSheet(CSS3)
         self.fileTreeListView.setObjectName("fileTreeListView")
         self.fileTreeListView.setModel(self.fileModel)
         self.fileTreeListView.setRootIndex(self.fileModel.index(self.default_soundFile_path))
+        self.fileTreeListView.setColumnHidden(1, True)  # hide file size
+        self.fileTreeListView.setColumnHidden(2, True)  # hide file type
+        self.fileTreeListView.setColumnHidden(3, True)  # hide file date
+        self.fileTreeListView.setColumnWidth(0, 400)
         self.fileTreeListView.show()
         self.fileTreeListView.doubleClicked[QtCore.QModelIndex].connect(self.on_fileTree_doubleClicked)
         #self.fileTreeListView.doubleClicked.connect(lambda: self.on_fileTree_doubleClicked())
@@ -239,9 +300,11 @@ class Ui_MainWindow(object):
         self.musicBtn_lst = [self.create_acceptDropButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
         for btn in self.musicBtn_lst:
             curBtnIndex = self.musicBtn_lst.index(btn)
+            btn.setCheckable(True)
+            btn.setToolTip("Music button")
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
-            btn.setStyleSheet(f"background-color:{self.musicBtn_color}")
+            btn.setStyleSheet(CSS_PB_music)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"icons/{self.musicIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
