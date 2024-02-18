@@ -1,5 +1,5 @@
 import pygame
-import time
+import threading as tr
 
 
 class MusicPlayer:
@@ -7,6 +7,8 @@ class MusicPlayer:
         pygame.init()
         # Initiating Pygame Mixer
         pygame.mixer.init()
+        # init clock
+        clock = pygame.time.Clock()
         # Declaring track Variable
         self.track = None
         self.playlist = []
@@ -14,7 +16,7 @@ class MusicPlayer:
         self.status = "-Stopped"
         pygame.mixer.music.set_endevent(pygame.USEREVENT)
        
-       """ while True:
+        '''while True:
             for event in pygame.event.get():
                 if event.type == pygame.USEREVENT:
                     track_idx = self.getCurrenTrackIndex()
@@ -26,8 +28,8 @@ class MusicPlayer:
                         self.track = self.playlist[track_idx+1]
                         pygame.mixer.music.queue(self.playlist[track_idx+1])
 
-            time.sleep(0.5)
-"""
+            pygame.time.wait(100)'''
+
     def getCurrenTrackIndex(self)->int:
         return self.playlist.index(self.track) 
 

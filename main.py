@@ -1,6 +1,7 @@
 
 from PyQt6 import QtGui, QtWidgets
 
+
 import GUI_qtDesign as gui
 import sys
 import os
