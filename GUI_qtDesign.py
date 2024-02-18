@@ -180,6 +180,8 @@ class Ui_MainWindow(object):
         self.masterVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.masterVolumeSlider.setStyleSheet(CSS)
         self.masterVolumeSlider.setObjectName("masterVolumeSlider")
+        self.masterVolumeSlider.setMinimum(0)
+        self.masterVolumeSlider.setMaximum(100)
         self.masterVolumeSlider.setValue(int(self._audio_output.volume()))
         #self.masterVolumeSlider.setValue(self.masterVolumeSlider.maximum())   #initial setting = max
         self.masterVolumeSlider.valueChanged[int].connect(self._audio_output.setVolume)
@@ -497,7 +499,6 @@ class Ui_MainWindow(object):
             nextsong = activeMusicBtn.getNextSong()
             self.musicPlayer.setSource(nextsong[0])
             self.musicPlayer.play()
-      
 
     def on_musicPlayerDurationChanged(self, duration)->None:
         duration_sec = duration/1000
@@ -505,8 +506,8 @@ class Ui_MainWindow(object):
         self.soundProgressBar.reset()
 
     def on_musicPlayerPositionChanged(self, position)->None:
-        position = self.musicPlayer.position()/1000
-        self.soundProgressBar.setValue(int(position))
+        position_sec = self.musicPlayer.position()/1000
+        self.soundProgressBar.setValue(int(position_sec))
 
     #############################################################################################################################
     # helper functions
