@@ -7,18 +7,11 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets, QtMultimedia, QtMultimediaWidgets
-import sys
-"""from PySide6.QtCore import QStandardPaths, Qt, Slot
-from PySide6.QtGui import QAction, QIcon, QKeySequence
-from PySide6.QtWidgets import (QApplication, QDialog, QFileDialog,
-                               QMainWindow, QSlider, QStyle, QToolBar)
-from PySide6.QtMultimedia import (QAudioOutput, QMediaFormat,
-                                  QMediaPlayer)
-from PySide6.QtMultimediaWidgets import QVideoWidget"""
+from PySide6.QtCore import Slot
+import pickle as pc
 
 import os
 
-import MusicPlayer as mp
 
 # app colors
 green = "rgb(97, 195, 144)"
@@ -54,8 +47,11 @@ class Ui_MainWindow(object):
 
         # Create Player Objects for Button Columns
         self._audio_output = QtMultimedia.QAudioOutput()
+        self._audio_output.setVolume(1.0) # initial volume is max
         self.musicPlayer = QtMultimedia.QMediaPlayer()
         self.musicPlayer.setAudioOutput(self._audio_output)
+
+        self.m_iVideoPosition = 0
 
         # Player signals
         self.musicPlayer.mediaStatusChanged.connect(self.on_musicPlayerStatusChanged)
@@ -122,6 +118,45 @@ class Ui_MainWindow(object):
                 }}
         """
 
+        # sound slider
+        CSS_soundSlider = f"""QSlider::groove:horizontal {{
+                background: {white};
+                height: 40px;
+            }}
+
+            QSlider::sub-page:horizontal {{
+                background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,
+                    stop: 0 #66e, stop: 1 #bbf);
+                background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,
+                    stop: 0 #bbf, stop: 1 #55f);
+                height: 40px;
+            }}
+
+            QSlider::add-page:horizontal {{
+                background: #fff;
+                height: 40px;
+            }}
+
+            QSlider::handle:horizontal {{
+                background: {dark_gray};
+                border: 1px;
+                width: 16px;
+                margin-top: 0px;
+                margin-bottom: 0px;
+                border-radius: 0px;
+            }}
+        """
+
+        # menu bar style sheet
+        CSS_menubar = f"""QMenuBar::item{{
+                color: {white};
+                background-color: transparent;
+            }}
+            QMenuBar {{
+                background: {dark_gray};
+            }}
+        """
+
         # main window 
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1000, 600)
@@ -180,11 +215,9 @@ class Ui_MainWindow(object):
         self.masterVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.masterVolumeSlider.setStyleSheet(CSS)
         self.masterVolumeSlider.setObjectName("masterVolumeSlider")
-        self.masterVolumeSlider.setMinimum(0)
-        self.masterVolumeSlider.setMaximum(100)
-        self.masterVolumeSlider.setValue(int(self._audio_output.volume()))
-        #self.masterVolumeSlider.setValue(self.masterVolumeSlider.maximum())   #initial setting = max
-        self.masterVolumeSlider.valueChanged[int].connect(self._audio_output.setVolume)
+        self.masterVolumeSlider.setRange(0, 100)
+        self.masterVolumeSlider.setValue(100*int(self._audio_output.volume()))
+        self.masterVolumeSlider.valueChanged[int].connect(self.on_masterVolumeSliderChanged)
 
         self.masterVolumeLabel = QtWidgets.QLabel(parent=self.Sound_frame)
         self.masterVolumeLabel.setGeometry(QtCore.QRect(420, 80, 91, 16))
@@ -202,13 +235,16 @@ class Ui_MainWindow(object):
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
         self.currentSoundFilesListWidget.doubleClicked.connect(self.on_currentSoundFilesListWidget_doubleClicked)
 
-        self.soundProgressBar = QtWidgets.QProgressBar(parent=self.Sound_frame)
-        self.soundProgressBar.setGeometry(QtCore.QRect(390, 27, 160, 16))
-        self.soundProgressBar.setStyleSheet(CSS4)
-        self.soundProgressBar.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.soundProgressBar.setProperty("value", 24)
-        self.soundProgressBar.setObjectName("progressBar")
-
+        self.soundSlider = QtWidgets.QSlider(parent=self.Sound_frame)
+        self.soundSlider.setGeometry(QtCore.QRect(390, 27, 160, 16))
+        self.soundSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.soundSlider.setStyleSheet(CSS_soundSlider)
+        self.soundSlider.setValue(0)
+        self.soundSlider.setObjectName("soundSlider")
+        self.soundSlider.setTracking(False)
+        self.soundSlider.sliderPressed.connect(self.on_soundSliderPressed)
+        self.soundSlider.sliderReleased.connect(self.on_soundSliderReleased)
+       
         ########################################################################################################
         # SD card frame
 
@@ -223,7 +259,6 @@ class Ui_MainWindow(object):
         self.fileModel.setRootPath(self.default_soundFile_path)
         self.fileTreeListView = QtWidgets.QTreeView(parent=self.SDframe)
         self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
-        #self.fileTreeListView.setExpandsOnDoubleClick(True)
         self.fileTreeListView.setHeaderHidden(True)
         self.fileTreeListView.setDragEnabled(True)
         self.fileTreeListView.setGeometry(QtCore.QRect(10, 50, 180, 361))
@@ -237,8 +272,6 @@ class Ui_MainWindow(object):
         self.fileTreeListView.setColumnWidth(0, 400)
         self.fileTreeListView.show()
         self.fileTreeListView.doubleClicked[QtCore.QModelIndex].connect(self.on_fileTree_doubleClicked)
-        #self.fileTreeListView.doubleClicked.connect(lambda: self.on_fileTree_doubleClicked())
-        
 
         self.getRootFolderButton = QtWidgets.QPushButton(parent=self.SDframe)
         self.getRootFolderButton.setGeometry(QtCore.QRect(10, 10, 111, 24))
@@ -279,7 +312,7 @@ class Ui_MainWindow(object):
         self.interfaceFrame.setObjectName("interfaceFrame")
         # grid for main sound Buttons
         self.layoutWidget = QtWidgets.QWidget(parent=self.interfaceFrame)
-        self.layoutWidget.setGeometry(QtCore.QRect(0, 22, 800, 355))
+        self.layoutWidget.setGeometry(QtCore.QRect(0, 42, 800, 365))
         self.layoutWidget.setObjectName("layoutWidget")
 
         self.mainButtonGridLayout = QtWidgets.QGridLayout(self.layoutWidget)
@@ -350,35 +383,38 @@ class Ui_MainWindow(object):
             self.mainButtonGridLayout.addWidget(btn, self.specialBtn_lst.index(btn), 3, 1, 1)    
 
         # individual volume sliders
+        y_positon_volumeSliders = 415
         self.musicVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
-        self.musicVolumeSlider.setGeometry(QtCore.QRect(79, 390, 111, 20))
+        self.musicVolumeSlider.setGeometry(QtCore.QRect(79, y_positon_volumeSliders, 111, 20))
         self.musicVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.musicVolumeSlider.setStyleSheet(CSS)
         self.musicVolumeSlider.setObjectName("musicVolumeSlider")
         self.musicVolumeSlider.setValue(self.musicVolumeSlider.maximum())   #initial setting = max
+        self.musicVolumeSlider.valueChanged.connect(self.on_musicVolumeSliderChanged)
 
         self.settingVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
-        self.settingVolumeSlider.setGeometry(QtCore.QRect(260, 390, 111, 20))
+        self.settingVolumeSlider.setGeometry(QtCore.QRect(260, y_positon_volumeSliders, 111, 20))
         self.settingVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.settingVolumeSlider.setStyleSheet(CSS)
         self.settingVolumeSlider.setObjectName("settingVolumeSlider")
         self.settingVolumeSlider.setValue(self.settingVolumeSlider.maximum())   #initial setting = max
 
         self.weatherVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
-        self.weatherVolumeSlider.setGeometry(QtCore.QRect(430, 390, 111, 20))
+        self.weatherVolumeSlider.setGeometry(QtCore.QRect(430, y_positon_volumeSliders, 111, 20))
         self.weatherVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.weatherVolumeSlider.setStyleSheet(CSS)
         self.weatherVolumeSlider.setObjectName("weatherVolumeSlider")
         self.weatherVolumeSlider.setValue(self.weatherVolumeSlider.maximum())   #initial setting = max
 
         self.specialVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
-        self.specialVolumeSlider.setGeometry(QtCore.QRect(610, 390, 111, 20))
+        self.specialVolumeSlider.setGeometry(QtCore.QRect(610, y_positon_volumeSliders, 111, 20))
         self.specialVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.specialVolumeSlider.setStyleSheet(CSS)
         self.specialVolumeSlider.setObjectName("specialVolumeSlider")
         self.specialVolumeSlider.setValue(self.specialVolumeSlider.maximum())   #initial setting = max
 
-        self.musicMuffleButton = QtWidgets.QPushButton(parent=self.interfaceFrame)
+        # muffle Buttons require basic audio manipulation -> future version?
+        '''self.musicMuffleButton = QtWidgets.QPushButton(parent=self.interfaceFrame)
         self.musicMuffleButton.setGeometry(QtCore.QRect(115, 415, 31, 24))
         self.musicMuffleButton.setStyleSheet(f"background-color: {dark_gray}")
         self.musicMuffleButton.setText("")
@@ -411,17 +447,40 @@ class Ui_MainWindow(object):
         self.muffle_label.setTextFormat(QtCore.Qt.TextFormat.PlainText)
         self.muffle_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.muffle_label.setObjectName("muffle_label")
+        self.muffle_label.setText(_translate("MainWindow", "Muffle:"))'''
 
         # menu and status bars
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1000, 22))
-        self.menubar.setObjectName("menubar")
+        self.menubar.setStyleSheet(CSS_menubar)
+        '''self.menubar.setGeometry(QtCore.QRect(0, 22, 1000, 22))
+        self.menubar.setObjectName("menubar")'''
         MainWindow.setMenuBar(self.menubar)
+        self.file_menu = MainWindow.menuBar().addMenu("&File")
+        
+        # open 
+        icon = QtGui.QIcon.fromTheme("document-open")
+        open_action = QtGui.QAction(icon, "&Open...",MainWindow, triggered=self.open) 
+        self.file_menu.addAction(open_action)
+        #open_action.triggered.connect(lambda: self.open())
+        # save
+        icon = QtGui.QIcon.fromTheme("document-save")
+        save_action = QtGui.QAction(icon, "&Save...",MainWindow, triggered=self.save) 
+        self.file_menu.addAction(save_action)
+        #save_action.triggered.connect(lambda: self.save())
+        # save as
+        icon = QtGui.QIcon.fromTheme("document-save")
+        save_as_action = QtGui.QAction(icon, "&Save as...",MainWindow, triggered=self.save_as) 
+        self.file_menu.addAction(save_as_action)
+        #save_as_action.triggered.connect(lambda: self.save_as())
+
+        
         self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
         self.statusbar.setStyleSheet(f"background-color: {dark_gray}")
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        
+        
         # Toolbar
         # ToDo
 
@@ -442,17 +501,29 @@ class Ui_MainWindow(object):
         self.SDcardsLabel.setText(_translate("MainWindow", "SD cards"))
         self.refreshButton.setText(_translate("MainWindow", "Refresh"))
         
-        self.muffle_label.setText(_translate("MainWindow", "Muffle:"))
+        
 
     #############################################################################################################################
     # event handlers
-        
+    # Slots
+    @Slot()
+    def open(self)->None:
+        pass
+
+    @Slot()
+    def save(self)->None:
+        pass
+
+    @Slot()
+    def save_as(self)->None:
+        pass
+
+    # Buttons
     def on_fileTree_doubleClicked(self)->None:
         index = self.fileTreeListView.currentIndex()
         filePath = self.fileModel.filePath(index)
         if os.path.isdir(filePath):
             self.fileTreeListView.expand(index.parent())
-
 
     def on_rootFolderDialogBtnClicked(self)->None:
         path = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Folder")
@@ -460,6 +531,7 @@ class Ui_MainWindow(object):
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
 
     def on_musicBtnclicked(self, idx)->None:
+        self.musicPlayer.stop()
         musicBtn = self.setActiveButton(idx, self.musicBtn_lst)
         self.uncheckInactiveButtons(self.musicBtn_lst)
         activeSong = musicBtn.getActiveSong()
@@ -490,27 +562,96 @@ class Ui_MainWindow(object):
         selection = self.currentSoundFilesListWidget.selectedItems()
         if not selection: return
         for item in selection:
-            self.currentSoundFilesListWidget.takeItem(self.currentSoundFilesListWidget.row(item))
-            # ToDo: remove from active btn playlist
+            #self.currentSoundFilesListWidget.takeItem(self.currentSoundFilesListWidget.row(item))
+            activeBtn = self.getActiveButton(self.musicBtn_lst)
+            if not activeBtn: return
+            else:
+                itemIndex = self.currentSoundFilesListWidget.row(item)
+                activeBtn.removeSongFromPlaylist(itemIndex)
 
+    # musicPlayer
     def on_musicPlayerStatusChanged(self, status)->None:
+        '''if(status == QtMultimedia.QMediaPlayer.MediaStatus.BufferedMedia):
+            #self.musicPlayer.pause()
+            self.musicPlayer.setPosition(self.m_iVideoPosition)
+            self.musicPlayer.play()'''
+    
         if status ==QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             activeMusicBtn = self.getActiveButton(self.musicBtn_lst)
             nextsong = activeMusicBtn.getNextSong()
             self.musicPlayer.setSource(nextsong[0])
+            self.musicPlayer.setPosition(0)
             self.musicPlayer.play()
+        
 
     def on_musicPlayerDurationChanged(self, duration)->None:
-        duration_sec = duration/1000
-        self.soundProgressBar.setMaximum(int(duration_sec))
-        self.soundProgressBar.reset()
+        duration_sec = duration
+        self.soundSlider.setMaximum(int(duration_sec))
 
     def on_musicPlayerPositionChanged(self, position)->None:
-        position_sec = self.musicPlayer.position()/1000
-        self.soundProgressBar.setValue(int(position_sec))
+        position_sec = position
+        self.soundSlider.setValue(int(position_sec))
+
+    # soundSlider
+    def on_soundSliderPressed(self)->None:
+        self.musicPlayer.pause()
+
+    def on_soundSliderReleased(self)->None:
+        position = self.soundSlider.sliderPosition()
+        self.musicPlayer.pause()
+        self.musicPlayer.setPosition(position)
+        self.musicPlayer.play()
+
+    # master volume slider
+    def on_masterVolumeSliderChanged(self, masterValue)->None:
+        # convert linear scale to logarithmic to match dB perception
+        musicValue = self.musicVolumeSlider.value()
+        depMusicVal = masterValue*musicValue / 100
+        linMusicVolume = QtMultimedia.QAudio.convertVolume(depMusicVal / 100, QtMultimedia.QAudio.VolumeScale.LogarithmicVolumeScale, QtMultimedia.QAudio.VolumeScale.LinearVolumeScale)
+        self._audio_output.setVolume(linMusicVolume)
+
+        '''settingValue = self.settingVolumeSlider.value()
+        depSettingVal = masterValue*settingValue / 100
+        linSettingVolume = QtMultimedia.QAudio.convertVolume(depSettingVal / 100, QtMultimedia.QAudio.VolumeScale.LogarithmicVolumeScale, QtMultimedia.QAudio.VolumeScale.LinearVolumeScale)
+        self._audio_output.setVolume(linSettingVolume)'''
+
+    def on_musicVolumeSliderChanged(self, subValue)->None:
+        masterValue = self.masterVolumeSlider.value()
+        depValue = subValue*masterValue / 100
+        linDepVal = QtMultimedia.QAudio.convertVolume(depValue / 100, QtMultimedia.QAudio.VolumeScale.LogarithmicVolumeScale, QtMultimedia.QAudio.VolumeScale.LinearVolumeScale)
+        self._audio_output.setVolume(linDepVal)
+        
+        
+       
 
     #############################################################################################################################
     # helper functions
+    def save_preset(self, savepath)->None:
+        with open(savepath, 'w') as f:
+            for btn in self.musicBtn_lst:
+                pc.dump(btn.playlist, f)
+            for btn in self.settingBtn_lst:
+                pc.dump(btn.playlist, f)
+            for btn in self.weatherBtn_lst:
+                pc.dump(btn.playlist, f)
+            for btn in self.specialBtn_lst:
+                pc.dump(btn.playlist, f)
+
+    def load_preset(self, loadpath)->None:
+        with open(loadpath) as f:
+            import_data = pc.load(f)
+            for item in import_data:
+                print(item)
+            '''for btn in self.musicBtn_lst:
+                pc.load(btn.playlist, f)
+            for btn in self.settingBtn_lst:
+                pc.load(btn.playlist, f)
+            for btn in self.weatherBtn_lst:
+                pc.load(btn.playlist, f)
+            for btn in self.specialBtn_lst:
+                pc.load(btn.playlist, f)'''
+
+
     def uncheckInactiveButtons(self, btn_list)->None:
         for btn in btn_list:
             if not btn._isActive:
@@ -596,6 +737,10 @@ class Ui_MainWindow(object):
                 file = soundFile_url.toLocalFile()
                 filename = outer_self.getFilenameFromPath(file)
                 self.playlist[key] = [soundFile_url, filename]
+
+            def removeSongFromPlaylist(self, index)->None:
+                self.playlist.pop(index, None)
+                outer_self.displayPlaylist(self)
 
             def dragEnterEvent(self, event):
                 if event.mimeData().hasUrls():
