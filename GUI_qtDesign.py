@@ -559,7 +559,24 @@ class Ui_MainWindow(object):
                         strUrl = btn.playlist[key][0].toString()
                         f.write(f"{0} {btn_idx}\t{strUrl}\n")
                     btn_idx+=1
-                #Todo: add other btn lists
+                btn_idx=0
+                for btn in self.settingBtn_lst:
+                    for key in btn.playlist:
+                        strUrl = btn.playlist[key][0].toString()
+                        f.write(f"{1} {btn_idx}\t{strUrl}\n")
+                    btn_idx+=1
+                btn_idx=0
+                for btn in self.weatherBtn_lst:
+                    for key in btn.playlist:
+                        strUrl = btn.playlist[key][0].toString()
+                        f.write(f"{2} {btn_idx}\t{strUrl}\n")
+                    btn_idx+=1
+                btn_idx=0
+                for btn in self.specialBtn_lst:
+                    for key in btn.playlist:
+                        strUrl = btn.playlist[key][0].toString()
+                        f.write(f"{3} {btn_idx}\t{strUrl}\n")
+                    btn_idx+=1
 
     # Buttons
     def on_fileTree_doubleClicked(self)->None:
@@ -567,12 +584,18 @@ class Ui_MainWindow(object):
         filePath = self.fileModel.filePath(index)
         if os.path.isdir(filePath):
             self.fileTreeListView.expand(index.parent())
+        # play sound file when double clicked in fileTree (SD card frame)?
+        '''if os.path.isfile(filePath):
+            self.stopAllPlayers()
+            self.musicPlayer.setSource(filePath)
+            self.musicPlayer.play()'''
 
     def on_rootFolderDialogBtnClicked(self)->None:
         path = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Folder")
         if path:
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
 
+    # ToDo: rewrite generic for all buttons, e.g. on_soundBtnClicked(self, idx, soundBtn_lst)->None
     def on_musicBtnclicked(self, idx)->None:
         musicBtn = self.musicBtn_lst[idx]
         self.musicPlayer.stop()
@@ -775,7 +798,16 @@ class Ui_MainWindow(object):
 
             def removeSongFromPlaylist(self, index)->None:
                 self.playlist.pop(index, None)
+                self.makePlaylistConsistent()
                 outer_self.displayPlaylist(self)
+
+            def makePlaylistConsistent(self)->None:
+                idx=0
+                for key in self.playlist:
+                    if key != idx:
+                        self.playlist[idx]=self.playlist[key]
+                        self.playlist.pop(key)
+                    idx+=1
 
             def dragEnterEvent(self, event):
                 if event.mimeData().hasUrls():
