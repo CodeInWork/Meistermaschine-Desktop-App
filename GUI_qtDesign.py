@@ -508,7 +508,14 @@ class Ui_MainWindow(object):
     # Slots
     @Slot()
     def open(self)->None:
-        pass
+        file = QtWidgets.QFileDialog.getOpenFileName(None, "Select a file...", QtCore.QDir.homePath(), "*.mms")
+        with open(file[0], 'r') as f:
+            data = f.readlines()
+            for line in data:
+                splitLine = line.split("\t")
+                print(splitLine)
+                #print(QtCore.QUrl.fromStringList([splitLine[1]]))
+
 
     @Slot()
     def save(self)->None:
@@ -516,7 +523,23 @@ class Ui_MainWindow(object):
 
     @Slot()
     def save_as(self)->None:
-        pass
+        file = QtWidgets.QFileDialog.getSaveFileName(None, "Save file", QtCore.QDir.homePath(), ".mms")
+        filepath = f"{file[0]}{file[1]}"
+        with open(filepath, 'w') as f:
+            btn_idx=0
+            for btn in self.musicBtn_lst:
+                btn_idx+=1
+                for key in btn.playlist:
+                    strUrl = btn.playlist[key][0].toString()
+                    btnID = (0,btn_idx) 
+                    f.write(f"{btnID}\t{strUrl}")
+                    
+            '''for btn in self.settingBtn_lst:
+                pc.dump(btn.playlist, f)
+            for btn in self.weatherBtn_lst:
+                pc.dump(btn.playlist, f)
+            for btn in self.specialBtn_lst:
+                pc.dump(btn.playlist, f)'''
 
     # Buttons
     def on_fileTree_doubleClicked(self)->None:
