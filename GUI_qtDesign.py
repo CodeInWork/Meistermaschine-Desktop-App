@@ -9,6 +9,7 @@
 from PyQt6 import QtCore, QtGui, QtWidgets, QtMultimedia, QtMultimediaWidgets
 from PySide6.QtCore import Slot
 import pickle as pc
+import time as t
 
 import os
 
@@ -47,18 +48,23 @@ class Ui_MainWindow(object):
         self.default_preset_path = f"{os.getcwd()}\\presets"
 
         # Create Player Objects for Button Columns
-        self._audio_output = QtMultimedia.QAudioOutput()
-        self._audio_output.setVolume(1.0) # initial volume is max
+        # music player
+        self._music_output = QtMultimedia.QAudioOutput()
+        self._music_output.setVolume(1.0) # initial volume is max
         self.musicPlayer = QtMultimedia.QMediaPlayer()
-        self.musicPlayer.setAudioOutput(self._audio_output)
+        self.musicPlayer.setAudioOutput(self._music_output)
 
-        self.m_iVideoPosition = 0
+        # setting player
+        self._setting_output = QtMultimedia.QAudioOutput()
+        self._setting_output.setVolume(1.0) # initial volume is max
+        self.settingPlayer = QtMultimedia.QMediaPlayer()
+        self.settingPlayer.setAudioOutput(self._setting_output)
 
         # Player signals
         self.musicPlayer.mediaStatusChanged.connect(self.on_musicPlayerStatusChanged)
         self.musicPlayer.positionChanged.connect(self.on_musicPlayerPositionChanged)
         self.musicPlayer.durationChanged.connect(self.on_musicPlayerDurationChanged)
-
+        self.settingPlayer.mediaStatusChanged.connect(self.on_settingPlayerStatusChanged)
 
         # slider style sheet
         CSS = f"""QSlider::handle:horizontal {{
@@ -112,6 +118,24 @@ class Ui_MainWindow(object):
         # music button
         CSS_PB_music = f"""QPushButton {{
             background-color: {self.musicBtn_color};
+        }}
+        QPushButton:checked{{
+                    background-color: {dark_gray};
+                    border: none; 
+                }}
+        """
+
+        CSS_PB_setting = f"""QPushButton {{
+            background-color: {self.settingBtn_color};
+        }}
+        QPushButton:checked{{
+                    background-color: {dark_gray};
+                    border: none; 
+                }}
+        """
+
+        CSS_PB_weather = f"""QPushButton {{
+            background-color: {self.weatherBtn_color};
         }}
         QPushButton:checked{{
                     background-color: {dark_gray};
@@ -217,7 +241,7 @@ class Ui_MainWindow(object):
         self.masterVolumeSlider.setStyleSheet(CSS)
         self.masterVolumeSlider.setObjectName("masterVolumeSlider")
         self.masterVolumeSlider.setRange(0, 100)
-        self.masterVolumeSlider.setValue(100*int(self._audio_output.volume()))
+        self.masterVolumeSlider.setValue(100*int(self._music_output.volume()))
         self.masterVolumeSlider.valueChanged[int].connect(self.on_masterVolumeSliderChanged)
 
         self.masterVolumeLabel = QtWidgets.QLabel(parent=self.Sound_frame)
@@ -313,7 +337,7 @@ class Ui_MainWindow(object):
         self.interfaceFrame.setObjectName("interfaceFrame")
         # grid for main sound Buttons
         self.layoutWidget = QtWidgets.QWidget(parent=self.interfaceFrame)
-        self.layoutWidget.setGeometry(QtCore.QRect(0, 42, 800, 365))
+        self.layoutWidget.setGeometry(QtCore.QRect(0, 22, 800, 375))
         self.layoutWidget.setObjectName("layoutWidget")
 
         self.mainButtonGridLayout = QtWidgets.QGridLayout(self.layoutWidget)
@@ -338,8 +362,9 @@ class Ui_MainWindow(object):
             btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"musicBtn_{curBtnIndex+1}")
-            btn.clicked.connect(lambda checked, idx = curBtnIndex: self.on_musicBtnclicked(idx))
+            btn.clicked.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'music'))
             self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 0, 1, 1)
+            #btn.toggled
 
         # setting Buttons
         self.settingBtn_lst = [self.create_acceptDropButton(parent=self.layoutWidget, playlistMaxlength=1) for b in range(self.btn_rows)]
@@ -348,15 +373,14 @@ class Ui_MainWindow(object):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
-            btn.setStyleSheet(f"background-color:{self.settingBtn_color}")
-            #btn.setStyleSheet(CSS_PB_setting)
+            btn.setStyleSheet(CSS_PB_setting)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"icons/{self.settingIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
             btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"settingBtn_{curBtnIndex+1}")
-            #btn.clicked.connect(lambda checked, idx = curBtnIndex: self.on_settingBtnclicked(idx))
+            btn.clicked.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'setting'))
             self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 1, 1, 1)
 
         # weather Buttons
@@ -366,8 +390,7 @@ class Ui_MainWindow(object):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
-            btn.setStyleSheet(f"background-color:{self.weatherBtn_color}")
-            #btn.setStyleSheet(CSS_PB_weather)
+            btn.setStyleSheet(CSS_PB_weather)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"icons/{self.weatherIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -384,7 +407,6 @@ class Ui_MainWindow(object):
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
             btn.setStyleSheet(f"background-color:{self.specialBtn_color[curBtnIndex]}")
-            #btn.setStyleSheet(CSS_PB_special)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"icons/{self.specialIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -474,27 +496,19 @@ class Ui_MainWindow(object):
         icon = QtGui.QIcon.fromTheme("document-open")
         open_action = QtGui.QAction(icon, "&Open...",MainWindow, triggered=self.open) 
         self.file_menu.addAction(open_action)
-        #open_action.triggered.connect(lambda: self.open())
         # save
         icon = QtGui.QIcon.fromTheme("document-save")
         save_action = QtGui.QAction(icon, "&Save...",MainWindow, triggered=self.save) 
         self.file_menu.addAction(save_action)
-        #save_action.triggered.connect(lambda: self.save())
         # save as
         icon = QtGui.QIcon.fromTheme("document-save")
         save_as_action = QtGui.QAction(icon, "&Save as...",MainWindow, triggered=self.save_as) 
         self.file_menu.addAction(save_as_action)
-        #save_as_action.triggered.connect(lambda: self.save_as())
-
         
         self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
         self.statusbar.setStyleSheet(f"background-color: {dark_gray}")
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
-        
-        
-        # Toolbar
-        # ToDo
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -533,8 +547,6 @@ class Ui_MainWindow(object):
                     splitLine = line.split("\t")
                     idLst = splitLine[0].split()
                     soundFile_url = QtCore.QUrl.fromStringList([splitLine[1].rstrip()])[0]
-                    print(splitLine)
-                    print(soundFile_url)
                     if int(idLst[0])==0:
                         self.musicBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile_url) 
                         self.musicBtn_lst[int(idLst[1])].activeSongKey=-1
@@ -555,25 +567,25 @@ class Ui_MainWindow(object):
             with f:
                 btn_idx=0
                 for btn in self.musicBtn_lst:
-                    for key in btn.playlist:
+                    for key in range(len(btn.playlist)):
                         strUrl = btn.playlist[key][0].toString()
                         f.write(f"{0} {btn_idx}\t{strUrl}\n")
                     btn_idx+=1
                 btn_idx=0
                 for btn in self.settingBtn_lst:
-                    for key in btn.playlist:
+                    for key in range(len(btn.playlist)):
                         strUrl = btn.playlist[key][0].toString()
                         f.write(f"{1} {btn_idx}\t{strUrl}\n")
                     btn_idx+=1
                 btn_idx=0
                 for btn in self.weatherBtn_lst:
-                    for key in btn.playlist:
+                    for key in range(len(btn.playlist)):
                         strUrl = btn.playlist[key][0].toString()
                         f.write(f"{2} {btn_idx}\t{strUrl}\n")
                     btn_idx+=1
                 btn_idx=0
                 for btn in self.specialBtn_lst:
-                    for key in btn.playlist:
+                    for key in range(len(btn.playlist)):
                         strUrl = btn.playlist[key][0].toString()
                         f.write(f"{3} {btn_idx}\t{strUrl}\n")
                     btn_idx+=1
@@ -595,10 +607,17 @@ class Ui_MainWindow(object):
         if path:
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
 
-    # ToDo: rewrite generic for all buttons, e.g. on_soundBtnClicked(self, idx, soundBtn_lst)->None
+    '''# ToDo: rewrite generic for all buttons, e.g. on_soundBtnClicked(self, idx, soundBtn_lst)->None
     def on_musicBtnclicked(self, idx)->None:
         musicBtn = self.musicBtn_lst[idx]
         self.musicPlayer.stop()
+        timeout = t.time()+5    # timer set to 5 seconds
+        while t.time()<timeout:    
+            t.sleep(0.1)
+            playback_state = self.musicPlayer.playbackState()
+            if playback_state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
+                break
+
         if musicBtn.isChecked():
             self.setActiveButton(idx, self.musicBtn_lst)
             self.uncheckInactiveButtons(self.musicBtn_lst)
@@ -609,10 +628,54 @@ class Ui_MainWindow(object):
             
             self.displayPlaylist(musicBtn)    
         else:
-            musicBtn._isActive=False
+            self.currentSoundFilesListWidget.clear()    # clear playlist
+            musicBtn._isActive=False'''
+
+    def on_soundBtnclicked(self, idx: int, btn_Type: str)->None:
+        if btn_Type == 'music':
+            soundBtn = self.musicBtn_lst[idx]
+            soundPlayer = self.musicPlayer
+            soundBtn_lst = self.musicBtn_lst
+        elif btn_Type == 'setting':
+            soundBtn = self.settingBtn_lst[idx]
+            soundPlayer = self.settingPlayer
+            soundBtn_lst = self.settingBtn_lst
+        elif btn_Type == 'weather':
+            soundBtn = self.weatherBtn_lst[idx]
+            soundPlayer = self.weatherPlayer
+            soundBtn_lst = self.weatherBtn_lst
+        elif btn_Type == 'special':
+            soundBtn = self.specialBtn_lst[idx]
+            soundPlayer = self.specialPlayer
+            soundBtn_lst = self.weatherBtn_lst
+
+        
+        soundPlayer.stop()
+        timeout = t.time()+5    # timer set to 5 seconds
+        while t.time()<timeout:    
+            t.sleep(0.1)
+            playback_state = soundPlayer.playbackState()
+            if playback_state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
+                break
+
+        if soundBtn.isChecked():
+            self.setActiveButton(idx, soundBtn_lst)
+            self.uncheckInactiveButtons(soundBtn_lst)
+            activeSong = soundBtn.getActiveSong()
+            if activeSong:
+                soundPlayer.setSource(activeSong[0])
+                soundPlayer.play()
+                if btn_Type == 'music': self.displayPlaylist(soundBtn)
+            else:
+                soundBtn.setChecked(False)
+        else:
+            if btn_Type == 'music': self.currentSoundFilesListWidget.clear()    # clear playlist
+            soundBtn._isActive=False
 
     def on_stopBtnClicked(self)->None:
         self.musicPlayer.stop()
+        self.uncheckAllButtons()
+        self.currentSoundFilesListWidget.clear()    # clear playlist
 
     def on_pauseBtnClicked(self)->None:
         self.musicPlayer.pause()
@@ -642,18 +705,20 @@ class Ui_MainWindow(object):
 
     # musicPlayer
     def on_musicPlayerStatusChanged(self, status)->None:
-        '''if(status == QtMultimedia.QMediaPlayer.MediaStatus.BufferedMedia):
-            #self.musicPlayer.pause()
-            self.musicPlayer.setPosition(self.m_iVideoPosition)
-            self.musicPlayer.play()'''
-    
-        if status ==QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
+        if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             activeMusicBtn = self.getActiveButton(self.musicBtn_lst)
             nextsong = activeMusicBtn.getNextSong()
             self.musicPlayer.setSource(nextsong[0])
             self.musicPlayer.setPosition(0)
             self.musicPlayer.play()
-        
+
+    def on_settingPlayerStatusChanged(self, status)->None:
+        if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
+            activeSettingBtn = self.getActiveButton(self.settingBtn_lst)
+            nextsong = activeSettingBtn.getNextSong()
+            self.settingPlayer.setSource(nextsong[0])
+            self.settingPlayer.setPosition(0)
+            self.settingPlayer.play()
 
     def on_musicPlayerDurationChanged(self, duration)->None:
         duration_sec = duration
@@ -679,7 +744,7 @@ class Ui_MainWindow(object):
         musicValue = self.musicVolumeSlider.value()
         depMusicVal = masterValue*musicValue / 100
         linMusicVolume = QtMultimedia.QAudio.convertVolume(depMusicVal / 100, QtMultimedia.QAudio.VolumeScale.LogarithmicVolumeScale, QtMultimedia.QAudio.VolumeScale.LinearVolumeScale)
-        self._audio_output.setVolume(linMusicVolume)
+        self._music_output.setVolume(linMusicVolume)
         #ToDo: add other volume sliders
         '''settingValue = self.settingVolumeSlider.value()
         depSettingVal = masterValue*settingValue / 100
@@ -690,22 +755,36 @@ class Ui_MainWindow(object):
         masterValue = self.masterVolumeSlider.value()
         depValue = subValue*masterValue / 100
         linDepVal = QtMultimedia.QAudio.convertVolume(depValue / 100, QtMultimedia.QAudio.VolumeScale.LogarithmicVolumeScale, QtMultimedia.QAudio.VolumeScale.LinearVolumeScale)
-        self._audio_output.setVolume(linDepVal)
+        self._music_output.setVolume(linDepVal)
         
         
        
 
     #############################################################################################################################
     # helper functions
+    def uncheckAllButtons(self)->None:
+        for btn in self.musicBtn_lst:
+            btn.setChecked(False)
+            btn._isActive=False
+        for btn in self.settingBtn_lst:
+            btn.setChecked(False)
+            btn._isActive=False
+        for btn in self.weatherBtn_lst:
+            btn.setChecked(False)
+            btn._isActive=False
+        for btn in self.specialBtn_lst:
+            btn.setChecked(False)
+            btn._isActive=False
+
     def clearAllPlaylists(self)->None:
-            for btn in self.musicBtn_lst:
-                btn.playlist.clear()
-            for btn in self.settingBtn_lst:
-                btn.playlist.clear()
-            for btn in self.weatherBtn_lst:
-                btn.playlist.clear()
-            for btn in self.specialBtn_lst:
-                btn.playlist.clear()
+        for btn in self.musicBtn_lst:
+            btn.playlist.clear()
+        for btn in self.settingBtn_lst:
+            btn.playlist.clear()
+        for btn in self.weatherBtn_lst:
+            btn.playlist.clear()
+        for btn in self.specialBtn_lst:
+            btn.playlist.clear()
 
     def uncheckInactiveButtons(self, btn_list)->None:
         for btn in btn_list:
@@ -734,7 +813,7 @@ class Ui_MainWindow(object):
     def displayPlaylist(self, btn)->None:
         if not btn: return
         self.currentSoundFilesListWidget.clear()
-        for sound_key in btn.playlist:
+        for sound_key in range(len(btn.playlist)):
             self.currentSoundFilesListWidget.addItem(btn.playlist[sound_key][1])
 
         self.currentSoundFilesListWidget.setCurrentRow(btn.activeSongKey)
@@ -756,7 +835,7 @@ class Ui_MainWindow(object):
                 
                 self.playlistMaxlength = playlistMaxlength
                 self.setAcceptDrops(True)
-                self.playlist = {}
+                self.playlist = []
                 self._isActive = False
                 self.activeSongKey = -1
 
@@ -765,9 +844,9 @@ class Ui_MainWindow(object):
                     return None
                 elif self.activeSongKey == -1:
                     self.setActiveSong(0)
-                    return self.playlist.get(0)
+                    return self.playlist[0]
                 elif self.activeSongKey < len(self.playlist):
-                    return self.playlist.get(self.activeSongKey)
+                    return self.playlist[self.activeSongKey]
 
             def setActiveSong(self, key)->None:
                 self.activeSongKey = key
@@ -786,28 +865,22 @@ class Ui_MainWindow(object):
                     self.activeSongKey += 1
                 return self.getActiveSong()
                 
-                
             def addSongToPlaylist(self, soundFile_url)->None:
                 # validdate if url with validator?
-                key = len(self.playlist)
-                if key >= self.playlistMaxlength:
-                    key = 0     # first entry will be overwritten
                 file = soundFile_url.toLocalFile()
                 filename = outer_self.getFilenameFromPath(file)
-                self.playlist[key] = [soundFile_url, filename]
+                key = len(self.playlist)
+                if key >= self.playlistMaxlength:
+                    self.playlist[0]=[soundFile_url, filename]
+                else:
+                    self.playlist.append([soundFile_url, filename])
 
             def removeSongFromPlaylist(self, index)->None:
-                self.playlist.pop(index, None)
-                self.makePlaylistConsistent()
+                # ToDo: make player stop when active song is erased
+                '''if index == self.activeSongKey:
+                    player.stop()'''
+                self.playlist.pop(index)
                 outer_self.displayPlaylist(self)
-
-            def makePlaylistConsistent(self)->None:
-                idx=0
-                for key in self.playlist:
-                    if key != idx:
-                        self.playlist[idx]=self.playlist[key]
-                        self.playlist.pop(key)
-                    idx+=1
 
             def dragEnterEvent(self, event):
                 if event.mimeData().hasUrls():
