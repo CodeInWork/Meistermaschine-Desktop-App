@@ -60,11 +60,28 @@ class Ui_MainWindow(object):
         self.settingPlayer = QtMultimedia.QMediaPlayer()
         self.settingPlayer.setAudioOutput(self._setting_output)
 
+        # weather player
+        self._weather_output = QtMultimedia.QAudioOutput()
+        self._weather_output.setVolume(1.0) # initial volume is max
+        self.weatherPlayer = QtMultimedia.QMediaPlayer()
+        self.weatherPlayer.setAudioOutput(self._weather_output)
+
+        # special player
+        self._special_output = QtMultimedia.QAudioOutput()
+        self._special_output.setVolume(1.0) # initial volume is max
+        self.specialPlayer = QtMultimedia.QMediaPlayer()
+        self.specialPlayer.setAudioOutput(self._special_output)
+
         # Player signals
+        # music player enables position change and is displayed on interface (playlist and position)
+        # setting and weather are repeated upon end of media is reached
+        # special is only played once
         self.musicPlayer.mediaStatusChanged.connect(self.on_musicPlayerStatusChanged)
         self.musicPlayer.positionChanged.connect(self.on_musicPlayerPositionChanged)
         self.musicPlayer.durationChanged.connect(self.on_musicPlayerDurationChanged)
         self.settingPlayer.mediaStatusChanged.connect(self.on_settingPlayerStatusChanged)
+        self.weatherPlayer.mediaStatusChanged.connect(self.on_weatherPlayerStatusChanged)
+        
 
         # slider style sheet
         CSS = f"""QSlider::handle:horizontal {{
@@ -252,7 +269,7 @@ class Ui_MainWindow(object):
         self.masterVolumeLabel.setObjectName("masterVolumeLabel")
 
         self.currentSoundFilesListWidget = QtWidgets.QListWidget(parent=self.Sound_frame)
-        self.currentSoundFilesListWidget.setGeometry(QtCore.QRect(620, 20, 141, 71))
+        self.currentSoundFilesListWidget.setGeometry(QtCore.QRect(620, 20, 141, 71))q
         self.currentSoundFilesListWidget.setDragEnabled(True)
         self.currentSoundFilesListWidget.viewport().setAcceptDrops(True)
         self.currentSoundFilesListWidget.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
@@ -280,8 +297,10 @@ class Ui_MainWindow(object):
         self.SDframe.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.SDframe.setObjectName("SDframe")
 
+
         self.fileModel = QtGui.QFileSystemModel()
         self.fileModel.setRootPath(self.default_soundFile_path)
+        self.fileModel.setNameFilters(["*.mp3","*.wav"])
         self.fileTreeListView = QtWidgets.QTreeView(parent=self.SDframe)
         self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
         self.fileTreeListView.setHeaderHidden(True)
@@ -362,9 +381,8 @@ class Ui_MainWindow(object):
             btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"musicBtn_{curBtnIndex+1}")
-            btn.clicked.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'music'))
+            btn.toggled.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'music'))
             self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 0, 1, 1)
-            #btn.toggled
 
         # setting Buttons
         self.settingBtn_lst = [self.create_acceptDropButton(parent=self.layoutWidget, playlistMaxlength=1) for b in range(self.btn_rows)]
@@ -703,7 +721,7 @@ class Ui_MainWindow(object):
                 itemIndex = self.currentSoundFilesListWidget.row(item)
                 activeBtn.removeSongFromPlaylist(itemIndex)
 
-    # musicPlayer
+    # music player
     def on_musicPlayerStatusChanged(self, status)->None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             activeMusicBtn = self.getActiveButton(self.musicBtn_lst)
@@ -711,7 +729,7 @@ class Ui_MainWindow(object):
             self.musicPlayer.setSource(nextsong[0])
             self.musicPlayer.setPosition(0)
             self.musicPlayer.play()
-
+    # setting player   
     def on_settingPlayerStatusChanged(self, status)->None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             activeSettingBtn = self.getActiveButton(self.settingBtn_lst)
@@ -719,6 +737,14 @@ class Ui_MainWindow(object):
             self.settingPlayer.setSource(nextsong[0])
             self.settingPlayer.setPosition(0)
             self.settingPlayer.play()
+    # weather player
+    def on_weatherPlayerStatusChanged(self, status)->None:
+        if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
+            activeSettingBtn = self.getActiveButton(self.weatherBtn_lst)
+            nextsong = activeSettingBtn.getNextSong()
+            self.weatherPlayer.setSource(nextsong[0])
+            self.weatherPlayer.setPosition(0)
+            self.weatherPlayer.play()
 
     def on_musicPlayerDurationChanged(self, duration)->None:
         duration_sec = duration
