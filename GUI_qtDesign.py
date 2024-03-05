@@ -81,10 +81,11 @@ class Ui_MainWindow(object):
         self.musicPlayer.durationChanged.connect(self.on_musicPlayerDurationChanged)
         self.settingPlayer.mediaStatusChanged.connect(self.on_settingPlayerStatusChanged)
         self.weatherPlayer.mediaStatusChanged.connect(self.on_weatherPlayerStatusChanged)
+        self.specialPlayer.mediaStatusChanged.connect(self.on_specialPlayerStatusChanged)
         
 
         # slider style sheet
-        CSS = f"""QSlider::handle:horizontal {{
+        CSS_Slider = f"""QSlider::handle:horizontal {{
             background: {blue};
             border: 1px solid #565a5e;
             width: 24px;
@@ -93,7 +94,7 @@ class Ui_MainWindow(object):
         }}"""
 
         # List View Style sheet
-        CSS2 = f"""QListWidget::item{{
+        CSS_List = f"""QListWidget::item{{
             color: {white};
             background-color: transparent;
         }}
@@ -106,7 +107,7 @@ class Ui_MainWindow(object):
         """
 
         # List View Style sheet
-        CSS3 = f"""QTreeView::item{{
+        CSS_ListView = f"""QTreeView::item{{
             color: {white};
             background-color: transparent;
         }}
@@ -120,16 +121,16 @@ class Ui_MainWindow(object):
         }}
         """
 
-        # Progress Bar Style Sheet
-        CSS4 = f"""QProgressBar {{
-            border: 2px solid {gray};
-            border-radius: 5px;
-            background-color: {gray};
+        # ComboBox Style sheet
+        CSS_ComboBox = f"""QComboBox::item{{
+            color: {white};
+            background-color: transparent;
         }}
-        QProgressBar::chunk {{
-            background-color:{blue};
-            width: 20px;
-        }}"""
+        QComboBox {{
+            background-color: {dark_gray};
+            show-decoration-selected: 1;
+        }}
+        """
 
         # Push Button Style Sheets
         # music button
@@ -159,6 +160,48 @@ class Ui_MainWindow(object):
                     border: none; 
                 }}
         """
+
+        CSS_PB_special_0 = f"""QPushButton {{
+            background-color: {self.specialBtn_color[0]};
+        }}
+        QPushButton:checked{{
+                    background-color: {dark_gray};
+                    border: none; 
+                }}
+        """
+        CSS_PB_special_1 = f"""QPushButton {{
+            background-color: {self.specialBtn_color[1]};
+        }}
+        QPushButton:checked{{
+                    background-color: {dark_gray};
+                    border: none; 
+                }}
+        """
+        CSS_PB_special_2 = f"""QPushButton {{
+            background-color: {self.specialBtn_color[2]};
+        }}
+        QPushButton:checked{{
+                    background-color: {dark_gray};
+                    border: none; 
+                }}
+        """
+        CSS_PB_special_3 = f"""QPushButton {{
+            background-color: {self.specialBtn_color[3]};
+        }}
+        QPushButton:checked{{
+                    background-color: {dark_gray};
+                    border: none; 
+                }}
+        """
+        CSS_PB_special_4 = f"""QPushButton {{
+            background-color: {self.specialBtn_color[4]};
+        }}
+        QPushButton:checked{{
+                    background-color: {dark_gray};
+                    border: none; 
+                }}
+        """
+        CSS_PB_special_lst=[CSS_PB_special_0,CSS_PB_special_1,CSS_PB_special_2,CSS_PB_special_3,CSS_PB_special_4]
 
         # sound slider
         CSS_soundSlider = f"""QSlider::groove:horizontal {{
@@ -198,10 +241,17 @@ class Ui_MainWindow(object):
                 background: {dark_gray};
             }}
         """
+        # tool bar style sheet
+        CSS_toolbar = f"""QToolBar{{
+                color: {white};
+                border: 0px;
+                background-color: {dark_gray};
+            }}"""
+
 
         # main window 
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(1000, 600)
+        MainWindow.resize(1100, 600)
         MainWindow.setTabShape(QtWidgets.QTabWidget.TabShape.Rounded)
         
         
@@ -255,7 +305,7 @@ class Ui_MainWindow(object):
         self.masterVolumeSlider = QtWidgets.QSlider(parent=self.Sound_frame)
         self.masterVolumeSlider.setGeometry(QtCore.QRect(390, 60, 160, 18))
         self.masterVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.masterVolumeSlider.setStyleSheet(CSS)
+        self.masterVolumeSlider.setStyleSheet(CSS_Slider)
         self.masterVolumeSlider.setObjectName("masterVolumeSlider")
         self.masterVolumeSlider.setRange(0, 100)
         self.masterVolumeSlider.setValue(100*int(self._music_output.volume()))
@@ -269,13 +319,14 @@ class Ui_MainWindow(object):
         self.masterVolumeLabel.setObjectName("masterVolumeLabel")
 
         self.currentSoundFilesListWidget = QtWidgets.QListWidget(parent=self.Sound_frame)
-        self.currentSoundFilesListWidget.setGeometry(QtCore.QRect(620, 20, 141, 71))q
+        self.currentSoundFilesListWidget.setGeometry(QtCore.QRect(590, 20, 191, 71))
         self.currentSoundFilesListWidget.setDragEnabled(True)
         self.currentSoundFilesListWidget.viewport().setAcceptDrops(True)
         self.currentSoundFilesListWidget.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
-        self.currentSoundFilesListWidget.setStyleSheet(CSS2)
+        self.currentSoundFilesListWidget.setStyleSheet(CSS_List)
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
         self.currentSoundFilesListWidget.doubleClicked.connect(self.on_currentSoundFilesListWidget_doubleClicked)
+        self.currentSoundFilesListWidget.clicked.connect(self.on_currentSoundFilesListWidget_clicked)
 
         self.soundSlider = QtWidgets.QSlider(parent=self.Sound_frame)
         self.soundSlider.setGeometry(QtCore.QRect(390, 27, 160, 16))
@@ -291,7 +342,7 @@ class Ui_MainWindow(object):
         # SD card frame
 
         self.SDframe = QtWidgets.QFrame(parent=self.centralwidget)
-        self.SDframe.setGeometry(QtCore.QRect(800, 0, 200, 600))
+        self.SDframe.setGeometry(QtCore.QRect(800, 0, 300, 600))
         self.SDframe.setStyleSheet(f"background-color:{black}")
         self.SDframe.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         self.SDframe.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
@@ -300,13 +351,14 @@ class Ui_MainWindow(object):
 
         self.fileModel = QtGui.QFileSystemModel()
         self.fileModel.setRootPath(self.default_soundFile_path)
-        self.fileModel.setNameFilters(["*.mp3","*.wav"])
+        self.fileModel.setNameFilters(["*.mp3","*.wav", "*.ogg"]) 
+        self.fileModel.setNameFilterDisables(False)
         self.fileTreeListView = QtWidgets.QTreeView(parent=self.SDframe)
         self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
         self.fileTreeListView.setHeaderHidden(True)
         self.fileTreeListView.setDragEnabled(True)
-        self.fileTreeListView.setGeometry(QtCore.QRect(10, 50, 180, 361))
-        self.fileTreeListView.setStyleSheet(CSS3)
+        self.fileTreeListView.setGeometry(QtCore.QRect(10, 50, 280, 361))
+        self.fileTreeListView.setStyleSheet(CSS_ListView)
         self.fileTreeListView.setObjectName("fileTreeListView")
         self.fileTreeListView.setModel(self.fileModel)
         self.fileTreeListView.setRootIndex(self.fileModel.index(self.default_soundFile_path))
@@ -324,12 +376,12 @@ class Ui_MainWindow(object):
         self.getRootFolderButton.clicked.connect(lambda: self.on_rootFolderDialogBtnClicked())
 
         self.saveToSDButton = QtWidgets.QPushButton(parent=self.SDframe)
-        self.saveToSDButton.setGeometry(QtCore.QRect(110, 500, 81, 24))
+        self.saveToSDButton.setGeometry(QtCore.QRect(210, 500, 81, 24))
         self.saveToSDButton.setStyleSheet(f"background-color: {blue}")
         self.saveToSDButton.setObjectName("saveToSDButton")
 
         self.listOfFoundSDCardsCombobox = QtWidgets.QComboBox(parent=self.SDframe)
-        self.listOfFoundSDCardsCombobox.setGeometry(QtCore.QRect(10, 470, 180, 22))
+        self.listOfFoundSDCardsCombobox.setGeometry(QtCore.QRect(10, 470, 280, 22))
         self.listOfFoundSDCardsCombobox.setStyleSheet(f"background-color: {dark_gray}")
         self.listOfFoundSDCardsCombobox.setObjectName("listOfFoundSDCardsCombobox")
 
@@ -415,23 +467,24 @@ class Ui_MainWindow(object):
             btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"weatherBtn_{curBtnIndex+1}")
-            #btn.clicked.connect(lambda checked, idx = curBtnIndex: self.on_weatherBtnclicked(idx))
+            btn.toggled.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'weather'))
             self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 2, 1, 1)
 
         # special Buttons
         self.specialBtn_lst = [self.create_acceptDropButton(parent=self.layoutWidget, playlistMaxlength=1) for b in range(self.btn_rows)]
         for btn in self.specialBtn_lst:
             curBtnIndex = self.specialBtn_lst.index(btn)
+            btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
-            btn.setStyleSheet(f"background-color:{self.specialBtn_color[curBtnIndex]}")
+            btn.setStyleSheet(CSS_PB_special_lst[curBtnIndex])
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"icons/{self.specialIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
             btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"specialBtn_{curBtnIndex+1}")
-            #btn.clicked.connect(lambda checked, idx = curBtnIndex: self.on_specialBtnclicked(idx))
+            btn.toggled.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'special'))
             self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 3, 1, 1)    
 
         # individual volume sliders
@@ -439,7 +492,7 @@ class Ui_MainWindow(object):
         self.musicVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
         self.musicVolumeSlider.setGeometry(QtCore.QRect(79, y_positon_volumeSliders, 111, 20))
         self.musicVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.musicVolumeSlider.setStyleSheet(CSS)
+        self.musicVolumeSlider.setStyleSheet(CSS_Slider)
         self.musicVolumeSlider.setObjectName("musicVolumeSlider")
         self.musicVolumeSlider.setValue(self.musicVolumeSlider.maximum())   #initial setting = max
         self.musicVolumeSlider.valueChanged.connect(self.on_musicVolumeSliderChanged)
@@ -447,25 +500,25 @@ class Ui_MainWindow(object):
         self.settingVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
         self.settingVolumeSlider.setGeometry(QtCore.QRect(260, y_positon_volumeSliders, 111, 20))
         self.settingVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.settingVolumeSlider.setStyleSheet(CSS)
+        self.settingVolumeSlider.setStyleSheet(CSS_Slider)
         self.settingVolumeSlider.setObjectName("settingVolumeSlider")
         self.settingVolumeSlider.setValue(self.settingVolumeSlider.maximum())   #initial setting = max
 
         self.weatherVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
         self.weatherVolumeSlider.setGeometry(QtCore.QRect(430, y_positon_volumeSliders, 111, 20))
         self.weatherVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.weatherVolumeSlider.setStyleSheet(CSS)
+        self.weatherVolumeSlider.setStyleSheet(CSS_Slider)
         self.weatherVolumeSlider.setObjectName("weatherVolumeSlider")
         self.weatherVolumeSlider.setValue(self.weatherVolumeSlider.maximum())   #initial setting = max
 
         self.specialVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
         self.specialVolumeSlider.setGeometry(QtCore.QRect(610, y_positon_volumeSliders, 111, 20))
         self.specialVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.specialVolumeSlider.setStyleSheet(CSS)
+        self.specialVolumeSlider.setStyleSheet(CSS_Slider)
         self.specialVolumeSlider.setObjectName("specialVolumeSlider")
         self.specialVolumeSlider.setValue(self.specialVolumeSlider.maximum())   #initial setting = max
 
-        # muffle Buttons require basic audio manipulation -> future version?
+        # muffle Buttons require raw audio manipulation -> future version?
         '''self.musicMuffleButton = QtWidgets.QPushButton(parent=self.interfaceFrame)
         self.musicMuffleButton.setGeometry(QtCore.QRect(115, 415, 31, 24))
         self.musicMuffleButton.setStyleSheet(f"background-color: {dark_gray}")
@@ -503,30 +556,45 @@ class Ui_MainWindow(object):
 
         # menu and status bars
         MainWindow.setCentralWidget(self.centralwidget)
-        self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
-        self.menubar.setStyleSheet(CSS_menubar)
-        '''self.menubar.setGeometry(QtCore.QRect(0, 22, 1000, 22))
-        self.menubar.setObjectName("menubar")'''
-        MainWindow.setMenuBar(self.menubar)
-        self.file_menu = MainWindow.menuBar().addMenu("&File")
-        
+        menuBar = MainWindow.menuBar()
+        toolBar = MainWindow.addToolBar("File")
+        toolBar.setMovable(False)
+        toolBar.setStyleSheet(CSS_toolbar)
+
+        # preset dropdown
+        presetCombobox = QtWidgets.QComboBox()
+        presetCombobox.setMinimumWidth(200)
+        presetCombobox.setStyleSheet(CSS_ComboBox)
+        presetLabel = QtWidgets.QLabel("Preset: ")
+        presetLabel.setStyleSheet(f"color: {white}")
+    
+        # file menu
+        file_menu = menuBar.addMenu("&File")
         # open 
         icon = QtGui.QIcon.fromTheme("document-open")
         open_action = QtGui.QAction(icon, "&Open...",MainWindow, triggered=self.open) 
-        self.file_menu.addAction(open_action)
+        file_menu.addAction(open_action)
         # save
         icon = QtGui.QIcon.fromTheme("document-save")
         save_action = QtGui.QAction(icon, "&Save...",MainWindow, triggered=self.save) 
-        self.file_menu.addAction(save_action)
+        file_menu.addAction(save_action)
         # save as
         icon = QtGui.QIcon.fromTheme("document-save")
         save_as_action = QtGui.QAction(icon, "&Save as...",MainWindow, triggered=self.save_as) 
-        self.file_menu.addAction(save_as_action)
+        file_menu.addAction(save_as_action)
+
         
-        self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
-        self.statusbar.setStyleSheet(f"background-color: {dark_gray}")
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
+        menuBar.setStyleSheet(CSS_menubar)
+        MainWindow.setMenuBar(menuBar)
+        toolBar.addWidget(menuBar)
+        toolBar.addWidget(presetLabel)
+        toolBar.addWidget(presetCombobox)
+        
+        
+        statusbar = QtWidgets.QStatusBar(parent=MainWindow)
+        statusbar.setStyleSheet(f"background-color: {dark_gray}")
+        statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(statusbar)
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -568,6 +636,7 @@ class Ui_MainWindow(object):
                     if int(idLst[0])==0:
                         self.musicBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile_url) 
                         self.musicBtn_lst[int(idLst[1])].activeSongKey=-1
+                    # ToDo: Add all Btn Lists
 
 
     @Slot()
@@ -625,30 +694,6 @@ class Ui_MainWindow(object):
         if path:
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
 
-    '''# ToDo: rewrite generic for all buttons, e.g. on_soundBtnClicked(self, idx, soundBtn_lst)->None
-    def on_musicBtnclicked(self, idx)->None:
-        musicBtn = self.musicBtn_lst[idx]
-        self.musicPlayer.stop()
-        timeout = t.time()+5    # timer set to 5 seconds
-        while t.time()<timeout:    
-            t.sleep(0.1)
-            playback_state = self.musicPlayer.playbackState()
-            if playback_state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
-                break
-
-        if musicBtn.isChecked():
-            self.setActiveButton(idx, self.musicBtn_lst)
-            self.uncheckInactiveButtons(self.musicBtn_lst)
-            activeSong = musicBtn.getActiveSong()
-            if activeSong:
-                self.musicPlayer.setSource(activeSong[0])
-                self.musicPlayer.play()
-            
-            self.displayPlaylist(musicBtn)    
-        else:
-            self.currentSoundFilesListWidget.clear()    # clear playlist
-            musicBtn._isActive=False'''
-
     def on_soundBtnclicked(self, idx: int, btn_Type: str)->None:
         if btn_Type == 'music':
             soundBtn = self.musicBtn_lst[idx]
@@ -665,7 +710,7 @@ class Ui_MainWindow(object):
         elif btn_Type == 'special':
             soundBtn = self.specialBtn_lst[idx]
             soundPlayer = self.specialPlayer
-            soundBtn_lst = self.weatherBtn_lst
+            soundBtn_lst = self.specialBtn_lst
 
         
         soundPlayer.stop()
@@ -692,6 +737,19 @@ class Ui_MainWindow(object):
 
     def on_stopBtnClicked(self)->None:
         self.musicPlayer.stop()
+        self.settingPlayer.stop()
+        self.weatherPlayer.stop()
+        self.specialPlayer.stop()
+        timeout = t.time()+5    # timer set to 5 seconds
+        while t.time()<timeout:    
+            t.sleep(0.1)
+            playback_state_music = self.musicPlayer.playbackState()
+            playback_state_setting = self.settingPlayer.playbackState()
+            playback_state_weather = self.weatherPlayer.playbackState()
+            playback_state_special = self.specialPlayer.playbackState()
+            stoppedState = QtMultimedia.QMediaPlayer.PlaybackState.StoppedState
+            if playback_state_music==stoppedState and playback_state_setting==stoppedState and playback_state_weather==stoppedState and playback_state_special==stoppedState:
+                break
         self.uncheckAllButtons()
         self.currentSoundFilesListWidget.clear()    # clear playlist
 
@@ -709,6 +767,22 @@ class Ui_MainWindow(object):
                 if activeSong:
                     self.musicPlayer.setSource(activeSong[0])
                     self.musicPlayer.play()
+
+    def on_currentSoundFilesListWidget_clicked(self)->None:
+        selection = self.currentSoundFilesListWidget.selectedItems()
+        if not selection: return
+        self.stopPlayers([self.musicPlayer])
+        for item in selection:
+            activeBtn = self.getActiveButton(self.musicBtn_lst)
+            if not activeBtn: return
+            else:
+                itemIndex = self.currentSoundFilesListWidget.row(item)
+                activeBtn.setActiveSongKey(itemIndex)
+                activeSong = activeBtn.getActiveSong()
+                if activeSong:
+                    self.musicPlayer.setSource(activeSong[0])
+                    self.musicPlayer.play()
+
 
     def on_currentSoundFilesListWidget_doubleClicked(self)->None:
         selection = self.currentSoundFilesListWidget.selectedItems()
@@ -745,6 +819,13 @@ class Ui_MainWindow(object):
             self.weatherPlayer.setSource(nextsong[0])
             self.weatherPlayer.setPosition(0)
             self.weatherPlayer.play()
+    # special player
+    def on_specialPlayerStatusChanged(self, status)->None:
+        if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
+            activeSettingBtn = self.getActiveButton(self.specialBtn_lst)
+            activeSettingBtn.setChecked(False)
+            activeSettingBtn._isActive = False
+            self.specialPlayer.setPosition(0)   #rewind
 
     def on_musicPlayerDurationChanged(self, duration)->None:
         duration_sec = duration
@@ -788,6 +869,20 @@ class Ui_MainWindow(object):
 
     #############################################################################################################################
     # helper functions
+    def stopPlayers(self, soundPlayer_lst: list[object])->None:
+        for player in soundPlayer_lst:
+            player.stop()
+        timeout = t.time()+5    # timer set to 5 seconds
+        while t.time()<timeout:    
+            t.sleep(0.1)
+            testVal = 0
+            for player in soundPlayer_lst:
+                playbackState = player.PlaybackState()
+                if playbackState != QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
+                    testVal+=1
+            if testVal == 0:
+                break
+
     def uncheckAllButtons(self)->None:
         for btn in self.musicBtn_lst:
             btn.setChecked(False)
@@ -805,12 +900,16 @@ class Ui_MainWindow(object):
     def clearAllPlaylists(self)->None:
         for btn in self.musicBtn_lst:
             btn.playlist.clear()
+            btn.activeSongKey=-1
         for btn in self.settingBtn_lst:
             btn.playlist.clear()
+            btn.activeSongKey=-1
         for btn in self.weatherBtn_lst:
             btn.playlist.clear()
+            btn.activeSongKey=-1
         for btn in self.specialBtn_lst:
             btn.playlist.clear()
+            btn.activeSongKey=-1
 
     def uncheckInactiveButtons(self, btn_list)->None:
         for btn in btn_list:
@@ -897,7 +996,7 @@ class Ui_MainWindow(object):
                 filename = outer_self.getFilenameFromPath(file)
                 key = len(self.playlist)
                 if key >= self.playlistMaxlength:
-                    self.playlist[0]=[soundFile_url, filename]
+                    self.playlist.insert(0, [soundFile_url, filename])  # not tested
                 else:
                     self.playlist.append([soundFile_url, filename])
 
@@ -941,8 +1040,41 @@ class Ui_MainWindow(object):
         return AcceptDropButton(parent) 
         
 
+# Custom Dropdown button for presets
+class CustomToolButton(QtWidgets.QToolButton):
+    def __init__(self, parent=None):
+        super(CustomToolButton, self).__init__(parent)
+        self.setPopupMode(self.ToolButtonPopupMode.MenuButtonPopup)
+        self.triggered.connect(self.setDefaultAction)
 
-class Playlist(dict):
+'''class CustomToolButton(QtWidgets.QComboBox):
     def __init__(self, parent):
-        super(Playlist, self).__init__(parent)
+        super().__init__(parent)
+        self.menu = QtWidgets.QMenu(self)
+        self.act0 = QtGui.QAction("test", self)
+        self.act1 = QtGui.QAction("test1", self)
+        self.act0.setObjectName("act0")
+        self.act1.setObjectName("act1")
+        self.menu.addAction(self.act0)
+        self.menu.addAction(self.act1)
+        self.ui.toolButton.setMenu(self.menu)
+        self.ui.toolButton.clicked.connect(self.slotTest)
+        self.act0.triggered.connect(self.slotTest)
+        self.act1.triggered.connect(self.slotTest)
+        self.adjustSize()'''
+
+class ComboBoxAction(QtWidgets.QWidgetAction):
+    def __init__(self, title, parent = None):
+        super().__init__(parent)
+        pWidget = QtWidgets.QWidget(parent)
+        pLayout = QtWidgets.QHBoxLayout()
+        pLabel = QtWidgets.QLabel(title)
+        pLayout.addWidget(pLabel)
+        self.comboBox = QtWidgets.QSpinBox(parent)
+        pLayout.addWidget(self.comboBox)
+        pWidget.setLayout(pLayout)
+        self.setDefaultWidget(pWidget)
+
+    def spinBox(self):
+        return self.comboBox
         
