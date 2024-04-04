@@ -14,13 +14,12 @@ import glob as gl
 import os
 
 # ToDo: 
-#   - presets
+#   - when currentplaylist widget is rearranged, update button playlist
+#   - add inactive play icon when playstate is stopped (play button is inactive)
 #   - erase unnecessary public declarators (self.*) for garbage collection
 #   - shift stylesheets into own source file
 #   - make window resizable (or disable resize) 
 #   - make program react to audio output changes
-#   - make status bar display audio playback state
-#   - clear playlist of activated button (via button in sound control frame?)
 
 
 # app colors
@@ -88,6 +87,7 @@ class Ui_MainWindow(object):
         self.musicPlayer.mediaStatusChanged.connect(self.on_musicPlayerStatusChanged)
         self.musicPlayer.positionChanged.connect(self.on_musicPlayerPositionChanged)
         self.musicPlayer.durationChanged.connect(self.on_musicPlayerDurationChanged)
+        self.musicPlayer.playbackStateChanged.connect(self.on_musicPlaybackStateChanged)
         self.settingPlayer.mediaStatusChanged.connect(self.on_settingPlayerStatusChanged)
         self.weatherPlayer.mediaStatusChanged.connect(self.on_weatherPlayerStatusChanged)
         self.specialPlayer.mediaStatusChanged.connect(self.on_specialPlayerStatusChanged)
@@ -282,19 +282,43 @@ class Ui_MainWindow(object):
         self.Sound_frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         self.Sound_frame.setObjectName("Sound_frame")
         
-        self.pauseButton = QtWidgets.QPushButton(parent=self.Sound_frame)
-        self.pauseButton.setGeometry(QtCore.QRect(170, 30, 75, 51))
-        self.pauseButton.setStyleSheet(f"background-color:{green}")
-        self.pauseButton.setText("")
+        self.playPauseButton = QtWidgets.QPushButton(parent=self.Sound_frame)
+        self.playPauseButton.setGeometry(QtCore.QRect(30, 30, 60, 50))
+        self.playPauseButton.setStyleSheet(f"background-color:{green}")
+        self.playPauseButton.setText("")
+        self.playIcon = QtGui.QIcon()
+        self.pauseIcon = QtGui.QIcon()
+        self.playIcon.addPixmap(QtGui.QPixmap("icons/icon_play.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        self.pauseIcon.addPixmap(QtGui.QPixmap("icons/icon_pause.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        self.playPauseButton.setIcon(self.playIcon)
+        self.playPauseButton.setIconSize(QtCore.QSize(50, 50))
+        self.playPauseButton.setObjectName("playPauseButton")
+        self.playPauseButton.clicked.connect(lambda: self.on_playPauseBtnClicked())
+
+        self.trackBackwardButton = QtWidgets.QPushButton(parent=self.Sound_frame)
+        self.trackBackwardButton.setGeometry(QtCore.QRect(120, 30, 60, 50))
+        self.trackBackwardButton.setStyleSheet(f"background-color:{green}")
+        self.trackBackwardButton.setText("")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("icons/icon_pause.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
-        self.pauseButton.setIcon(icon)
-        self.pauseButton.setIconSize(QtCore.QSize(50, 50))
-        self.pauseButton.setObjectName("pauseButton")
-        self.pauseButton.clicked.connect(lambda: self.on_pauseBtnClicked())
+        icon.addPixmap(QtGui.QPixmap("icons/icon_minus.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        self.trackBackwardButton.setIcon(icon)
+        self.trackBackwardButton.setIconSize(QtCore.QSize(50, 50))
+        self.trackBackwardButton.setObjectName("backwardButton")
+        self.trackBackwardButton.clicked.connect(lambda: self.on_trackBackwardClicked())
+
+        self.trackForwardButton = QtWidgets.QPushButton(parent=self.Sound_frame)
+        self.trackForwardButton.setGeometry(QtCore.QRect(210, 30, 60, 50))
+        self.trackForwardButton.setStyleSheet(f"background-color:{green}")
+        self.trackForwardButton.setText("")
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap("icons/icon_minus.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
+        self.trackForwardButton.setIcon(icon)
+        self.trackForwardButton.setIconSize(QtCore.QSize(50, 50))
+        self.trackForwardButton.setObjectName("forwardButton")
+        self.trackForwardButton.clicked.connect(lambda: self.on_trackForwardClicked())
         
         self.stopButton = QtWidgets.QPushButton(parent=self.Sound_frame)
-        self.stopButton.setGeometry(QtCore.QRect(290, 30, 75, 51))
+        self.stopButton.setGeometry(QtCore.QRect(300, 30, 60, 50))
         self.stopButton.setStyleSheet(f"background-color:{green}")
         self.stopButton.setText("")
         icon = QtGui.QIcon()
@@ -303,17 +327,6 @@ class Ui_MainWindow(object):
         self.stopButton.setIconSize(QtCore.QSize(50, 50))
         self.stopButton.setObjectName("stopButton")
         self.stopButton.clicked.connect(lambda: self.on_stopBtnClicked())
-
-        self.playButton = QtWidgets.QPushButton(parent=self.Sound_frame)
-        self.playButton.setGeometry(QtCore.QRect(50, 30, 75, 51))
-        self.playButton.setStyleSheet(f"background-color:{green}")
-        self.playButton.setText("")
-        icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("icons/icon_play.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
-        self.playButton.setIcon(icon)
-        self.playButton.setIconSize(QtCore.QSize(50, 50))
-        self.playButton.setObjectName("playButton")
-        self.playButton.clicked.connect(lambda: self.on_playBtnClicked())
 
         self.masterVolumeSlider = QtWidgets.QSlider(parent=self.Sound_frame)
         self.masterVolumeSlider.setGeometry(QtCore.QRect(390, 60, 160, 18))
@@ -331,15 +344,18 @@ class Ui_MainWindow(object):
         self.masterVolumeLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.masterVolumeLabel.setObjectName("masterVolumeLabel")
 
-        self.currentSoundFilesListWidget = QtWidgets.QListWidget(parent=self.Sound_frame)
+        # List widget displaying the currently active playlist (music button)
+        self.currentSoundFilesListWidget = self.RearrangeListWidget(parent=self.Sound_frame)
+        #self.currentSoundFilesListWidget = QtWidgets.QListWidget(parent=self.Sound_frame)
         self.currentSoundFilesListWidget.setGeometry(QtCore.QRect(590, 20, 191, 71))
-        self.currentSoundFilesListWidget.setDragEnabled(True)
-        self.currentSoundFilesListWidget.viewport().setAcceptDrops(True)
-        self.currentSoundFilesListWidget.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
+        #self.currentSoundFilesListWidget.setDragEnabled(True)
+        #self.currentSoundFilesListWidget.viewport().setAcceptDrops(True)
+        #self.currentSoundFilesListWidget.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
         self.currentSoundFilesListWidget.setStyleSheet(CSS_List)
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
         self.currentSoundFilesListWidget.doubleClicked.connect(self.on_currentSoundFilesListWidget_doubleClicked)
-        self.currentSoundFilesListWidget.clicked.connect(self.on_currentSoundFilesListWidget_clicked)
+        self.currentSoundFilesListWidget.clicked.connect(self.on_currentSoundFilesListWidget_clicked) 
+        self.currentSoundFilesListWidget.itemMoved.connect(self.currentSoundFilesListWidget_itemMoved)
 
         self.soundSlider = QtWidgets.QSlider(parent=self.Sound_frame)
         self.soundSlider.setGeometry(QtCore.QRect(390, 27, 160, 16))
@@ -463,7 +479,7 @@ class Ui_MainWindow(object):
             btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"settingBtn_{curBtnIndex+1}")
-            btn.clicked.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'setting'))
+            btn.toggled.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'setting'))
             self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 1, 1, 1)
 
         # weather Buttons
@@ -587,6 +603,10 @@ class Ui_MainWindow(object):
     
         # file menu
         file_menu = menuBar.addMenu("&File")
+        # new 
+        icon = QtGui.QIcon.fromTheme("document-new")
+        new_action = QtGui.QAction(icon, "&New...",MainWindow, triggered=self.new) 
+        file_menu.addAction(new_action)
         # open 
         icon = QtGui.QIcon.fromTheme("document-open")
         open_action = QtGui.QAction(icon, "&Open...",MainWindow, triggered=self.open) 
@@ -594,6 +614,7 @@ class Ui_MainWindow(object):
         # save
         icon = QtGui.QIcon.fromTheme("document-save")
         save_action = QtGui.QAction(icon, "&Save...",MainWindow, triggered=self.save) 
+        save_action.setShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Save))
         file_menu.addAction(save_action)
         # save as
         icon = QtGui.QIcon.fromTheme("document-save")
@@ -608,10 +629,10 @@ class Ui_MainWindow(object):
         toolBar.addWidget(self.presetCombobox)
         
         
-        statusbar = QtWidgets.QStatusBar(parent=MainWindow)
-        statusbar.setStyleSheet(f"background-color: {dark_gray}")
-        statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(statusbar)
+        self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
+        self.statusbar.setStyleSheet(f"background-color: {dark_gray}")
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
 
         # init functions
         self.listPresets()
@@ -639,6 +660,13 @@ class Ui_MainWindow(object):
     # event handlers
     # Slots
     @Slot()
+    def new(self)->None:
+        file = QtWidgets.QFileDialog.getSaveFileName(None, "Create new file", self.default_preset_path, "*.mms")
+        self.clearAllPlaylists()
+        self.saveFile_mms(file[0])
+        self.preset_lst = self.listPresets()
+
+    @Slot()
     def open(self)->None:
         file = QtWidgets.QFileDialog.getOpenFileName(None, "Select a file...", self.default_preset_path, "*.mms")
         self.loadFile_mms(file[0])
@@ -652,11 +680,14 @@ class Ui_MainWindow(object):
     def save_as(self)->None:
         file = QtWidgets.QFileDialog.getSaveFileName(None, "Save file", self.default_preset_path, "*.mms")
         self.saveFile_mms(file[0])
+        self.preset_lst = self.listPresets()
 
     # Preset Combobox
     def on_presetComboBoxChanged(self, idx)->None:
-        new_file = self.preset_lst[idx]
-        self.loadFile_mms(new_file[0])
+        self.preset_lst = self.listPresets()
+        if self.preset_lst:
+            new_file = self.preset_lst[idx]
+            self.loadFile_mms(new_file[0])
 
     # Buttons
     def on_fileTree_doubleClicked(self)->None:
@@ -695,21 +726,15 @@ class Ui_MainWindow(object):
             soundBtn_lst = self.specialBtn_lst
         
         self.stopPlayers([soundPlayer])
-        '''soundPlayer.stop()
-        timeout = t.time()+5    # timer set to 5 seconds
-        while t.time()<timeout:    
-            t.sleep(0.1)
-            playback_state = soundPlayer.playbackState()
-            if playback_state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
-                break'''
 
         if soundBtn.isChecked():
             self.setActiveButton(idx, soundBtn_lst)
             self.uncheckInactiveButtons(soundBtn_lst)
             activeSong = soundBtn.getActiveSong()
             if activeSong:
-                soundPlayer.setSource(activeSong[0])
-                soundPlayer.play()
+                '''soundPlayer.setSource(activeSong[0])
+                soundPlayer.play()'''
+                self.playPlayer(soundPlayer, activeSong[0])
                 if btn_Type == 'music': self.displayPlaylist(soundBtn)
             else:
                 soundBtn.setChecked(False)
@@ -722,13 +747,33 @@ class Ui_MainWindow(object):
         self.uncheckAllButtons()
         self.currentSoundFilesListWidget.clear()    # clear playlist
 
-    def on_pauseBtnClicked(self)->None:
-        self.musicPlayer.pause()
+    def on_trackBackwardClicked(self)->None:
+        activeBtn = self.getActiveButton(self.musicBtn_lst)
+        previousSong = activeBtn.getPreviousSong()
+        self.stopPlayers([self.musicPlayer])
+        self.musicPlayer.setSource(previousSong[0])
+        self.musicPlayer.setPosition(0)
+        self.musicPlayer.play()
+        self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
+        #Todo: set activated item
 
-    def on_playBtnClicked(self)->None:
+    def on_trackForwardClicked(self)->None:
+        activeBtn = self.getActiveButton(self.musicBtn_lst)
+        nextSong = activeBtn.getNextSong()
+        self.stopPlayers([self.musicPlayer])
+        self.musicPlayer.setSource(nextSong[0])
+        self.musicPlayer.setPosition(0)
+        self.musicPlayer.play()
+        self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
+
+    def on_playPauseBtnClicked(self)->None:
         status = self.musicPlayer.playbackState()
+        if status == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState:
+            self.playPauseButton.setIcon(self.playIcon)
+            self.musicPlayer.pause()
         if status == QtMultimedia.QMediaPlayer.PlaybackState.PausedState:
             self.musicPlayer.play()
+            self.playPauseButton.setIcon(self.pauseIcon)
         elif status == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
             activeBtn = self.getActiveButton(self.musicBtn_lst)
             if activeBtn:
@@ -736,6 +781,7 @@ class Ui_MainWindow(object):
                 if activeSong:
                     self.musicPlayer.setSource(activeSong[0])
                     self.musicPlayer.play()
+                    self.playPauseButton.setIcon(self.pauseIcon)
 
     def on_currentSoundFilesListWidget_clicked(self)->None:
         selection = self.currentSoundFilesListWidget.selectedItems()
@@ -760,7 +806,28 @@ class Ui_MainWindow(object):
             if not activeBtn: return
             else:
                 itemIndex = self.currentSoundFilesListWidget.row(item)
-                activeBtn.removeSongFromPlaylist(itemIndex)
+                if itemIndex == activeBtn.activeSongKey:
+                    player = self.getPlayerForButton(activeBtn)
+                    self.stopPlayers([player])
+                    activeBtn.removeSongFromPlaylist(itemIndex)
+                    self.displayPlaylist(activeBtn)
+                    if not activeBtn.activeSongKey==-1:
+                        self.playPlayer(player, activeBtn.getActiveSong()[0])
+                else:
+                    activeBtn.removeSongFromPlaylist(itemIndex)
+                    self.displayPlaylist(activeBtn)
+                if activeBtn.activeSongKey==-1:
+                    activeBtn.setChecked(False)
+                    activeBtn._isActive=False
+
+    def currentSoundFilesListWidget_itemMoved(self, old_index, new_index)->None:
+        activeBtn = self.getActiveButton(self.musicBtn_lst)
+        self.stopPlayers([self.musicPlayer])
+        track = activeBtn.playlist.pop(old_index)
+        activeBtn.playlist.insert(new_index, track)
+        activeBtn.activeSongKey = new_index
+        currentItem = self.currentSoundFilesListWidget.item(new_index)
+        self.currentSoundFilesListWidget.setCurrentItem(currentItem)
 
     # music player
     def on_musicPlayerStatusChanged(self, status)->None:
@@ -770,6 +837,20 @@ class Ui_MainWindow(object):
             self.musicPlayer.setSource(nextsong[0])
             self.musicPlayer.setPosition(0)
             self.musicPlayer.play()
+            #self.currentSoundFilesListWidget.item(activeMusicBtn.activeSongKey).setSelected(True)
+            self.currentSoundFilesListWidget.setCurrentRow(activeMusicBtn.activeSongKey)
+
+    def on_musicPlaybackStateChanged(self, state)->None:
+        if state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
+            self.statusbar.showMessage(f"Music Player: Stopped")
+            self.playPauseButton.setIcon(self.playIcon)
+        elif state == QtMultimedia.QMediaPlayer.PlaybackState.PausedState:
+            self.statusbar.showMessage(f"Music Player: Paused")
+            self.playPauseButton.setIcon(self.playIcon)
+        elif state == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState:
+            self.statusbar.showMessage(f"Music Player: Playing")
+            self.playPauseButton.setIcon(self.pauseIcon)
+
     # setting player   
     def on_settingPlayerStatusChanged(self, status)->None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
@@ -859,13 +940,39 @@ class Ui_MainWindow(object):
 
     #############################################################################################################################
     # helper functions
+
+    def stopPlayerOfButton(self, dropButton)->None:
+        player = self.getPlayerForButton(dropButton)
+        self.stopPlayers([player])
+        
+    def getPlayerForButton(self, dropButton)->QtMultimedia.QMediaPlayer:
+        for btn in self.musicBtn_lst:
+            if id(btn)==id(dropButton):
+                return self.musicPlayer
+        for btn in self.settingBtn_lst:
+            if id(btn)==id(dropButton):
+                return self.settingPlayer
+        for btn in self.weatherBtn_lst:
+            if id(btn)==id(dropButton):
+                return self.weatherPlayer
+        for btn in self.specialBtn_lst:
+            if id(btn)==id(dropButton):
+                return self.specialPlayer
+        
+        
+    def playPlayer(self, player: QtMultimedia.QMediaPlayer, songFile: str, fromBeginning=True)->None:
+        player.setSource(songFile)
+        if fromBeginning: player.setPosition(0)
+        player.play()
         
     def getCurrentPresetFile(self)->str:
         current_idx=self.presetCombobox.currentIndex()
-        currentPreset = self.preset_lst(current_idx)
+        currentPreset = self.preset_lst[current_idx]
         return currentPreset[0]
  
     def listPresets(self)->None:
+        self.preset_lst.clear()
+        self.presetCombobox.clear()
         presets = gl.glob(f"{self.default_preset_path}\\*.mms")
         presets.sort(key=os.path.getmtime)
         presets.reverse()
@@ -875,9 +982,9 @@ class Ui_MainWindow(object):
             self.preset_lst.append([file, filename[0]])
             self.presetCombobox.addItem(filename[0])
 
-    def saveFile_mms(self, file):
+    def saveFile_mms(self, file: str):
         try:
-            f = open(file, 'w')
+            f = open(file, 'w', encoding="utf-8")
         except Exception as exc:
             print(f"Unexpected {exc=}, {type(exc)=}")
         else:
@@ -907,15 +1014,15 @@ class Ui_MainWindow(object):
                         f.write(f"{3} {btn_idx}\t{strUrl}\n")
                     btn_idx+=1
         
-    def loadFile_mms(self, file):
+    def loadFile_mms(self, file: str):
         try:
-            f = open(file, 'r')
+            f = open(file, 'r',  encoding="utf-8")
         except FileNotFoundError:
             print('File not found') # ToDo: display error in status bar
         else:
             with f:
                 data = f.readlines()
-                if data: self.clearAllPlaylists()
+                self.clearAllPlaylists()
                 for line in data:
                     splitLine = line.split("\t")
                     idLst = splitLine[0].split()
@@ -934,7 +1041,7 @@ class Ui_MainWindow(object):
         linDepVal = QtMultimedia.QAudio.convertVolume(depValue / 100, QtMultimedia.QAudio.VolumeScale.LogarithmicVolumeScale, QtMultimedia.QAudio.VolumeScale.LinearVolumeScale)
         return linDepVal
 
-    def stopPlayers(self, soundPlayer_lst: list[object])->None:
+    def stopPlayers(self, soundPlayer_lst: list[QtMultimedia.QMediaPlayer])->None:
         for player in soundPlayer_lst:
             player.stop()
         timeout = t.time()+5    # timer set to 5 seconds
@@ -976,7 +1083,7 @@ class Ui_MainWindow(object):
             btn.playlist.clear()
             btn.activeSongKey=-1
 
-    def uncheckInactiveButtons(self, btn_list)->None:
+    def uncheckInactiveButtons(self, btn_list: list[object])->None:
         for btn in btn_list:
             if not btn._isActive:
                 btn.setChecked(False)
@@ -997,23 +1104,90 @@ class Ui_MainWindow(object):
         file = os.path.splitext(head_tail[1])
         return file[0]
 
-    def sliderTest(self, value):
-        self.currentSoundFilesListWidget.addItem(str(value))
 
     def displayPlaylist(self, btn)->None:
         if not btn: return
         self.currentSoundFilesListWidget.clear()
         for sound_key in range(len(btn.playlist)):
             self.currentSoundFilesListWidget.addItem(btn.playlist[sound_key][1])
-
+        #self.currentSoundFilesListWidget.item(btn.activeSongKey).setSelected(True)
         self.currentSoundFilesListWidget.setCurrentRow(btn.activeSongKey)
-        #if btn.activeSongIdx >= 0 & btn.activeSongIdx < self.currentSoundFilesListWidget.count():
-            
-
-    '''class DragDropListModel(QtGui.QAbstractListModel):
-        def supportedDropActions(self):
-            return QtCore.Qt.DropAction'''
     
+    class RearrangeListWidget(QtWidgets.QListWidget):
+        '''
+        class that implements the itemMoved signal so that the according Button playlist can be rearranged
+        class enables internal drag and drop actions and scrolls automatically on drag move events up or down
+
+        itemMoved signal is emitted with old_row and new_row which correspond to the old and new position of the moved item
+        '''
+        itemMoved = QtCore.pyqtSignal(int, int)
+
+        def __init__(self, parent=None):
+            super().__init__(parent)
+            self.setAcceptDrops(True)
+            self.setDragEnabled(True)
+            self.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+            self.scroll_timer = QtCore.QTimer(self)
+            self.scroll_timer.timeout.connect(self.scroll_while_dragging)
+            self.scroll_speed = 20
+            self.old_row = None
+
+        def dragEnterEvent(self, event):
+            if event.mimeData().hasFormat('application/x-qabstractitemmodeldatalist'):
+                event.accept()
+            else:
+                event.ignore()
+
+        def dragMoveEvent(self, event):
+            if event.mimeData().hasFormat('application/x-qabstractitemmodeldatalist'):
+                
+                self.updateListDuringDrag(event)
+                #event.setDropAction(QtCore.Qt.DropAction.MoveAction)
+                event.accept()
+                # Start autoscrolling timer if not already started
+                if not self.scroll_timer.isActive():
+                    self.scroll_timer.start(20)
+            else:
+                event.ignore()
+
+        def dropEvent(self, event):
+            if event.mimeData().hasFormat('application/x-qabstractitemmodeldatalist'):
+                new_row = self.indexAt(event.position().toPoint()).row()
+                if new_row != -1:
+                    old_row = self.old_row
+                    if old_row != new_row:
+                        item = self.takeItem(old_row)
+                        self.insertItem(new_row, item)
+                        self.itemMoved.emit(old_row, new_row)
+                        event.accept()  
+            else:
+                event.ignore()
+
+        def updateListDuringDrag(self, event):
+            row = self.indexAt(event.position().toPoint()).row()
+            if row != -1:
+                currentItem = self.item(self.old_row)
+                currentItemRow = self.row(currentItem)
+
+                if currentItemRow < row:
+                    self.insertItem(row + 1, currentItem.text())
+                    self.takeItem(currentItemRow)
+                elif currentItemRow > row:
+                    self.insertItem(row, currentItem.text())
+                    self.takeItem(currentItemRow + 1)
+
+        def mousePressEvent(self, event):
+            self.old_row = self.indexAt(event.position().toPoint()).row()
+            super().mousePressEvent(event)
+
+        def scroll_while_dragging(self):
+            pos = self.mapFromGlobal(QtGui.QCursor.pos())
+            if pos.y() < 0:
+                self.verticalScrollBar().setValue(self.verticalScrollBar().value() - self.scroll_speed)
+            elif pos.y() > self.viewport().height():
+                self.verticalScrollBar().setValue(self.verticalScrollBar().value() + self.scroll_speed)
+
+
     # method to create Button overriding QtPushButton to handle drop events and access outer methods (e.g. displayPlaylist())
     def create_acceptDropButton(self, parent, playlistMaxlength=40):
         outer_self = self
@@ -1023,11 +1197,28 @@ class Ui_MainWindow(object):
             def __init__(self, parent, playlistMaxlength):
                 super(AcceptDropButton, self).__init__(parent)
                 
+                self.musicBtnContextMenu = QtWidgets.QMenu(self)
+                clearPlaylistAction = self.musicBtnContextMenu.addAction("Clear Playlist")
+                clearPlaylistAction.triggered.connect(self.clearPlaylist)
+
                 self.playlistMaxlength = playlistMaxlength
                 self.setAcceptDrops(True)
                 self.playlist = []
                 self._isActive = False
                 self.activeSongKey = -1
+
+            def contextMenuEvent(self, event: QtGui.QContextMenuEvent | None) -> None:
+                #outer_self.displayPlaylist(self)
+                self.musicBtnContextMenu.exec(event.globalPos())
+
+            def clearPlaylist(self)->None:
+                self.playlist.clear()
+                outer_self.currentSoundFilesListWidget.clear()
+                self.activeSongKey = -1
+                if self._isActive:  # if playing then inactivate
+                    outer_self.stopPlayerOfButton(self)
+                    self.setChecked(False)
+                    self._isActive = False
 
             def getActiveSong(self)->list | None:
                 if not len(self.playlist):
@@ -1041,6 +1232,13 @@ class Ui_MainWindow(object):
             def setActiveSong(self, key)->None:
                 self.activeSongKey = key
 
+            def getPreviousSong(self)->str:
+                if self.activeSongKey-1 < 0:
+                    self.activeSongKey = len(self.playlist)-1 #switch to last entry
+                else:
+                    self.activeSongKey -= 1
+                return self.getActiveSong()
+
             def getActiveSongTitle(self)->str | None:
                 activeSong = self.getActiveSong()
                 if not activeSong:
@@ -1049,8 +1247,8 @@ class Ui_MainWindow(object):
                     return activeSong[1]
                 
             def getNextSong(self)->list:
-                if self.activeSongKey+1 >= len(self.playlist):
-                    self.activeSongKey = 0
+                if self.activeSongKey+1 >= len(self.playlist) & len(self.playlist)!=0:
+                    self.activeSongKey = 0  #switch to first entry
                 else:
                     self.activeSongKey += 1
                 return self.getActiveSong()
@@ -1064,12 +1262,17 @@ class Ui_MainWindow(object):
                 else:
                     self.playlist.append([soundFile_url, filename])
 
-            def removeSongFromPlaylist(self, index)->None:
-                # ToDo: make player stop when active song is erased
-                '''if index == self.activeSongKey:
-                    player.stop()'''
-                self.playlist.pop(index)
-                outer_self.displayPlaylist(self)
+            def removeSongFromPlaylist(self, index)->list[str]:
+                if len(self.playlist)-1 == 0:       #only one song in list
+                    track=self.playlist.pop()
+                    self.activeSongKey=-1           #no active song left
+                elif index==len(self.playlist)-1:   #last song erased
+                    track=self.playlist.pop()
+                    self.activeSongKey=0            #jump to first
+                else:
+                    track=self.playlist.pop(index)
+                    self.activeSongKey=index        #next song active
+                return track
 
             def dragEnterEvent(self, event):
                 if event.mimeData().hasUrls():
@@ -1096,7 +1299,7 @@ class Ui_MainWindow(object):
             
             def enterEvent(self, event: QtGui.QEnterEvent | None) -> None:
                 if len(self.playlist):
-                    self.setToolTip(self.getActiveSongTitle())
+                    #self.setToolTip(self.getActiveSongTitle())
                     outer_self.displayPlaylist(self)
                 return super().enterEvent(event)
             
