@@ -664,7 +664,7 @@ class Ui_MainWindow(object):
         file = QtWidgets.QFileDialog.getSaveFileName(None, "Create new file", self.default_preset_path, "*.mms")
         self.clearAllPlaylists()
         self.saveFile_mms(file[0])
-        self.preset_lst = self.listPresets()
+        self.listPresets()
 
     @Slot()
     def open(self)->None:
@@ -680,7 +680,7 @@ class Ui_MainWindow(object):
     def save_as(self)->None:
         file = QtWidgets.QFileDialog.getSaveFileName(None, "Save file", self.default_preset_path, "*.mms")
         self.saveFile_mms(file[0])
-        self.preset_lst = self.listPresets()
+        self.listPresets()
 
     # Preset Combobox
     def on_presetComboBoxChanged(self, idx)->None:
