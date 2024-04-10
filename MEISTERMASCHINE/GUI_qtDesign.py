@@ -14,6 +14,8 @@ import glob as gl
 import os
 import sys
 
+
+
 # ToDo: 
 #   - make *.mms only hold the song title and make it recombine with application path on demand
 #   - when currentplaylist widget is rearranged, update button playlist
@@ -61,7 +63,7 @@ class Ui_MainWindow(object):
         else:
             application_path = os.path.dirname(__file__)
 
-
+        self.srcFolder = '/Meistermaschine-Desktop-App'        # name of root directory
         self.default_soundFile_path = os.path.join(application_path, "sounds")
         #f"{os.getcwd()}\\sounds"
         self.default_preset_path = os.path.join(application_path, "presets")
@@ -746,9 +748,7 @@ class Ui_MainWindow(object):
             self.uncheckInactiveButtons(soundBtn_lst)
             activeSong = soundBtn.getActiveSong()
             if activeSong:
-                '''soundPlayer.setSource(activeSong[0])
-                soundPlayer.play()'''
-                self.playPlayer(soundPlayer, activeSong[0])
+                self.playPlayer(soundPlayer, activeSong)
                 if btn_Type == 'music': self.displayPlaylist(soundBtn)
             else:
                 soundBtn.setChecked(False)
@@ -826,7 +826,7 @@ class Ui_MainWindow(object):
                     activeBtn.removeSongFromPlaylist(itemIndex)
                     self.displayPlaylist(activeBtn)
                     if not activeBtn.activeSongKey==-1:
-                        self.playPlayer(player, activeBtn.getActiveSong()[0])
+                        self.playPlayer(player, activeBtn.getActiveSong())
                 else:
                     activeBtn.removeSongFromPlaylist(itemIndex)
                     self.displayPlaylist(activeBtn)
@@ -848,9 +848,10 @@ class Ui_MainWindow(object):
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             activeMusicBtn = self.getActiveButton(self.musicBtn_lst)
             nextsong = activeMusicBtn.getNextSong()
-            self.musicPlayer.setSource(nextsong[0])
-            self.musicPlayer.setPosition(0)
-            self.musicPlayer.play()
+            self.playPlayer(self.musicPlayer, nextsong)
+            #self.musicPlayer.setSource(nextsong[0])
+            #self.musicPlayer.setPosition(0)
+            #self.musicPlayer.play()
             #self.currentSoundFilesListWidget.item(activeMusicBtn.activeSongKey).setSelected(True)
             self.currentSoundFilesListWidget.setCurrentRow(activeMusicBtn.activeSongKey)
 
@@ -870,17 +871,19 @@ class Ui_MainWindow(object):
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             activeSettingBtn = self.getActiveButton(self.settingBtn_lst)
             nextsong = activeSettingBtn.getNextSong()
-            self.settingPlayer.setSource(nextsong[0])
-            self.settingPlayer.setPosition(0)
-            self.settingPlayer.play()
+            self.playPlayer(self.settingPlayer, nextsong)
+            #self.settingPlayer.setSource(nextsong[0])
+            #self.settingPlayer.setPosition(0)
+            #self.settingPlayer.play()
     # weather player
     def on_weatherPlayerStatusChanged(self, status)->None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             activeSettingBtn = self.getActiveButton(self.weatherBtn_lst)
             nextsong = activeSettingBtn.getNextSong()
-            self.weatherPlayer.setSource(nextsong[0])
-            self.weatherPlayer.setPosition(0)
-            self.weatherPlayer.play()
+            self.playPlayer(self.weatherPlayer, nextsong)
+            #self.weatherPlayer.setSource(nextsong[0])
+            #self.weatherPlayer.setPosition(0)
+            #self.weatherPlayer.play()
     # special player
     def on_specialPlayerStatusChanged(self, status)->None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
@@ -974,10 +977,21 @@ class Ui_MainWindow(object):
                 return self.specialPlayer
         
         
-    def playPlayer(self, player: QtMultimedia.QMediaPlayer, songFile: str, fromBeginning=True)->None:
-        player.setSource(songFile)
-        if fromBeginning: player.setPosition(0)
-        player.play()
+    def playPlayer(self, player: QtMultimedia.QMediaPlayer, songFile: list[str], fromBeginning=True)->None:
+        if os.path.isfile(songFile[0].toLocalFile()):
+            player.setSource(songFile[0])
+            if fromBeginning: player.setPosition(0)
+            player.play()
+        else: 
+            file = songFile[0].toLocalFile()
+            splitFile = file.split(self.srcFolder)
+            if len(splitFile)>1:
+                newFile = f"{os.path.dirname(os.path.normpath(self.default_soundFile_path))}{os.path.normpath(splitFile[1])}"
+                qurl=QtCore.QUrl.fromLocalFile(newFile)
+                player.setSource(qurl)
+                if fromBeginning: player.setPosition(0)
+                player.play()
+        
         
     def getCurrentPresetFile(self)->str:
         current_idx=self.presetCombobox.currentIndex()
@@ -1200,6 +1214,8 @@ class Ui_MainWindow(object):
                 self.verticalScrollBar().setValue(self.verticalScrollBar().value() - self.scroll_speed)
             elif pos.y() > self.viewport().height():
                 self.verticalScrollBar().setValue(self.verticalScrollBar().value() + self.scroll_speed)
+
+        
 
 
     # method to create Button overriding QtPushButton to handle drop events and access outer methods (e.g. displayPlaylist())
