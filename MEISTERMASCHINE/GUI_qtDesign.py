@@ -59,16 +59,14 @@ class Ui_MainWindow(object):
             # If the application is run as a bundle, the PyInstaller bootloader
             # extends the sys module by a flag frozen=True and sets the app 
             # path into variable _MEIPASS'.
-            application_path = sys._MEIPASS
+            self.application_path = sys._MEIPASS
         else:
-            application_path = os.path.dirname(__file__)
+            self.application_path = os.path.dirname(__file__)
 
         self.srcFolder = '/Meistermaschine-Desktop-App'        # name of root directory
-        self.default_soundFile_path = os.path.join(application_path, "sounds")
-        #f"{os.getcwd()}\\sounds"
-        self.default_preset_path = os.path.join(application_path, "presets")
-        default_icon_path = os.path.join(application_path, "icons")
-        #f"{os.getcwd()}\\presets"
+        self.default_soundFile_path = os.path.join(self.application_path, "sounds")
+        self.default_preset_path = os.path.join(self.application_path, "presets")
+        default_icon_path = os.path.join(self.application_path, "icons")
 
         self.preset_lst=[]
 
@@ -765,9 +763,7 @@ class Ui_MainWindow(object):
         activeBtn = self.getActiveButton(self.musicBtn_lst)
         previousSong = activeBtn.getPreviousSong()
         self.stopPlayers([self.musicPlayer])
-        self.musicPlayer.setSource(previousSong[0])
-        self.musicPlayer.setPosition(0)
-        self.musicPlayer.play()
+        self.playPlayer(self.musicPlayer, previousSong)
         self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
         #Todo: set activated item
 
@@ -775,9 +771,7 @@ class Ui_MainWindow(object):
         activeBtn = self.getActiveButton(self.musicBtn_lst)
         nextSong = activeBtn.getNextSong()
         self.stopPlayers([self.musicPlayer])
-        self.musicPlayer.setSource(nextSong[0])
-        self.musicPlayer.setPosition(0)
-        self.musicPlayer.play()
+        self.playPlayer(self.musicPlayer, nextSong)
         self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
 
     def on_playPauseBtnClicked(self)->None:
@@ -793,8 +787,7 @@ class Ui_MainWindow(object):
             if activeBtn:
                 activeSong = activeBtn.getActiveSong()
                 if activeSong:
-                    self.musicPlayer.setSource(activeSong[0])
-                    self.musicPlayer.play()
+                    self.playPlayer(self.musicPlayer, activeSong, fromBeginning=False)
                     self.playPauseButton.setIcon(self.pauseIcon)
 
     def on_currentSoundFilesListWidget_clicked(self)->None:
@@ -809,8 +802,7 @@ class Ui_MainWindow(object):
                 activeBtn.setActiveSong(itemIndex)
                 activeSong = activeBtn.getActiveSong()
                 if activeSong:
-                    self.musicPlayer.setSource(activeSong[0])
-                    self.musicPlayer.play()
+                    self.playPlayer(self.musicPlayer, activeSong)
 
     def on_currentSoundFilesListWidget_doubleClicked(self)->None:
         selection = self.currentSoundFilesListWidget.selectedItems()
@@ -849,10 +841,6 @@ class Ui_MainWindow(object):
             activeMusicBtn = self.getActiveButton(self.musicBtn_lst)
             nextsong = activeMusicBtn.getNextSong()
             self.playPlayer(self.musicPlayer, nextsong)
-            #self.musicPlayer.setSource(nextsong[0])
-            #self.musicPlayer.setPosition(0)
-            #self.musicPlayer.play()
-            #self.currentSoundFilesListWidget.item(activeMusicBtn.activeSongKey).setSelected(True)
             self.currentSoundFilesListWidget.setCurrentRow(activeMusicBtn.activeSongKey)
 
     def on_musicPlaybackStateChanged(self, state)->None:
@@ -872,18 +860,12 @@ class Ui_MainWindow(object):
             activeSettingBtn = self.getActiveButton(self.settingBtn_lst)
             nextsong = activeSettingBtn.getNextSong()
             self.playPlayer(self.settingPlayer, nextsong)
-            #self.settingPlayer.setSource(nextsong[0])
-            #self.settingPlayer.setPosition(0)
-            #self.settingPlayer.play()
     # weather player
     def on_weatherPlayerStatusChanged(self, status)->None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             activeSettingBtn = self.getActiveButton(self.weatherBtn_lst)
             nextsong = activeSettingBtn.getNextSong()
             self.playPlayer(self.weatherPlayer, nextsong)
-            #self.weatherPlayer.setSource(nextsong[0])
-            #self.weatherPlayer.setPosition(0)
-            #self.weatherPlayer.play()
     # special player
     def on_specialPlayerStatusChanged(self, status)->None:
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
@@ -978,6 +960,12 @@ class Ui_MainWindow(object):
         
         
     def playPlayer(self, player: QtMultimedia.QMediaPlayer, songFile: list[str], fromBeginning=True)->None:
+        path = os.path.join(self.application_path, songFile[0])
+        qurl=QtCore.QUrl.fromLocalFile(path)
+        player.setSource(qurl)
+        if(fromBeginning): player.setPosition(0)
+        player.play()
+        '''
         if os.path.isfile(songFile[0].toLocalFile()):
             player.setSource(songFile[0])
             if fromBeginning: player.setPosition(0)
@@ -990,7 +978,7 @@ class Ui_MainWindow(object):
                 qurl=QtCore.QUrl.fromLocalFile(newFile)
                 player.setSource(qurl)
                 if fromBeginning: player.setPosition(0)
-                player.play()
+                player.play()'''
         
         
     def getCurrentPresetFile(self)->str:
@@ -1020,26 +1008,26 @@ class Ui_MainWindow(object):
                 btn_idx=0
                 for btn in self.musicBtn_lst:
                     for key in range(len(btn.playlist)):
-                        strUrl = btn.playlist[key][0].toString()
-                        f.write(f"{0} {btn_idx}\t{strUrl}\n")
+                        relPath = btn.playlist[key][0]
+                        f.write(f"{0} {btn_idx}\t{relPath}\n")
                     btn_idx+=1
                 btn_idx=0
                 for btn in self.settingBtn_lst:
                     for key in range(len(btn.playlist)):
-                        strUrl = btn.playlist[key][0].toString()
-                        f.write(f"{1} {btn_idx}\t{strUrl}\n")
+                        relPath = btn.playlist[key][0]
+                        f.write(f"{1} {btn_idx}\t{relPath}\n")
                     btn_idx+=1
                 btn_idx=0
                 for btn in self.weatherBtn_lst:
                     for key in range(len(btn.playlist)):
-                        strUrl = btn.playlist[key][0].toString()
-                        f.write(f"{2} {btn_idx}\t{strUrl}\n")
+                        relPath = btn.playlist[key][0]
+                        f.write(f"{2} {btn_idx}\t{relPath}\n")
                     btn_idx+=1
                 btn_idx=0
                 for btn in self.specialBtn_lst:
                     for key in range(len(btn.playlist)):
-                        strUrl = btn.playlist[key][0].toString()
-                        f.write(f"{3} {btn_idx}\t{strUrl}\n")
+                        relPath = btn.playlist[key][0]
+                        f.write(f"{3} {btn_idx}\t{relPath}\n")
                     btn_idx+=1
         
     def loadFile_mms(self, file: str):
@@ -1054,15 +1042,15 @@ class Ui_MainWindow(object):
                 for line in data:
                     splitLine = line.split("\t")
                     idLst = splitLine[0].split()
-                    soundFile_url = QtCore.QUrl.fromStringList([splitLine[1].rstrip()])[0]
+                    soundFile = splitLine[1].rstrip()
                     if int(idLst[0])==0:
-                        self.musicBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile_url) 
+                        self.musicBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile) 
                     if int(idLst[0])==1:
-                        self.settingBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile_url)
+                        self.settingBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile)
                     if int(idLst[0])==2:
-                        self.weatherBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile_url)
+                        self.weatherBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile)
                     if int(idLst[0])==3:
-                        self.specialBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile_url)
+                        self.specialBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile)
 
     def calculateDependentVolume(self, masterValue: float, subValue: float)-> float:
         depValue = subValue*masterValue / 100
@@ -1126,12 +1114,6 @@ class Ui_MainWindow(object):
             if btn._isActive == True: 
                 return btn
         return None
-            
-    def getFilenameFromPath(self, path: str)->str:
-        head_tail = os.path.split(path)
-        file = os.path.splitext(head_tail[1])
-        return file[0]
-
 
     def displayPlaylist(self, btn)->None:
         if not btn: return
@@ -1283,14 +1265,13 @@ class Ui_MainWindow(object):
                     self.activeSongKey += 1
                 return self.getActiveSong()
                 
-            def addSongToPlaylist(self, soundFile_url)->None:
+            def addSongToPlaylist(self, soundFile: str)->None:
                 # validdate if url with validator?
-                file = soundFile_url.toLocalFile()
-                filename = outer_self.getFilenameFromPath(file)
+                filename = self.getFilenameFromPath(soundFile)
                 if len(self.playlist) >= self.playlistMaxlength:
-                    self.playlist[0]=[soundFile_url, filename]  # replace entry
+                    self.playlist[0]=[soundFile, filename]  # replace entry
                 else:
-                    self.playlist.append([soundFile_url, filename])
+                    self.playlist.append([soundFile, filename])
 
             def removeSongFromPlaylist(self, index)->list[str]:
                 if len(self.playlist)-1 == 0:       #only one song in list
@@ -1317,7 +1298,8 @@ class Ui_MainWindow(object):
             def dropEvent(self, event):
                 if event.mimeData().hasUrls():
                     for url in event.mimeData().urls():
-                        self.addSongToPlaylist(url)
+                        rePath = self.getRelativePath(url)
+                        self.addSongToPlaylist(rePath)
                     event.acceptProposedAction()
                 else:
                     super(AcceptDropButton,self).dropEvent(event)   
@@ -1340,6 +1322,16 @@ class Ui_MainWindow(object):
                 else:
                     outer_self.currentSoundFilesListWidget.clear()
                 return super().leaveEvent(event)
+            
+            def getRelativePath(self, url: QtCore.QUrl)->str:
+                path = url.toLocalFile()
+                relPath = os.path.relpath(path, outer_self.application_path)
+                return relPath
+            
+            def getFilenameFromPath(self, path: str)->str:
+                head_tail = os.path.split(path)
+                nameExt = os.path.splitext(head_tail[1])
+                return nameExt[0]
 
         return AcceptDropButton(parent, playlistMaxlength) 
         
