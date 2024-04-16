@@ -699,6 +699,8 @@ class Ui_MainWindow(object):
 
     # Preset Combobox
     def on_presetComboBoxChanged(self, idx)->None:
+        self.stopPlayers([self.musicPlayer, self.settingPlayer, self.weatherPlayer, self.specialPlayer])
+        self.uncheckAllButtons()
         if self.preset_lst:
             new_file = self.preset_lst[idx]
             self.loadFile_mms(new_file[0])

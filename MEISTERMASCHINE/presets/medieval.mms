@@ -5,13 +5,13 @@
 0 2	sounds/Musik/medieval&fantasy/471510__shadydave__small-adventurers-music-loop.mp3
 0 2	sounds/Musik/medieval&fantasy/Medieval Music Troubadour.mp3
 0 2	sounds/Musik/medieval&fantasy/Village-theme.mp3
-0 3	sounds/Musik/DSA 3/Realms of Arkania 3：The Lurking Horror.mp3
+0 3	sounds/Musik/DSA 3/Realms of Arkania 3 The Lurking Horror.mp3
 0 3	sounds/Musik/medieval&fantasy/559389__szegvari__mystic-forest-ambient.wav
-0 3	sounds/Musik/DSA 3/Realms of Arkania 3： How Deep Can We Go.mp3
-0 3	sounds/Musik/DSA 3/Realms of Arkania 3： Evil Under The Surface.mp3
-0 4	sounds/Musik/DSA 3/Realms of Arkania 3： To The Hilt.mp3
-0 4	sounds/Musik/DSA 3/Realms of Arkania 3： Te Extinguo.mp3
-0 4	sounds/Musik/DSA 3/Realms of Arkania 3： Unholy March.mp3
+0 3	sounds/Musik/DSA 3/Realms of Arkania 3 How Deep Can We Go.mp3
+0 3	sounds/Musik/DSA 3/Realms of Arkania 3 Evil Under The Surface.mp3
+0 4	sounds/Musik/DSA 3/Realms of Arkania 3 To The Hilt.mp3
+0 4	sounds/Musik/DSA 3/Realms of Arkania 3 Te Extinguo.mp3
+0 4	sounds/Musik/DSA 3/Realms of Arkania 3 Unholy March.mp3
 1 0	sounds/Setting/tavern - pirates.wav
 1 1	sounds/Setting/city - medieval.wav
 1 2	sounds/Setting/fields - medieval summerday.wav
