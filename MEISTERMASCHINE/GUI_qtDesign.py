@@ -16,6 +16,8 @@ import sys
 
 import random
 
+import MEISTERMASCHINE.stylesheet as style
+
 
 
 # ToDo: 
@@ -23,38 +25,21 @@ import random
 #   - when currentplaylist widget is rearranged, update button playlist
 #   - add inactive play icon when playstate is stopped (play button is inactive)
 #   - erase unnecessary public declarators (self.*) for garbage collection
-#   - shift stylesheets into own source file
-#   - make window resizable (or disable resize) 
+#   - shift stylesheets into own source file -> done
+#   - make window resizable (or disable resize) -> done
+#   - make functions to handle frame creation -> done for Utility frame
 #   - make program react to audio output changes
 
 
-# app colors
-green = "rgb(97, 195, 144)"
-pale_green = "rgb(153, 255, 202)"
-pale_blue = "rgb(53, 238, 255)"
-blue = "rgb(3, 175, 255)"
-yellow = "rgb(255, 205, 88)"
-pale_pink = "rgb(255, 152, 231)"
-
-black = "rgb(0,0,0)"
-dark_gray = "rgb(80, 80, 80)"
-gray = "rgb(149, 149, 149)"
-white = "rgb(255,255,255)"
-
-
-class Ui_MainWindow(object):
+class Ui_MainWindow(QtWidgets.QWidget):
     def setupUi(self, MainWindow):
         ########################################################################################################
         # variables and settings
         self.btn_rows = 5
         self.musicIcon_lst = ["smiley_star","smiley_grin","smiley_neutral","smiley_scary","smiley_death"]
-        self.musicBtn_color = pale_green
         self.settingIcon_lst = ["pub","dorf","landschaft","hohle","kampf"]
-        self.settingBtn_color = yellow
         self.weatherIcon_lst = ["nacht","welle","wind","sturm","schnee"]
-        self.weatherBtn_color = pale_blue
         self.specialIcon_lst = ["icon_square","icon_plus","icon_triangle","icon_minus","icon_star"]
-        self.specialBtn_color = [pale_pink, pale_blue, yellow, pale_green, pale_pink]
         
         self.Btn_Display_Time = 20000   # how long is dice roll result displayed
 
@@ -112,281 +97,6 @@ class Ui_MainWindow(object):
         self.specialPlayer.mediaStatusChanged.connect(self.on_specialPlayerStatusChanged)
         
 
-        # slider style sheet
-        CSS_Slider = f"""QSlider::handle:horizontal {{
-            background: {blue};
-            border: 1px solid #565a5e;
-            width: 24px;
-            height: 8px;
-            border-radius: 4px;
-        }}"""
-
-        # List View Style sheet
-        CSS_List = f"""QListWidget::item{{
-            color: {white};
-            background-color: transparent;
-        }}
-        QListWidget {{
-            background-color: {dark_gray};
-        }}
-        QListWidget::item:selected {{
-            background-color: {blue};
-        }}
-        """
-
-        # List View Style sheet
-        CSS_ListView = f"""QTreeView::item{{
-            color: {white};
-            background-color: transparent;
-        }}
-        QTreeView {{
-            background-color: {dark_gray};
-            show-decoration-selected: 1;
-        }}
-        QTreeView::QScrollBar:horizontal {{
-            border: 2px solid {gray};
-            background: {dark_gray};
-        }}
-        """
-
-        # ComboBox Style sheet
-        CSS_ComboBox = f"""QComboBox {{
-            background-color: {dark_gray};
-            color: {white};
-        }}
-        QListView::item {{
-            color: {white};
-            background-color: transparent;
-        }}
-        QComboBox QAbstractItemView {{
-            background-color: {dark_gray};
-            color = {white}
-        }}
-        """
-
-        # Push Button Style Sheets
-        # music button
-        CSS_PB_music = f"""QPushButton {{
-            background-color: {self.musicBtn_color};
-        }}
-        QPushButton:checked{{
-                    background-color: {dark_gray};
-                    border: none; 
-                }}
-        """
-
-        CSS_PB_setting = f"""QPushButton {{
-            background-color: {self.settingBtn_color};
-        }}
-        QPushButton:checked{{
-                    background-color: {dark_gray};
-                    border: none; 
-                }}
-        """
-
-        CSS_PB_weather = f"""QPushButton {{
-            background-color: {self.weatherBtn_color};
-        }}
-        QPushButton:checked{{
-                    background-color: {dark_gray};
-                    border: none; 
-                }}
-        """
-
-        CSS_PB_special_0 = f"""QPushButton {{
-            background-color: {self.specialBtn_color[0]};
-        }}
-        QPushButton:checked{{
-                    background-color: {dark_gray};
-                    border: none; 
-                }}
-        """
-        CSS_PB_special_1 = f"""QPushButton {{
-            background-color: {self.specialBtn_color[1]};
-        }}
-        QPushButton:checked{{
-                    background-color: {dark_gray};
-                    border: none; 
-                }}
-        """
-        CSS_PB_special_2 = f"""QPushButton {{
-            background-color: {self.specialBtn_color[2]};
-        }}
-        QPushButton:checked{{
-                    background-color: {dark_gray};
-                    border: none; 
-                }}
-        """
-        CSS_PB_special_3 = f"""QPushButton {{
-            background-color: {self.specialBtn_color[3]};
-        }}
-        QPushButton:checked{{
-                    background-color: {dark_gray};
-                    border: none; 
-                }}
-        """
-        CSS_PB_special_4 = f"""QPushButton {{
-            background-color: {self.specialBtn_color[4]};
-        }}
-        QPushButton:checked{{
-                    background-color: {dark_gray};
-                    border: none; 
-                }}
-        """
-        CSS_PB_special_lst=[CSS_PB_special_0,CSS_PB_special_1,CSS_PB_special_2,CSS_PB_special_3,CSS_PB_special_4]
-
-        # sound slider
-        CSS_soundSlider = f"""QSlider::groove:horizontal {{
-                background: {white};
-                height: 40px;
-            }}
-
-            QSlider::sub-page:horizontal {{
-                background: qlineargradient(x1: 0, y1: 0,    x2: 0, y2: 1,
-                    stop: 0 #66e, stop: 1 #bbf);
-                background: qlineargradient(x1: 0, y1: 0.2, x2: 1, y2: 1,
-                    stop: 0 #bbf, stop: 1 #55f);
-                height: 40px;
-            }}
-
-            QSlider::add-page:horizontal {{
-                background: #fff;
-                height: 40px;
-            }}
-
-            QSlider::handle:horizontal {{
-                background: {dark_gray};
-                border: 1px;
-                width: 16px;
-                margin-top: 0px;
-                margin-bottom: 0px;
-                border-radius: 0px;
-            }}
-        """
-
-        # menu bar style sheet
-        CSS_menubar = f"""QMenuBar::item{{
-                color: {white};
-                background-color: transparent;
-            }}
-            QMenuBar {{
-                background: {dark_gray};
-            }}
-        """
-        # tool bar style sheet
-        CSS_toolbar = f"""QToolBar{{
-                color: {white};
-                border: 0px;
-                background-color: {dark_gray};
-            }}"""
-        
-        # tab widget style sheet
-        CSS_tabwidget = f"""QTabWidget::tab-bar{{
-                border: 1px {dark_gray};
-            }}
-            QTabWidget{{
-                background: {dark_gray}
-            }}
-            QTabBar::tab{{
-                background: {dark_gray};
-                color: {white};
-                padding: 10 px;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
-                min-width: 10ex;
-            }}
-            QTabBar::tab::selected{{
-                background: {dark_gray};
-                margin-left: 4px;
-                margin-right: 4px;
-            }}
-            QTabBar::tab:!selected {{
-                margin-top: 6px; 
-                
-            }}
-            QTabWidget::pane{{
-                border: 2px solid {dark_gray};
-            }}
-
-            QTabBar::tab:first:selected {{
-                margin-left: 0; 
-            }}
-
-            QTabBar::tab:last:selected {{
-                margin-right: 0; 
-            }}
-
-            QTabBar::tab:only-one {{
-                margin: 0;     
-            }}
-        """
-        # Dice Roll results style sheet
-        self.CSS_Dice_Roll_Text = f"""QLabel{{
-                color: {white};
-                border: 1px solid {white}; 
-                font-size: 20px;
-            }}
-        """
-        self.CSS_Dice_Roll_Sum = f"""QLabel{{
-                color: {white};
-                border: none; 
-                font-size: 20px;
-            }}
-        """
-        self.CSS_Dice_Roll_Text_Big = f"""QLabel{{
-                color: {white};
-                border: 1px solid {white}; 
-                font-size: 30px;
-            }}
-        """
-        self.CSS_Dice_Roll_Text_Blue= f"""QLabel{{
-                color: {pale_blue};
-                border: 1px solid {white}; 
-                font-size: 30px;
-            }}
-        """
-        self.CSS_Dice_Roll_Text_Yellow= f"""QLabel{{
-                color: {yellow};
-                border: 1px solid {white}; 
-                font-size: 30px;
-            }}
-        """
-        self.CSS_Dice_Roll_Text_Pink= f"""QLabel{{
-                color: {pale_pink};
-                border: 1px solid {white}; 
-                font-size: 30px;
-            }}
-        """
-        # Dice QPushButton Stylesheets
-        self.CSS_Dice_Button_0 = f"""QPushButton {{
-            background-color: {pale_pink};
-            font-size: 20px;
-        }}
-        """
-        self.CSS_Dice_Button_1 = f"""QPushButton {{
-            background-color: {pale_blue};
-            font-size: 20px;
-        }}
-        """
-        self.CSS_Dice_Button_2 = f"""QPushButton {{
-            background-color: {yellow};
-            font-size: 20px;
-        }}
-        """
-        self.CSS_Dice_Button_3 = f"""QPushButton {{
-            background-color: {pale_green};
-            font-size: 20px
-        }}
-        """
-        self.CSS_Dice_Button_4 = f"""QPushButton {{
-            background-color: {dark_gray};
-            color: {white};
-            font-size: 20px;
-        }}
-        """
-
-
-
         # main window 
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1100, 600)
@@ -411,13 +121,13 @@ class Ui_MainWindow(object):
         # Sound Control Frame
         Sound_Frame_Layout = QtWidgets.QGridLayout()
         Sound_Frame = QtWidgets.QFrame()
-        Sound_Frame.setStyleSheet(f"background-color: {black}")
+        Sound_Frame.setStyleSheet(style.CSS_Sound_Frame)
         Sound_Frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         Sound_Frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         Sound_Frame.setObjectName("Sound_frame")
        
         self.playPauseButton = QtWidgets.QPushButton()
-        self.playPauseButton.setStyleSheet(f"background-color:{green}")
+        self.playPauseButton.setStyleSheet(style.CSS_Sound_Control_Btns)
         self.playPauseButton.setText("")
         self.playIcon = QtGui.QIcon()
         self.pauseIcon = QtGui.QIcon()
@@ -432,7 +142,7 @@ class Ui_MainWindow(object):
 
         self.trackBackwardButton = QtWidgets.QPushButton(parent=Sound_Frame)
         self.trackBackwardButton = QtWidgets.QPushButton()
-        self.trackBackwardButton.setStyleSheet(f"background-color:{green}")
+        self.trackBackwardButton.setStyleSheet(style.CSS_Sound_Control_Btns)
         self.trackBackwardButton.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/icon_previous.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -444,7 +154,7 @@ class Ui_MainWindow(object):
         Sound_Frame_Layout.addWidget(self.trackBackwardButton, 0, 1, 2, 1)
 
         self.trackForwardButton = QtWidgets.QPushButton()
-        self.trackForwardButton.setStyleSheet(f"background-color:{green}")
+        self.trackForwardButton.setStyleSheet(style.CSS_Sound_Control_Btns)
         self.trackForwardButton.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/icon_next.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -456,7 +166,7 @@ class Ui_MainWindow(object):
         Sound_Frame_Layout.addWidget(self.trackForwardButton, 0, 2, 2, 1)
         
         self.stopButton = QtWidgets.QPushButton()
-        self.stopButton.setStyleSheet(f"background-color:{green}")
+        self.stopButton.setStyleSheet(style.CSS_Sound_Control_Btns)
         self.stopButton.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/icon_stop.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -472,7 +182,7 @@ class Ui_MainWindow(object):
         
         self.soundSlider = QtWidgets.QSlider()
         self.soundSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.soundSlider.setStyleSheet(CSS_soundSlider)
+        self.soundSlider.setStyleSheet(style.CSS_soundSlider)
         self.soundSlider.setValue(0)
         self.soundSlider.setObjectName("soundSlider")
         self.soundSlider.setTracking(False)
@@ -483,7 +193,7 @@ class Ui_MainWindow(object):
 
         self.masterVolumeSlider = QtWidgets.QSlider()
         self.masterVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.masterVolumeSlider.setStyleSheet(CSS_Slider)
+        self.masterVolumeSlider.setStyleSheet(style.CSS_Slider)
         self.masterVolumeSlider.setObjectName("masterVolumeSlider")
         self.masterVolumeSlider.setRange(0, 100)
         self.masterVolumeSlider.setValue(100*int(self._music_output.volume()))
@@ -492,7 +202,7 @@ class Ui_MainWindow(object):
         Sound_Frame_Slider_Layout.addWidget(self.masterVolumeSlider, alignment=QtCore.Qt.AlignmentFlag.AlignBottom)
 
         self.masterVolumeLabel = QtWidgets.QLabel()
-        self.masterVolumeLabel.setStyleSheet(f"color: {white}")
+        self.masterVolumeLabel.setStyleSheet(style.CSS_Label)
         self.masterVolumeLabel.setTextFormat(QtCore.Qt.TextFormat.PlainText)
         self.masterVolumeLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
         self.masterVolumeLabel.setObjectName("masterVolumeLabel")
@@ -505,7 +215,7 @@ class Ui_MainWindow(object):
 
         # List widget displaying the currently active playlist (music button)
         self.currentSoundFilesListWidget = self.RearrangeListWidget()
-        self.currentSoundFilesListWidget.setStyleSheet(CSS_List)
+        self.currentSoundFilesListWidget.setStyleSheet(style.CSS_List)
         self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
         self.currentSoundFilesListWidget.doubleClicked.connect(self.on_currentSoundFilesListWidget_doubleClicked)
         self.currentSoundFilesListWidget.clicked.connect(self.on_currentSoundFilesListWidget_clicked) 
@@ -524,7 +234,7 @@ class Ui_MainWindow(object):
         # Tab 2: Audio file system and SD card managment
 
         Utility_Frame = QtWidgets.QFrame()
-        Utility_Frame.setStyleSheet(f"background-color:{black}")
+        Utility_Frame.setStyleSheet(style.CSS_Utility_Frame)
         Utility_Frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         Utility_Frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         Utility_Frame.setObjectName("SDframe")
@@ -535,7 +245,7 @@ class Ui_MainWindow(object):
 
         # Create the tab widget
         utilityTab = QtWidgets.QTabWidget()
-        utilityTab.setStyleSheet(CSS_tabwidget)
+        utilityTab.setStyleSheet(style.CSS_tabwidget)
 
         diceTab = QtWidgets.QWidget()
         audioTab = QtWidgets.QWidget()
@@ -565,7 +275,7 @@ class Ui_MainWindow(object):
         self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
         self.fileTreeListView.setHeaderHidden(True)
         self.fileTreeListView.setDragEnabled(True)
-        self.fileTreeListView.setStyleSheet(CSS_ListView)
+        self.fileTreeListView.setStyleSheet(style.CSS_ListView)
         self.fileTreeListView.setObjectName("fileTreeListView")
         self.fileTreeListView.setModel(self.fileModel)
         self.fileTreeListView.setRootIndex(self.fileModel.index(self.default_soundFile_path))
@@ -579,26 +289,26 @@ class Ui_MainWindow(object):
         Audio_Tab_Layout.addWidget(self.fileTreeListView)
 
         self.getRootFolderButton = QtWidgets.QPushButton()
-        self.getRootFolderButton.setStyleSheet(f"background-color:{green}")
+        self.getRootFolderButton.setStyleSheet(style.CSS_Root_Folder_Btn)
         self.getRootFolderButton.setObjectName("getRootFolderButton")
         self.getRootFolderButton.clicked.connect(lambda: self.on_rootFolderDialogBtnClicked())
 
         Audio_Tab_Layout.addWidget(self.getRootFolderButton)
 
         self.saveToSDButton = QtWidgets.QPushButton()
-        self.saveToSDButton.setStyleSheet(f"background-color: {blue}")
+        self.saveToSDButton.setStyleSheet(style.CSS_Save_SD_Btn)
         self.saveToSDButton.setObjectName("saveToSDButton")
 
         Audio_Tab_Layout.addWidget(self.saveToSDButton)
 
         self.listOfFoundSDCardsCombobox = QtWidgets.QComboBox()
-        self.listOfFoundSDCardsCombobox.setStyleSheet(f"background-color: {dark_gray}")
+        self.listOfFoundSDCardsCombobox.setStyleSheet(style.CSS_Found_SD_Combobox)
         self.listOfFoundSDCardsCombobox.setObjectName("listOfFoundSDCardsCombobox")
 
         Audio_Tab_Layout.addWidget(self.listOfFoundSDCardsCombobox)
 
         self.SDcardsLabel = QtWidgets.QLabel()
-        self.SDcardsLabel.setStyleSheet(f"color: {white}")
+        self.SDcardsLabel.setStyleSheet(style.CSS_Label)
         self.SDcardsLabel.setTextFormat(QtCore.Qt.TextFormat.PlainText)
         self.SDcardsLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.SDcardsLabel.setObjectName("SDcardsLabel")
@@ -606,7 +316,7 @@ class Ui_MainWindow(object):
         Audio_Tab_Layout.addWidget(self.SDcardsLabel)
 
         self.refreshButton = QtWidgets.QPushButton()
-        self.refreshButton.setStyleSheet(f"background-color: {green}")
+        self.refreshButton.setStyleSheet(style.CSS_Refresh_SD_Btn)
         self.refreshButton.setObjectName("refreshButton")
 
         Audio_Tab_Layout.addWidget(self.refreshButton)
@@ -625,7 +335,7 @@ class Ui_MainWindow(object):
         #Interface_Frame.setGeometry(QtCore.QRect(0, 0, 800, 450))
         Interface_Frame_Layout = QtWidgets.QGridLayout()
         Interface_Frame = QtWidgets.QFrame()
-        Interface_Frame.setStyleSheet(f"background-color: {gray}")
+        Interface_Frame.setStyleSheet(style.CSS_Interface_Frame)
         Interface_Frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         Interface_Frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         Interface_Frame.setObjectName("interfaceFrame")
@@ -649,7 +359,7 @@ class Ui_MainWindow(object):
             curBtnIndex = self.musicBtn_lst.index(btn)
             btn.setCheckable(True)
             btn.setFont(font)
-            btn.setStyleSheet(CSS_PB_music)
+            btn.setStyleSheet(style.CSS_PB_music)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.musicIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -667,7 +377,7 @@ class Ui_MainWindow(object):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
-            btn.setStyleSheet(CSS_PB_setting)
+            btn.setStyleSheet(style.CSS_PB_setting)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.settingIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -685,7 +395,7 @@ class Ui_MainWindow(object):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
-            btn.setStyleSheet(CSS_PB_weather)
+            btn.setStyleSheet(style.CSS_PB_weather)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.weatherIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -703,7 +413,7 @@ class Ui_MainWindow(object):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
-            btn.setStyleSheet(CSS_PB_special_lst[curBtnIndex])
+            btn.setStyleSheet(style.CSS_PB_special_lst[curBtnIndex])
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.specialIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -719,7 +429,7 @@ class Ui_MainWindow(object):
         #self.musicVolumeSlider.setGeometry(QtCore.QRect(79, y_positon_volumeSliders, 111, 20))
         self.musicVolumeSlider = QtWidgets.QSlider()
         self.musicVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.musicVolumeSlider.setStyleSheet(CSS_Slider)
+        self.musicVolumeSlider.setStyleSheet(style.CSS_Slider)
         self.musicVolumeSlider.setObjectName("musicVolumeSlider")
         self.musicVolumeSlider.setValue(self.musicVolumeSlider.maximum())   #initial setting = max
         self.musicVolumeSlider.valueChanged.connect(self.on_musicVolumeSliderChanged)
@@ -729,7 +439,7 @@ class Ui_MainWindow(object):
         #self.settingVolumeSlider.setGeometry(QtCore.QRect(260, y_positon_volumeSliders, 111, 20))
         self.settingVolumeSlider = QtWidgets.QSlider()
         self.settingVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.settingVolumeSlider.setStyleSheet(CSS_Slider)
+        self.settingVolumeSlider.setStyleSheet(style.CSS_Slider)
         self.settingVolumeSlider.setObjectName("settingVolumeSlider")
         self.settingVolumeSlider.setValue(self.settingVolumeSlider.maximum())   #initial setting = max
         self.settingVolumeSlider.valueChanged.connect(self.on_settingVolumeSliderChanged)
@@ -739,7 +449,7 @@ class Ui_MainWindow(object):
         #self.weatherVolumeSlider.setGeometry(QtCore.QRect(430, y_positon_volumeSliders, 111, 20))
         self.weatherVolumeSlider = QtWidgets.QSlider()
         self.weatherVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.weatherVolumeSlider.setStyleSheet(CSS_Slider)
+        self.weatherVolumeSlider.setStyleSheet(style.CSS_Slider)
         self.weatherVolumeSlider.setObjectName("weatherVolumeSlider")
         self.weatherVolumeSlider.setValue(self.weatherVolumeSlider.maximum())   #initial setting = max
         self.weatherVolumeSlider.valueChanged.connect(self.on_weatherVolumeSliderChanged)
@@ -749,7 +459,7 @@ class Ui_MainWindow(object):
         #self.specialVolumeSlider.setGeometry(QtCore.QRect(610, y_positon_volumeSliders, 111, 20))
         self.specialVolumeSlider = QtWidgets.QSlider()
         self.specialVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.specialVolumeSlider.setStyleSheet(CSS_Slider)
+        self.specialVolumeSlider.setStyleSheet(style.CSS_Slider)
         self.specialVolumeSlider.setObjectName("specialVolumeSlider")
         self.specialVolumeSlider.setValue(self.specialVolumeSlider.maximum())   #initial setting = max
         self.specialVolumeSlider.valueChanged.connect(self.on_specialVolumeSliderChanged)
@@ -800,15 +510,15 @@ class Ui_MainWindow(object):
         menuBar = MainWindow.menuBar()
         toolBar = MainWindow.addToolBar("File")
         toolBar.setMovable(False)
-        toolBar.setStyleSheet(CSS_toolbar)
+        toolBar.setStyleSheet(style.CSS_toolbar)
 
         # preset dropdown
         self.presetCombobox = QtWidgets.QComboBox()
         self.presetCombobox.setMinimumWidth(200)
-        self.presetCombobox.setStyleSheet(CSS_ComboBox)
+        self.presetCombobox.setStyleSheet(style.CSS_ComboBox)
         self.presetCombobox.currentIndexChanged.connect(self.on_presetComboBoxChanged)
         presetLabel = QtWidgets.QLabel("Preset: ")
-        presetLabel.setStyleSheet(f"color: {white}")
+        presetLabel.setStyleSheet(style.CSS_Label)
     
         # file menu
         file_menu = menuBar.addMenu("&File")
@@ -831,7 +541,7 @@ class Ui_MainWindow(object):
         file_menu.addAction(save_as_action)
 
         
-        menuBar.setStyleSheet(CSS_menubar)
+        menuBar.setStyleSheet(style.CSS_menubar)
         MainWindow.setMenuBar(menuBar)
         toolBar.addWidget(menuBar)
         toolBar.addWidget(presetLabel)
@@ -839,7 +549,7 @@ class Ui_MainWindow(object):
         
         
         self.statusbar = MainWindow.statusBar()
-        self.statusbar.setStyleSheet(f"background-color: {dark_gray}")
+        self.statusbar.setStyleSheet(style.CSS_statusbar)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
 
@@ -860,7 +570,7 @@ class Ui_MainWindow(object):
         maxHeight = 60
 
         self.dice_lst = [2, 4 ,6, 8, 10, 12, 20, 100]
-        dice_stylesheet_lst = [self.CSS_Dice_Button_0, self.CSS_Dice_Button_1, self.CSS_Dice_Button_2, self.CSS_Dice_Button_3]
+        dice_stylesheet_lst = [style.CSS_Dice_Button_0, style.CSS_Dice_Button_1, style.CSS_Dice_Button_2, style.CSS_Dice_Button_3]
 
         self.dice_btn_lst = [QtWidgets.QPushButton() for b in range(len(self.dice_lst))]
         self.dice_txt_lst = [QtWidgets.QLabel() for l in range(len(self.dice_lst))]
@@ -869,6 +579,19 @@ class Ui_MainWindow(object):
         
         self.sum_lst = [0]*len(self.dice_lst)
         stylesheet_count=0
+
+        result_label = QtWidgets.QLabel()
+        result_label.setText("=")
+        result_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        result_label.setStyleSheet(style.CSS_Label)
+
+        sum_label = QtWidgets.QLabel()
+        sum_label.setText("\u03a3")
+        sum_label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        sum_label.setStyleSheet(style.CSS_Label)
+        
+        layout.addWidget(result_label, 0, 1)
+        layout.addWidget(sum_label, 0, 2)
 
         for i in range(len(self.dice_lst)):
             dice_Btn = self.dice_btn_lst[i]
@@ -884,16 +607,16 @@ class Ui_MainWindow(object):
             dice_txt = self.dice_txt_lst[i]
             dice_txt.setText("")
             dice_txt.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-            dice_txt.setStyleSheet(self.CSS_Dice_Roll_Text)
-            dice_txt.setMinimumSize(minWidth, minHeight)
-            dice_txt.setMaximumSize(maxWidth, maxHeight)
+            dice_txt.setStyleSheet(style.CSS_Dice_Roll_Text)
+            #dice_txt.setMinimumSize(minWidth, minHeight)
+            #dice_txt.setMaximumSize(maxWidth, maxHeight)
 
             dice_sum = self.dice_sum_lst[i]
             dice_sum.setText("")
             dice_sum.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-            dice_sum.setStyleSheet(self.CSS_Dice_Roll_Sum)
-            dice_sum.setMinimumSize(minWidth, minHeight)
-            dice_sum.setMaximumSize(maxWidth, maxHeight)
+            dice_sum.setStyleSheet(style.CSS_Dice_Roll_Sum)
+            #dice_sum.setMinimumSize(minWidth, minHeight)
+            #dice_sum.setMaximumSize(maxWidth, maxHeight)
 
             dice_timer = self.dice_timer_lst[i]
             dice_timer.setSingleShot(True)
@@ -901,13 +624,13 @@ class Ui_MainWindow(object):
 
             dice_Btn.clicked.connect(lambda checked, idx = i: self.on_diceRollBtnClicked(idx))
             
-            layout.addWidget(dice_Btn, i, 0)
-            layout.addWidget(dice_txt, i, 1)
-            layout.addWidget(dice_sum, i, 2)
+            layout.addWidget(dice_Btn, i+1, 0)
+            layout.addWidget(dice_txt, i+1, 1)
+            layout.addWidget(dice_sum, i+1, 2)
         
         # Destiny Button
         DestinyBtn = QtWidgets.QPushButton()
-        DestinyBtn.setStyleSheet(self.CSS_Dice_Button_4)
+        DestinyBtn.setStyleSheet(style.CSS_Dice_Button_4)
         DestinyBtn.setObjectName("Destiny Button")
         DestinyBtn.setText("\u2665 \u2620")
         DestinyBtn.setMinimumSize(minWidth, minHeight)
@@ -915,11 +638,11 @@ class Ui_MainWindow(object):
         self.DestinyTxt = QtWidgets.QLabel()
         self.DestinyTxt.setText("")
         self.DestinyTxt.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.DestinyTxt.setStyleSheet(self.CSS_Dice_Roll_Text)
-        self.DestinyTxt.setMinimumSize(minWidth, minHeight)
-        self.DestinyTxt.setMaximumSize(maxWidth, maxHeight)
+        self.DestinyTxt.setStyleSheet(style.CSS_Dice_Roll_Text)
+        #self.DestinyTxt.setMinimumSize(minWidth, minHeight)
+        #self.DestinyTxt.setMaximumSize(maxWidth, maxHeight)
 
-        self.colorList = [self.CSS_Dice_Roll_Text_Blue, self.CSS_Dice_Roll_Text_Pink, self.CSS_Dice_Roll_Text_Yellow]
+        self.colorList = [style.CSS_Dice_Roll_Text_Blue, style.CSS_Dice_Roll_Text_Pink, style.CSS_Dice_Roll_Text_Yellow]
         self.current_color_index=0
         self.maxColorChanges = 20
         self.colorChanges = 0
@@ -931,8 +654,11 @@ class Ui_MainWindow(object):
 
         DestinyBtn.clicked.connect(lambda: self.on_destinyBtnClicked(self.DestinyTxt))
         
-        layout.addWidget(DestinyBtn, 8, 0)
-        layout.addWidget(self.DestinyTxt, 8, 1)
+        layout.addWidget(DestinyBtn, len(self.dice_lst)+2, 0)
+        layout.addWidget(self.DestinyTxt, len(self.dice_lst)+2, 1)
+        layout.setColumnStretch(0, 2)
+        layout.setColumnStretch(1, 2)
+        layout.setColumnStretch(2, 1)
 
         tab_widget.setLayout(layout)
 
@@ -960,7 +686,7 @@ class Ui_MainWindow(object):
             self.colorChanges += 1
         else:
             self.color_timer.stop()
-            textWidget.setStyleSheet(self.CSS_Dice_Roll_Text_Big)
+            textWidget.setStyleSheet(style.CSS_Dice_Roll_Text_Big)
 
     def clear_Btn(self, idx)->None:
         textWidget = self.dice_txt_lst[idx]
@@ -1050,9 +776,9 @@ class Ui_MainWindow(object):
             outPutStr =  "\u2665"
             self.color_timer.start(100)  # Change color every 100 ms
         if 1 < diceRoll < 20: 
-            textWidget.setStyleSheet(self.CSS_Dice_Roll_Text)
+            textWidget.setStyleSheet(style.CSS_Dice_Roll_Text)
         else:
-            textWidget.setStyleSheet(self.CSS_Dice_Roll_Text_Big)
+            textWidget.setStyleSheet(style.CSS_Dice_Roll_Text_Big)
         textWidget.setText(outPutStr)
         self.destinyBtn_clear_timer.start(self.Btn_Display_Time)
         
