@@ -14,6 +14,8 @@ import glob as gl
 import os
 import sys
 
+import random
+
 
 
 # ToDo: 
@@ -54,6 +56,8 @@ class Ui_MainWindow(object):
         self.specialIcon_lst = ["icon_square","icon_plus","icon_triangle","icon_minus","icon_star"]
         self.specialBtn_color = [pale_pink, pale_blue, yellow, pale_green, pale_pink]
         
+        self.Btn_Display_Time = 20000   # how long is dice roll result displayed
+
         # get sys path depending on build condition (as *.exe or as script)
         if getattr(sys, 'frozen', False):
             # If the application is run as a bundle, the PyInstaller bootloader
@@ -275,6 +279,112 @@ class Ui_MainWindow(object):
                 border: 0px;
                 background-color: {dark_gray};
             }}"""
+        
+        # tab widget style sheet
+        CSS_tabwidget = f"""QTabWidget::tab-bar{{
+                border: 1px {dark_gray};
+            }}
+            QTabWidget{{
+                background: {dark_gray}
+            }}
+            QTabBar::tab{{
+                background: {dark_gray};
+                color: {white};
+                padding: 10 px;
+                border-top-left-radius: 4px;
+                border-top-right-radius: 4px;
+                min-width: 10ex;
+            }}
+            QTabBar::tab::selected{{
+                background: {dark_gray};
+                margin-left: 4px;
+                margin-right: 4px;
+            }}
+            QTabBar::tab:!selected {{
+                margin-top: 6px; 
+                
+            }}
+            QTabWidget::pane{{
+                border: 2px solid {dark_gray};
+            }}
+
+            QTabBar::tab:first:selected {{
+                margin-left: 0; 
+            }}
+
+            QTabBar::tab:last:selected {{
+                margin-right: 0; 
+            }}
+
+            QTabBar::tab:only-one {{
+                margin: 0;     
+            }}
+        """
+        # Dice Roll results style sheet
+        self.CSS_Dice_Roll_Text = f"""QLabel{{
+                color: {white};
+                border: 1px solid {white}; 
+                font-size: 20px;
+            }}
+        """
+        self.CSS_Dice_Roll_Sum = f"""QLabel{{
+                color: {white};
+                border: none; 
+                font-size: 20px;
+            }}
+        """
+        self.CSS_Dice_Roll_Text_Big = f"""QLabel{{
+                color: {white};
+                border: 1px solid {white}; 
+                font-size: 30px;
+            }}
+        """
+        self.CSS_Dice_Roll_Text_Blue= f"""QLabel{{
+                color: {pale_blue};
+                border: 1px solid {white}; 
+                font-size: 30px;
+            }}
+        """
+        self.CSS_Dice_Roll_Text_Yellow= f"""QLabel{{
+                color: {yellow};
+                border: 1px solid {white}; 
+                font-size: 30px;
+            }}
+        """
+        self.CSS_Dice_Roll_Text_Pink= f"""QLabel{{
+                color: {pale_pink};
+                border: 1px solid {white}; 
+                font-size: 30px;
+            }}
+        """
+        # Dice QPushButton Stylesheets
+        self.CSS_Dice_Button_0 = f"""QPushButton {{
+            background-color: {pale_pink};
+            font-size: 20px;
+        }}
+        """
+        self.CSS_Dice_Button_1 = f"""QPushButton {{
+            background-color: {pale_blue};
+            font-size: 20px;
+        }}
+        """
+        self.CSS_Dice_Button_2 = f"""QPushButton {{
+            background-color: {yellow};
+            font-size: 20px;
+        }}
+        """
+        self.CSS_Dice_Button_3 = f"""QPushButton {{
+            background-color: {pale_green};
+            font-size: 20px
+        }}
+        """
+        self.CSS_Dice_Button_4 = f"""QPushButton {{
+            background-color: {dark_gray};
+            color: {white};
+            font-size: 20px;
+        }}
+        """
+
 
 
         # main window 
@@ -283,22 +393,30 @@ class Ui_MainWindow(object):
         MainWindow.setTabShape(QtWidgets.QTabWidget.TabShape.Rounded)
         
         
-        self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
+        centralwidget = QtWidgets.QWidget(parent=MainWindow)
         
-        self.centralwidget.setObjectName("centralwidget")
+        centralwidget.setObjectName("centralwidget")
+
+        Central_Layout = QtWidgets.QGridLayout()
+        Central_Layout.setSpacing(0)
+        Central_Layout.setContentsMargins(0,0,0,0)
+
+        # add here: create_frame() for all frames
+        # then: central_layout.addwidget(frame_xy)
+        # after that: centralwidget.setLayout()
+
+        
 
         ########################################################################################################
         # Sound Control Frame
-
-        self.Sound_frame = QtWidgets.QFrame(parent=self.centralwidget)
-        self.Sound_frame.setGeometry(QtCore.QRect(0, 449, 800, 151))
-        self.Sound_frame.setStyleSheet(f"background-color: {black}")
-        self.Sound_frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.Sound_frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.Sound_frame.setObjectName("Sound_frame")
-        
-        self.playPauseButton = QtWidgets.QPushButton(parent=self.Sound_frame)
-        self.playPauseButton.setGeometry(QtCore.QRect(30, 30, 60, 50))
+        Sound_Frame_Layout = QtWidgets.QGridLayout()
+        Sound_Frame = QtWidgets.QFrame()
+        Sound_Frame.setStyleSheet(f"background-color: {black}")
+        Sound_Frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        Sound_Frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
+        Sound_Frame.setObjectName("Sound_frame")
+       
+        self.playPauseButton = QtWidgets.QPushButton()
         self.playPauseButton.setStyleSheet(f"background-color:{green}")
         self.playPauseButton.setText("")
         self.playIcon = QtGui.QIcon()
@@ -306,74 +424,53 @@ class Ui_MainWindow(object):
         self.playIcon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/icon_play.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.pauseIcon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/icon_pause.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.playPauseButton.setIcon(self.playIcon)
-        self.playPauseButton.setIconSize(QtCore.QSize(50, 50))
+        self.playPauseButton.setIconSize(QtCore.QSize(40, 40))
         self.playPauseButton.setObjectName("playPauseButton")
         self.playPauseButton.clicked.connect(lambda: self.on_playPauseBtnClicked())
 
-        self.trackBackwardButton = QtWidgets.QPushButton(parent=self.Sound_frame)
-        self.trackBackwardButton.setGeometry(QtCore.QRect(120, 30, 60, 50))
+        Sound_Frame_Layout.addWidget(self.playPauseButton, 0, 0, 2, 1)
+
+        self.trackBackwardButton = QtWidgets.QPushButton(parent=Sound_Frame)
+        self.trackBackwardButton = QtWidgets.QPushButton()
         self.trackBackwardButton.setStyleSheet(f"background-color:{green}")
         self.trackBackwardButton.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/icon_previous.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.trackBackwardButton.setIcon(icon)
-        self.trackBackwardButton.setIconSize(QtCore.QSize(50, 50))
+        self.trackBackwardButton.setIconSize(QtCore.QSize(40, 40))
         self.trackBackwardButton.setObjectName("backwardButton")
         self.trackBackwardButton.clicked.connect(lambda: self.on_trackBackwardClicked())
 
-        self.trackForwardButton = QtWidgets.QPushButton(parent=self.Sound_frame)
-        self.trackForwardButton.setGeometry(QtCore.QRect(210, 30, 60, 50))
+        Sound_Frame_Layout.addWidget(self.trackBackwardButton, 0, 1, 2, 1)
+
+        self.trackForwardButton = QtWidgets.QPushButton()
         self.trackForwardButton.setStyleSheet(f"background-color:{green}")
         self.trackForwardButton.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/icon_next.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.trackForwardButton.setIcon(icon)
-        self.trackForwardButton.setIconSize(QtCore.QSize(50, 50))
+        self.trackForwardButton.setIconSize(QtCore.QSize(40, 40))
         self.trackForwardButton.setObjectName("forwardButton")
         self.trackForwardButton.clicked.connect(lambda: self.on_trackForwardClicked())
+
+        Sound_Frame_Layout.addWidget(self.trackForwardButton, 0, 2, 2, 1)
         
-        self.stopButton = QtWidgets.QPushButton(parent=self.Sound_frame)
-        self.stopButton.setGeometry(QtCore.QRect(300, 30, 60, 50))
+        self.stopButton = QtWidgets.QPushButton()
         self.stopButton.setStyleSheet(f"background-color:{green}")
         self.stopButton.setText("")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/icon_stop.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
         self.stopButton.setIcon(icon)
-        self.stopButton.setIconSize(QtCore.QSize(50, 50))
+        self.stopButton.setIconSize(QtCore.QSize(40, 40))
         self.stopButton.setObjectName("stopButton")
         self.stopButton.clicked.connect(lambda: self.on_stopBtnClicked())
 
-        self.masterVolumeSlider = QtWidgets.QSlider(parent=self.Sound_frame)
-        self.masterVolumeSlider.setGeometry(QtCore.QRect(390, 60, 160, 18))
-        self.masterVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.masterVolumeSlider.setStyleSheet(CSS_Slider)
-        self.masterVolumeSlider.setObjectName("masterVolumeSlider")
-        self.masterVolumeSlider.setRange(0, 100)
-        self.masterVolumeSlider.setValue(100*int(self._music_output.volume()))
-        self.masterVolumeSlider.valueChanged[int].connect(self.on_masterVolumeSliderChanged)
+        Sound_Frame_Layout.addWidget(self.stopButton, 0, 3, 2, 1)
 
-        self.masterVolumeLabel = QtWidgets.QLabel(parent=self.Sound_frame)
-        self.masterVolumeLabel.setGeometry(QtCore.QRect(420, 80, 91, 16))
-        self.masterVolumeLabel.setStyleSheet(f"color: {white}")
-        self.masterVolumeLabel.setTextFormat(QtCore.Qt.TextFormat.PlainText)
-        self.masterVolumeLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.masterVolumeLabel.setObjectName("masterVolumeLabel")
-
-        # List widget displaying the currently active playlist (music button)
-        self.currentSoundFilesListWidget = self.RearrangeListWidget(parent=self.Sound_frame)
-        #self.currentSoundFilesListWidget = QtWidgets.QListWidget(parent=self.Sound_frame)
-        self.currentSoundFilesListWidget.setGeometry(QtCore.QRect(590, 20, 191, 71))
-        #self.currentSoundFilesListWidget.setDragEnabled(True)
-        #self.currentSoundFilesListWidget.viewport().setAcceptDrops(True)
-        #self.currentSoundFilesListWidget.setDragDropMode(QtWidgets.QAbstractItemView.DragDropMode.InternalMove)
-        self.currentSoundFilesListWidget.setStyleSheet(CSS_List)
-        self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
-        self.currentSoundFilesListWidget.doubleClicked.connect(self.on_currentSoundFilesListWidget_doubleClicked)
-        self.currentSoundFilesListWidget.clicked.connect(self.on_currentSoundFilesListWidget_clicked) 
-        self.currentSoundFilesListWidget.itemMoved.connect(self.currentSoundFilesListWidget_itemMoved)
-
-        self.soundSlider = QtWidgets.QSlider(parent=self.Sound_frame)
-        self.soundSlider.setGeometry(QtCore.QRect(390, 27, 160, 16))
+        Sound_Frame_Slider_Layout = QtWidgets.QVBoxLayout()
+        Sound_Frame_Slider_Widget = QtWidgets.QWidget()
+        
+        self.soundSlider = QtWidgets.QSlider()
         self.soundSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.soundSlider.setStyleSheet(CSS_soundSlider)
         self.soundSlider.setValue(0)
@@ -381,27 +478,93 @@ class Ui_MainWindow(object):
         self.soundSlider.setTracking(False)
         self.soundSlider.sliderPressed.connect(self.on_soundSliderPressed)
         self.soundSlider.sliderReleased.connect(self.on_soundSliderReleased)
+
+        Sound_Frame_Slider_Layout.addWidget(self.soundSlider)
+
+        self.masterVolumeSlider = QtWidgets.QSlider()
+        self.masterVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+        self.masterVolumeSlider.setStyleSheet(CSS_Slider)
+        self.masterVolumeSlider.setObjectName("masterVolumeSlider")
+        self.masterVolumeSlider.setRange(0, 100)
+        self.masterVolumeSlider.setValue(100*int(self._music_output.volume()))
+        self.masterVolumeSlider.valueChanged[int].connect(self.on_masterVolumeSliderChanged)
+
+        Sound_Frame_Slider_Layout.addWidget(self.masterVolumeSlider, alignment=QtCore.Qt.AlignmentFlag.AlignBottom)
+
+        self.masterVolumeLabel = QtWidgets.QLabel()
+        self.masterVolumeLabel.setStyleSheet(f"color: {white}")
+        self.masterVolumeLabel.setTextFormat(QtCore.Qt.TextFormat.PlainText)
+        self.masterVolumeLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignHCenter)
+        self.masterVolumeLabel.setObjectName("masterVolumeLabel")
+
+        Sound_Frame_Slider_Layout.addWidget(self.masterVolumeLabel)
+        Sound_Frame_Slider_Layout.setAlignment(QtCore.Qt.AlignmentFlag.AlignTop)
+        Sound_Frame_Slider_Widget.setLayout(Sound_Frame_Slider_Layout)
+
+        Sound_Frame_Layout.addWidget(Sound_Frame_Slider_Widget, 0, 4, 2, 2)
+
+        # List widget displaying the currently active playlist (music button)
+        self.currentSoundFilesListWidget = self.RearrangeListWidget()
+        self.currentSoundFilesListWidget.setStyleSheet(CSS_List)
+        self.currentSoundFilesListWidget.setObjectName("currentSoundFilesListWidget")
+        self.currentSoundFilesListWidget.doubleClicked.connect(self.on_currentSoundFilesListWidget_doubleClicked)
+        self.currentSoundFilesListWidget.clicked.connect(self.on_currentSoundFilesListWidget_clicked) 
+        self.currentSoundFilesListWidget.itemMoved.connect(self.currentSoundFilesListWidget_itemMoved)
+
+        Sound_Frame_Layout.addWidget(self.currentSoundFilesListWidget, 0, 6, 2, 2)
+        
+        # Set Layout for frame
+        Sound_Frame.setLayout(Sound_Frame_Layout)
+        # Add frame to central grid layout
+        Central_Layout.addWidget(Sound_Frame, 4, 0, 1, 5)
        
         ########################################################################################################
-        # SD card frame
+        # Utilitiey frame
+        # Tab 1: Dice roll interface
+        # Tab 2: Audio file system and SD card managment
 
-        self.SDframe = QtWidgets.QFrame(parent=self.centralwidget)
-        self.SDframe.setGeometry(QtCore.QRect(800, 0, 300, 600))
-        self.SDframe.setStyleSheet(f"background-color:{black}")
-        self.SDframe.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.SDframe.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.SDframe.setObjectName("SDframe")
+        Utility_Frame = QtWidgets.QFrame()
+        Utility_Frame.setStyleSheet(f"background-color:{black}")
+        Utility_Frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        Utility_Frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
+        Utility_Frame.setObjectName("SDframe")
 
+        # Create a layout for the utility frame
+        Utility_Frame_Layout = QtWidgets.QVBoxLayout(Utility_Frame)
+        
 
+        # Create the tab widget
+        utilityTab = QtWidgets.QTabWidget()
+        utilityTab.setStyleSheet(CSS_tabwidget)
+
+        diceTab = QtWidgets.QWidget()
+        audioTab = QtWidgets.QWidget()
+        utilityTab.addTab(diceTab,"Dice")
+        utilityTab.addTab(audioTab,"Audio")
+
+        # Tab 1: Dice roll
+        utilityTab.setTabText(0,"Dice")
+
+        # create layouts and add it to tab
+        self.create_Dice_Tab_Layout(diceTab)
+
+        # Tab 2: Audio file system and SD card
+        Audio_Tab_Layout = QtWidgets.QVBoxLayout()
+        utilityTab.setTabText(0,"Dice")
+
+       
+
+        audioTab.setLayout(Audio_Tab_Layout)
+        
+        
         self.fileModel = QtGui.QFileSystemModel()
         self.fileModel.setRootPath(self.default_soundFile_path)
         self.fileModel.setNameFilters(["*.mp3","*.wav", "*.ogg"]) 
         self.fileModel.setNameFilterDisables(False)
-        self.fileTreeListView = QtWidgets.QTreeView(parent=self.SDframe)
+        self.fileTreeListView = QtWidgets.QTreeView()
         self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
         self.fileTreeListView.setHeaderHidden(True)
         self.fileTreeListView.setDragEnabled(True)
-        self.fileTreeListView.setGeometry(QtCore.QRect(10, 50, 280, 361))
         self.fileTreeListView.setStyleSheet(CSS_ListView)
         self.fileTreeListView.setObjectName("fileTreeListView")
         self.fileTreeListView.setModel(self.fileModel)
@@ -413,62 +576,78 @@ class Ui_MainWindow(object):
         self.fileTreeListView.show()
         self.fileTreeListView.doubleClicked[QtCore.QModelIndex].connect(self.on_fileTree_doubleClicked)
 
-        self.getRootFolderButton = QtWidgets.QPushButton(parent=self.SDframe)
-        self.getRootFolderButton.setGeometry(QtCore.QRect(10, 10, 111, 24))
+        Audio_Tab_Layout.addWidget(self.fileTreeListView)
+
+        self.getRootFolderButton = QtWidgets.QPushButton()
         self.getRootFolderButton.setStyleSheet(f"background-color:{green}")
         self.getRootFolderButton.setObjectName("getRootFolderButton")
         self.getRootFolderButton.clicked.connect(lambda: self.on_rootFolderDialogBtnClicked())
 
-        self.saveToSDButton = QtWidgets.QPushButton(parent=self.SDframe)
-        self.saveToSDButton.setGeometry(QtCore.QRect(210, 500, 81, 24))
+        Audio_Tab_Layout.addWidget(self.getRootFolderButton)
+
+        self.saveToSDButton = QtWidgets.QPushButton()
         self.saveToSDButton.setStyleSheet(f"background-color: {blue}")
         self.saveToSDButton.setObjectName("saveToSDButton")
 
-        self.listOfFoundSDCardsCombobox = QtWidgets.QComboBox(parent=self.SDframe)
-        self.listOfFoundSDCardsCombobox.setGeometry(QtCore.QRect(10, 470, 280, 22))
+        Audio_Tab_Layout.addWidget(self.saveToSDButton)
+
+        self.listOfFoundSDCardsCombobox = QtWidgets.QComboBox()
         self.listOfFoundSDCardsCombobox.setStyleSheet(f"background-color: {dark_gray}")
         self.listOfFoundSDCardsCombobox.setObjectName("listOfFoundSDCardsCombobox")
 
-        self.SDcardsLabel = QtWidgets.QLabel(parent=self.SDframe)
-        self.SDcardsLabel.setGeometry(QtCore.QRect(10, 450, 49, 16))
+        Audio_Tab_Layout.addWidget(self.listOfFoundSDCardsCombobox)
+
+        self.SDcardsLabel = QtWidgets.QLabel()
         self.SDcardsLabel.setStyleSheet(f"color: {white}")
         self.SDcardsLabel.setTextFormat(QtCore.Qt.TextFormat.PlainText)
         self.SDcardsLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
         self.SDcardsLabel.setObjectName("SDcardsLabel")
 
-        self.refreshButton = QtWidgets.QPushButton(parent=self.SDframe)
-        self.refreshButton.setGeometry(QtCore.QRect(10, 500, 51, 24))
+        Audio_Tab_Layout.addWidget(self.SDcardsLabel)
+
+        self.refreshButton = QtWidgets.QPushButton()
         self.refreshButton.setStyleSheet(f"background-color: {green}")
         self.refreshButton.setObjectName("refreshButton")
+
+        Audio_Tab_Layout.addWidget(self.refreshButton)
+        
+        # Add the tab widget to the frame's layout
+        Utility_Frame_Layout.addWidget(utilityTab)
+
+        Utility_Frame.setLayout(Utility_Frame_Layout)
+
+        Central_Layout.addWidget(Utility_Frame, 0, 5, 5, 2)
 
         #########################################################################################################
         # main interface frame (Audio Buttons)
         
-        self.interfaceFrame = QtWidgets.QFrame(parent=self.centralwidget)
-        self.interfaceFrame.setGeometry(QtCore.QRect(0, 0, 800, 450))
-        self.interfaceFrame.setStyleSheet(f"background-color: {gray}")
-        self.interfaceFrame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
-        self.interfaceFrame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
-        self.interfaceFrame.setObjectName("interfaceFrame")
+        #Interface_Frame = QtWidgets.QFrame(parent=centralwidget)
+        #Interface_Frame.setGeometry(QtCore.QRect(0, 0, 800, 450))
+        Interface_Frame_Layout = QtWidgets.QGridLayout()
+        Interface_Frame = QtWidgets.QFrame()
+        Interface_Frame.setStyleSheet(f"background-color: {gray}")
+        Interface_Frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
+        Interface_Frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
+        Interface_Frame.setObjectName("interfaceFrame")
         # grid for main sound Buttons
-        self.layoutWidget = QtWidgets.QWidget(parent=self.interfaceFrame)
-        self.layoutWidget.setGeometry(QtCore.QRect(0, 22, 800, 375))
-        self.layoutWidget.setObjectName("layoutWidget")
+        #layoutWidget = QtWidgets.QWidget(parent=Interface_Frame)
+        #layoutWidget.setGeometry(QtCore.QRect(0, 22, 800, 375))
+        #layoutWidget.setObjectName("layoutWidget")
 
-        self.mainButtonGridLayout = QtWidgets.QGridLayout(self.layoutWidget)
-        self.mainButtonGridLayout.setContentsMargins(0, 0, 0, 0)
-        self.mainButtonGridLayout.setObjectName("mainButtonGridLayout")
+        #self.mainButtonGridLayout = QtWidgets.QGridLayout(layoutWidget)
+        #self.mainButtonGridLayout.setContentsMargins(0, 0, 0, 0)
+        #self.mainButtonGridLayout.setObjectName("mainButtonGridLayout")
 
         # Button configurations 
         font = QtGui.QFont()
         font.setPointSize(16)     
           
         # music Buttons
-        self.musicBtn_lst = [self.create_acceptDropButton(parent=self.layoutWidget) for b in range(self.btn_rows)]
+        #self.musicBtn_lst = [self.create_acceptDropButton(parent=layoutWidget) for b in range(self.btn_rows)]
+        self.musicBtn_lst = [self.create_acceptDropButton() for b in range(self.btn_rows)]
         for btn in self.musicBtn_lst:
             curBtnIndex = self.musicBtn_lst.index(btn)
             btn.setCheckable(True)
-            btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setFont(font)
             btn.setStyleSheet(CSS_PB_music)
             btn.setText("")
@@ -478,10 +657,11 @@ class Ui_MainWindow(object):
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"musicBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'music'))
-            self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 0, 1, 1)
+            Interface_Frame_Layout.addWidget(btn, curBtnIndex, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
 
         # setting Buttons
-        self.settingBtn_lst = [self.create_acceptDropButton(parent=self.layoutWidget, playlistMaxlength=1) for b in range(self.btn_rows)]
+        #self.settingBtn_lst = [self.create_acceptDropButton(parent=layoutWidget, playlistMaxlength=1) for b in range(self.btn_rows)]
+        self.settingBtn_lst = [self.create_acceptDropButton(playlistMaxlength=1) for b in range(self.btn_rows)]
         for btn in self.settingBtn_lst:
             curBtnIndex = self.settingBtn_lst.index(btn)
             btn.setCheckable(True)
@@ -495,10 +675,11 @@ class Ui_MainWindow(object):
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"settingBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'setting'))
-            self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 1, 1, 1)
+            Interface_Frame_Layout.addWidget(btn, curBtnIndex, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
 
         # weather Buttons
-        self.weatherBtn_lst = [self.create_acceptDropButton(parent=self.layoutWidget, playlistMaxlength=1) for b in range(self.btn_rows)]
+        #self.weatherBtn_lst = [self.create_acceptDropButton(parent=layoutWidget, playlistMaxlength=1) for b in range(self.btn_rows)]
+        self.weatherBtn_lst = [self.create_acceptDropButton(playlistMaxlength=1) for b in range(self.btn_rows)]
         for btn in self.weatherBtn_lst:
             curBtnIndex = self.weatherBtn_lst.index(btn)
             btn.setCheckable(True)
@@ -512,10 +693,11 @@ class Ui_MainWindow(object):
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"weatherBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'weather'))
-            self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 2, 1, 1)
+            Interface_Frame_Layout.addWidget(btn, curBtnIndex, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
 
         # special Buttons
-        self.specialBtn_lst = [self.create_acceptDropButton(parent=self.layoutWidget, playlistMaxlength=1) for b in range(self.btn_rows)]
+        #self.specialBtn_lst = [self.create_acceptDropButton(parent=layoutWidget, playlistMaxlength=1) for b in range(self.btn_rows)]
+        self.specialBtn_lst = [self.create_acceptDropButton(playlistMaxlength=1) for b in range(self.btn_rows)]
         for btn in self.specialBtn_lst:
             curBtnIndex = self.specialBtn_lst.index(btn)
             btn.setCheckable(True)
@@ -529,41 +711,53 @@ class Ui_MainWindow(object):
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"specialBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, idx = curBtnIndex: self.on_soundBtnclicked(idx, 'special'))
-            self.mainButtonGridLayout.addWidget(btn, curBtnIndex, 3, 1, 1)    
+            Interface_Frame_Layout.addWidget(btn, curBtnIndex, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)    
 
         # individual volume sliders
-        y_positon_volumeSliders = 415
-        self.musicVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
-        self.musicVolumeSlider.setGeometry(QtCore.QRect(79, y_positon_volumeSliders, 111, 20))
+        #y_positon_volumeSliders = 415
+        #self.musicVolumeSlider = QtWidgets.QSlider(parent=Interface_Frame)
+        #self.musicVolumeSlider.setGeometry(QtCore.QRect(79, y_positon_volumeSliders, 111, 20))
+        self.musicVolumeSlider = QtWidgets.QSlider()
         self.musicVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.musicVolumeSlider.setStyleSheet(CSS_Slider)
         self.musicVolumeSlider.setObjectName("musicVolumeSlider")
         self.musicVolumeSlider.setValue(self.musicVolumeSlider.maximum())   #initial setting = max
         self.musicVolumeSlider.valueChanged.connect(self.on_musicVolumeSliderChanged)
+        Interface_Frame_Layout.addWidget(self.musicVolumeSlider, 5, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
-        self.settingVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
-        self.settingVolumeSlider.setGeometry(QtCore.QRect(260, y_positon_volumeSliders, 111, 20))
+        #self.settingVolumeSlider = QtWidgets.QSlider(parent=Interface_Frame)
+        #self.settingVolumeSlider.setGeometry(QtCore.QRect(260, y_positon_volumeSliders, 111, 20))
+        self.settingVolumeSlider = QtWidgets.QSlider()
         self.settingVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.settingVolumeSlider.setStyleSheet(CSS_Slider)
         self.settingVolumeSlider.setObjectName("settingVolumeSlider")
         self.settingVolumeSlider.setValue(self.settingVolumeSlider.maximum())   #initial setting = max
         self.settingVolumeSlider.valueChanged.connect(self.on_settingVolumeSliderChanged)
+        Interface_Frame_Layout.addWidget(self.settingVolumeSlider, 5, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
-        self.weatherVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
-        self.weatherVolumeSlider.setGeometry(QtCore.QRect(430, y_positon_volumeSliders, 111, 20))
+        #self.weatherVolumeSlider = QtWidgets.QSlider(parent=Interface_Frame)
+        #self.weatherVolumeSlider.setGeometry(QtCore.QRect(430, y_positon_volumeSliders, 111, 20))
+        self.weatherVolumeSlider = QtWidgets.QSlider()
         self.weatherVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.weatherVolumeSlider.setStyleSheet(CSS_Slider)
         self.weatherVolumeSlider.setObjectName("weatherVolumeSlider")
         self.weatherVolumeSlider.setValue(self.weatherVolumeSlider.maximum())   #initial setting = max
         self.weatherVolumeSlider.valueChanged.connect(self.on_weatherVolumeSliderChanged)
+        Interface_Frame_Layout.addWidget(self.weatherVolumeSlider, 5, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
-        self.specialVolumeSlider = QtWidgets.QSlider(parent=self.interfaceFrame)
-        self.specialVolumeSlider.setGeometry(QtCore.QRect(610, y_positon_volumeSliders, 111, 20))
+        #self.specialVolumeSlider = QtWidgets.QSlider(parent=Interface_Frame)
+        #self.specialVolumeSlider.setGeometry(QtCore.QRect(610, y_positon_volumeSliders, 111, 20))
+        self.specialVolumeSlider = QtWidgets.QSlider()
         self.specialVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
         self.specialVolumeSlider.setStyleSheet(CSS_Slider)
         self.specialVolumeSlider.setObjectName("specialVolumeSlider")
         self.specialVolumeSlider.setValue(self.specialVolumeSlider.maximum())   #initial setting = max
         self.specialVolumeSlider.valueChanged.connect(self.on_specialVolumeSliderChanged)
+        Interface_Frame_Layout.addWidget(self.specialVolumeSlider, 5, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+
+        Interface_Frame.setLayout(Interface_Frame_Layout)
+
+        Central_Layout.addWidget(Interface_Frame, 0, 0, 4, 5)
 
         # muffle Buttons require raw audio manipulation -> future version?
         '''self.musicMuffleButton = QtWidgets.QPushButton(parent=self.interfaceFrame)
@@ -602,7 +796,7 @@ class Ui_MainWindow(object):
         self.muffle_label.setText(_translate("MainWindow", "Muffle:"))'''
 
         # menu and status bars
-        MainWindow.setCentralWidget(self.centralwidget)
+        MainWindow.setCentralWidget(centralwidget)
         menuBar = MainWindow.menuBar()
         toolBar = MainWindow.addToolBar("File")
         toolBar.setMovable(False)
@@ -644,10 +838,13 @@ class Ui_MainWindow(object):
         toolBar.addWidget(self.presetCombobox)
         
         
-        self.statusbar = QtWidgets.QStatusBar(parent=MainWindow)
+        self.statusbar = MainWindow.statusBar()
         self.statusbar.setStyleSheet(f"background-color: {dark_gray}")
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+
+        # set Layout
+        centralwidget.setLayout(Central_Layout)
 
         # init functions
         self.listPresets()
@@ -655,7 +852,90 @@ class Ui_MainWindow(object):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-        # button action definitions
+    def create_Dice_Tab_Layout(self, tab_widget: QtWidgets.QTabWidget)->None:
+        layout = QtWidgets.QGridLayout()
+        minWidth = 40
+        maxWidth = 60
+        minHeight = 40
+        maxHeight = 60
+
+        self.dice_lst = [2, 4 ,6, 8, 10, 12, 20, 100]
+        dice_stylesheet_lst = [self.CSS_Dice_Button_0, self.CSS_Dice_Button_1, self.CSS_Dice_Button_2, self.CSS_Dice_Button_3]
+
+        self.dice_btn_lst = [QtWidgets.QPushButton() for b in range(len(self.dice_lst))]
+        self.dice_txt_lst = [QtWidgets.QLabel() for l in range(len(self.dice_lst))]
+        self.dice_sum_lst = [QtWidgets.QLabel() for l in range(len(self.dice_lst))]
+        self.dice_timer_lst = [QtCore.QTimer() for t in range(len(self.dice_lst))]
+        
+        self.sum_lst = [0]*len(self.dice_lst)
+        stylesheet_count=0
+
+        for i in range(len(self.dice_lst)):
+            dice_Btn = self.dice_btn_lst[i]
+            if stylesheet_count > 3:
+                stylesheet_count=0
+            dice_Btn.setStyleSheet(dice_stylesheet_lst[stylesheet_count])
+            stylesheet_count+=1
+            
+            dice_Btn.setObjectName(f"W{self.dice_lst[i]} Button")
+            dice_Btn.setText(f"W{self.dice_lst[i]}")
+            dice_Btn.setMinimumSize(minWidth, minHeight)
+            dice_Btn.setMaximumSize(maxWidth, maxHeight)
+            dice_txt = self.dice_txt_lst[i]
+            dice_txt.setText("")
+            dice_txt.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+            dice_txt.setStyleSheet(self.CSS_Dice_Roll_Text)
+            dice_txt.setMinimumSize(minWidth, minHeight)
+            dice_txt.setMaximumSize(maxWidth, maxHeight)
+
+            dice_sum = self.dice_sum_lst[i]
+            dice_sum.setText("")
+            dice_sum.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+            dice_sum.setStyleSheet(self.CSS_Dice_Roll_Sum)
+            dice_sum.setMinimumSize(minWidth, minHeight)
+            dice_sum.setMaximumSize(maxWidth, maxHeight)
+
+            dice_timer = self.dice_timer_lst[i]
+            dice_timer.setSingleShot(True)
+            dice_timer.timeout.connect(lambda idx = i: self.clear_Btn(idx))
+
+            dice_Btn.clicked.connect(lambda checked, idx = i: self.on_diceRollBtnClicked(idx))
+            
+            layout.addWidget(dice_Btn, i, 0)
+            layout.addWidget(dice_txt, i, 1)
+            layout.addWidget(dice_sum, i, 2)
+        
+        # Destiny Button
+        DestinyBtn = QtWidgets.QPushButton()
+        DestinyBtn.setStyleSheet(self.CSS_Dice_Button_4)
+        DestinyBtn.setObjectName("Destiny Button")
+        DestinyBtn.setText("\u2665 \u2620")
+        DestinyBtn.setMinimumSize(minWidth, minHeight)
+        DestinyBtn.setMaximumSize(maxWidth, maxHeight)
+        self.DestinyTxt = QtWidgets.QLabel()
+        self.DestinyTxt.setText("")
+        self.DestinyTxt.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
+        self.DestinyTxt.setStyleSheet(self.CSS_Dice_Roll_Text)
+        self.DestinyTxt.setMinimumSize(minWidth, minHeight)
+        self.DestinyTxt.setMaximumSize(maxWidth, maxHeight)
+
+        self.colorList = [self.CSS_Dice_Roll_Text_Blue, self.CSS_Dice_Roll_Text_Pink, self.CSS_Dice_Roll_Text_Yellow]
+        self.current_color_index=0
+        self.maxColorChanges = 20
+        self.colorChanges = 0
+        self.color_timer = QtCore.QTimer()
+        self.color_timer.timeout.connect(lambda: self.change_color(self.DestinyTxt))
+        self.destinyBtn_clear_timer = QtCore.QTimer()
+        self.destinyBtn_clear_timer.setSingleShot(True)
+        self.destinyBtn_clear_timer.timeout.connect(lambda: self.clear_destiny_Btn())
+
+        DestinyBtn.clicked.connect(lambda: self.on_destinyBtnClicked(self.DestinyTxt))
+        
+        layout.addWidget(DestinyBtn, 8, 0)
+        layout.addWidget(self.DestinyTxt, 8, 1)
+
+        tab_widget.setLayout(layout)
+
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -668,8 +948,29 @@ class Ui_MainWindow(object):
         self.saveToSDButton.setText(_translate("MainWindow", "Save to SD"))
         self.SDcardsLabel.setText(_translate("MainWindow", "SD cards"))
         self.refreshButton.setText(_translate("MainWindow", "Refresh"))
-        
-        
+
+    def change_color(self, textWidget: QtWidgets.QLabel):
+        if self.colorChanges < self.maxColorChanges:
+            # Update the color of the QLabel
+            current_color = self.colorList[self.current_color_index]
+            textWidget.setStyleSheet(current_color)
+
+            # Move to the next color in the list, looping back if necessary
+            self.current_color_index = (self.current_color_index + 1) % len(self.colorList)
+            self.colorChanges += 1
+        else:
+            self.color_timer.stop()
+            textWidget.setStyleSheet(self.CSS_Dice_Roll_Text_Big)
+
+    def clear_Btn(self, idx)->None:
+        textWidget = self.dice_txt_lst[idx]
+        textWidget.setText("")
+        self.sum_lst[idx]=0
+        sumWidget = self.dice_sum_lst[idx]
+        sumWidget.setText("")
+
+    def clear_destiny_Btn(self)->None:
+        self.DestinyTxt.setText("")
 
     #############################################################################################################################
     # event handlers
@@ -706,6 +1007,57 @@ class Ui_MainWindow(object):
             self.loadFile_mms(new_file[0])
 
     # Buttons
+    # Dice Roll Tab in Utility Frame
+
+    def on_diceRollBtnClicked(self, idx: int)->None:
+        textWidget = self.dice_txt_lst[idx]
+        sumWidget = self.dice_sum_lst[idx]
+        faces = self.dice_lst[idx]
+        timer = self.dice_timer_lst[idx]
+        
+        textWidget.setText("")
+        diceRoll = random.randint(1, faces)
+        textWidget.setText(str(diceRoll))
+        sum = self.sum_lst[idx]
+        self.sum_lst[idx] += diceRoll
+        if sum!=0:
+            sumWidget.setText(str(self.sum_lst[idx]))
+
+        timer.start(self.Btn_Display_Time)
+        
+
+    def on_destinyBtnClicked(self, textWidget: QtWidgets.QLabel)->None:
+        textWidget.setText("")
+        
+        self.color_timer.stop()
+        self.colorChanges = 0
+
+        diceRoll = random.randint(1, 20)
+        if diceRoll == 1:
+            outPutStr = "\u2620"
+            self.color_timer.start(100)  # Change color every 100 ms
+        elif 1 < diceRoll <= 5:
+            outPutStr = "\u2620\u2620"
+        elif 5 < diceRoll <= 9:
+            outPutStr = "\u2620"
+        elif 9 < diceRoll <= 11:
+            outPutStr = "\u2665 \u2620"
+        elif 11 < diceRoll <=15:
+            outPutStr = "\u2665" 
+        elif 15 < diceRoll <= 19:
+            outPutStr = "\u2665\u2665"
+        elif diceRoll == 20:
+            outPutStr =  "\u2665"
+            self.color_timer.start(100)  # Change color every 100 ms
+        if 1 < diceRoll < 20: 
+            textWidget.setStyleSheet(self.CSS_Dice_Roll_Text)
+        else:
+            textWidget.setStyleSheet(self.CSS_Dice_Roll_Text_Big)
+        textWidget.setText(outPutStr)
+        self.destinyBtn_clear_timer.start(self.Btn_Display_Time)
+        
+        
+
     def on_fileTree_doubleClicked(self)->None:
         index = self.fileTreeListView.currentIndex()
         filePath = self.fileModel.filePath(index)
@@ -1136,6 +1488,8 @@ class Ui_MainWindow(object):
 
         def __init__(self, parent=None):
             super().__init__(parent)
+            # Set appropriate size policy to allow resizing
+            self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
             self.setAcceptDrops(True)
             self.setDragEnabled(True)
             self.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
@@ -1143,6 +1497,14 @@ class Ui_MainWindow(object):
             self.scroll_timer.timeout.connect(self.scroll_while_dragging)
             self.scroll_speed = 20
             self.old_row = None
+
+        def sizeHint(self):
+            # Return a reasonable size hint for the widget
+            return QtCore.QSize(60, 20)  # Adjust this size as needed
+
+        def minimumSizeHint(self):
+            # Optionally, return a minimum size hint
+            return QtCore.QSize(60, 20)    
 
         def dragEnterEvent(self, event):
             if event.mimeData().hasFormat('application/x-qabstractitemmodeldatalist'):
@@ -1203,14 +1565,16 @@ class Ui_MainWindow(object):
 
 
     # method to create Button overriding QtPushButton to handle drop events and access outer methods (e.g. displayPlaylist())
-    def create_acceptDropButton(self, parent, playlistMaxlength=40):
+    def create_acceptDropButton(self, parent=None, playlistMaxlength=40):
         outer_self = self
         
         # override for QPushButton to accept drag and drop events
         class AcceptDropButton(QtWidgets.QPushButton):
             def __init__(self, parent, playlistMaxlength):
                 super(AcceptDropButton, self).__init__(parent)
-                
+                # Set appropriate size policy to allow resizing
+                self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
+
                 self.musicBtnContextMenu = QtWidgets.QMenu(self)
                 clearPlaylistAction = self.musicBtnContextMenu.addAction("Clear Playlist")
                 clearPlaylistAction.triggered.connect(self.clearPlaylist)
@@ -1220,6 +1584,14 @@ class Ui_MainWindow(object):
                 self.playlist = []
                 self._isActive = False
                 self.activeSongKey = -1
+
+            def sizeHint(self):
+                # Return a reasonable size hint for the widget
+                return QtCore.QSize(75, 75)  # Adjust this size as needed
+
+            def minimumSizeHint(self):
+                # Optionally, return a minimum size hint
+                return QtCore.QSize(50, 50)   
 
             def contextMenuEvent(self, event: QtGui.QContextMenuEvent | None) -> None:
                 #outer_self.displayPlaylist(self)
