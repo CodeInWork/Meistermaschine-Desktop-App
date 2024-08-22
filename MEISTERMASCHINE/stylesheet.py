@@ -53,6 +53,12 @@ CSS_Refresh_SD_Btn = f"background-color:{green}"
 # Save To SD Button
 CSS_Save_SD_Btn = f"background-color: {blue}"
 
+# Clear Sum Button
+CSS_Clear_Sum_Btn = f"""QPushButton{{
+    background-color: {dark_gray};
+    color:{white};
+    }}"""
+
 # List of found SD cards Combo Box
 CSS_Found_SD_Combobox = f"background-color: {dark_gray}"
 
@@ -260,7 +266,7 @@ CSS_Dice_Roll_Text = f"""QLabel{{
 """
 CSS_Dice_Roll_Sum = f"""QLabel{{
         color: {white};
-        border: none; 
+        border: 1px solid {dark_gray}; 
         font-size: 20px;
     }}
 """
