@@ -230,7 +230,7 @@ CSS_tabwidget = f"""QTabWidget::tab-bar{{
         padding: 10 px;
         border-top-left-radius: 4px;
         border-top-right-radius: 4px;
-        min-width: 10ex;
+        min-width: 20ex;
     }}
     QTabBar::tab::selected{{
         background: {dark_gray};

@@ -261,69 +261,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         # Tab 2: Audio file system and SD card
         self.create_Audio_Tab_Layout(audioTab)
-        """
-        Audio_Tab_Layout = QtWidgets.QVBoxLayout()
-        utilityTab.setTabText(0,"Dice")
-
-       
-
-        audioTab.setLayout(Audio_Tab_Layout)
-        
-        
-        self.fileModel = QtGui.QFileSystemModel()
-        self.fileModel.setRootPath(self.default_soundFile_path)
-        self.fileModel.setNameFilters(["*.mp3","*.wav", "*.ogg"]) 
-        self.fileModel.setNameFilterDisables(False)
-        self.fileTreeListView = QtWidgets.QTreeView()
-        self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
-        self.fileTreeListView.setHeaderHidden(True)
-        self.fileTreeListView.setDragEnabled(True)
-        self.fileTreeListView.setStyleSheet(style.CSS_ListView)
-        self.fileTreeListView.setObjectName("fileTreeListView")
-        self.fileTreeListView.setModel(self.fileModel)
-        self.fileTreeListView.setRootIndex(self.fileModel.index(self.default_soundFile_path))
-        self.fileTreeListView.setColumnHidden(1, True)  # hide file size
-        self.fileTreeListView.setColumnHidden(2, True)  # hide file type
-        self.fileTreeListView.setColumnHidden(3, True)  # hide file date
-        self.fileTreeListView.setColumnWidth(0, 400)
-        self.fileTreeListView.show()
-        self.fileTreeListView.doubleClicked[QtCore.QModelIndex].connect(self.on_fileTree_doubleClicked)
-
-        Audio_Tab_Layout.addWidget(self.fileTreeListView)
-
-        self.getRootFolderButton = QtWidgets.QPushButton()
-        self.getRootFolderButton.setStyleSheet(style.CSS_Root_Folder_Btn)
-        self.getRootFolderButton.setObjectName("getRootFolderButton")
-        self.getRootFolderButton.clicked.connect(lambda: self.on_rootFolderDialogBtnClicked())
-
-        Audio_Tab_Layout.addWidget(self.getRootFolderButton)
-
-        self.saveToSDButton = QtWidgets.QPushButton()
-        self.saveToSDButton.setStyleSheet(style.CSS_Save_SD_Btn)
-        self.saveToSDButton.setObjectName("saveToSDButton")
-
-        Audio_Tab_Layout.addWidget(self.saveToSDButton)
-
-        self.listOfFoundSDCardsCombobox = QtWidgets.QComboBox()
-        self.listOfFoundSDCardsCombobox.setStyleSheet(style.CSS_Found_SD_Combobox)
-        self.listOfFoundSDCardsCombobox.setObjectName("listOfFoundSDCardsCombobox")
-
-        Audio_Tab_Layout.addWidget(self.listOfFoundSDCardsCombobox)
-
-        self.SDcardsLabel = QtWidgets.QLabel()
-        self.SDcardsLabel.setStyleSheet(style.CSS_Label)
-        self.SDcardsLabel.setTextFormat(QtCore.Qt.TextFormat.PlainText)
-        self.SDcardsLabel.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.SDcardsLabel.setObjectName("SDcardsLabel")
-
-        Audio_Tab_Layout.addWidget(self.SDcardsLabel)
-
-        self.refreshButton = QtWidgets.QPushButton()
-        self.refreshButton.setStyleSheet(style.CSS_Refresh_SD_Btn)
-        self.refreshButton.setObjectName("refreshButton")
-
-        Audio_Tab_Layout.addWidget(self.refreshButton)
-        """
         
         # Add the tab widget to the frame's layout
         Utility_Frame_Layout.addWidget(utilityTab)
@@ -912,18 +849,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     def on_trackBackwardClicked(self)->None:
         activeBtn = self.getActiveButton(self.musicBtn_lst)
-        previousSong = activeBtn.getPreviousSong()
-        self.stopPlayers([self.musicPlayer])
-        self.playPlayer(self.musicPlayer, previousSong)
-        self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
+        if activeBtn:
+            previousSong = activeBtn.getPreviousSong()
+            self.stopPlayers([self.musicPlayer])
+            self.playPlayer(self.musicPlayer, previousSong)
+            self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
         #Todo: set activated item
 
     def on_trackForwardClicked(self)->None:
         activeBtn = self.getActiveButton(self.musicBtn_lst)
-        nextSong = activeBtn.getNextSong()
-        self.stopPlayers([self.musicPlayer])
-        self.playPlayer(self.musicPlayer, nextSong)
-        self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
+        if activeBtn:
+            nextSong = activeBtn.getNextSong()
+            self.stopPlayers([self.musicPlayer])
+            self.playPlayer(self.musicPlayer, nextSong)
+            self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
 
     def on_playPauseBtnClicked(self)->None:
         status = self.musicPlayer.playbackState()
