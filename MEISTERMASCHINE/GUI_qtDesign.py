@@ -17,6 +17,10 @@ import sys
 import random
 
 import MEISTERMASCHINE.stylesheet as style
+from audio.volume import dependent_volume
+from preset_utilities.preset_io import save_mms, load_mms
+
+
 
 
 
@@ -709,23 +713,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def new(self)->None:
         file = QtWidgets.QFileDialog.getSaveFileName(None, "Create new file", self.default_preset_path, "*.mms")
         self.clearAllPlaylists()
-        self.saveFile_mms(file[0])
+        save_mms(file[0])
         self.listPresets()
 
     @Slot()
     def open(self)->None:
         file = QtWidgets.QFileDialog.getOpenFileName(None, "Select a file...", self.default_preset_path, "*.mms")
-        self.loadFile_mms(file[0])
+        load_mms(file[0])
 
     @Slot()
     def save(self)->None:
         file = self.getCurrentPresetFile()
-        self.saveFile_mms(file)
+        save_mms(file)
 
     @Slot()
     def save_as(self)->None:
         file = QtWidgets.QFileDialog.getSaveFileName(None, "Save file", self.default_preset_path, "*.mms")
-        self.saveFile_mms(file[0])
+        save_mms(file[0])
         self.listPresets()
 
     # Preset Combobox
@@ -734,7 +738,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.uncheckAllButtons()
         if self.preset_lst:
             new_file = self.preset_lst[idx]
-            self.loadFile_mms(new_file[0])
+            load_mms(new_file[0])
 
     # Buttons
     # Dice Roll Tab in Utility Frame
@@ -986,40 +990,40 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def on_masterVolumeSliderChanged(self, masterValue)->None:
         # convert linear scale to logarithmic to match dB perception
         musicValue = self.musicVolumeSlider.value()
-        linMusicVolume = self.calculateDependentVolume(masterValue, musicValue)
+        linMusicVolume = dependent_volume(masterValue, musicValue)
         self._music_output.setVolume(linMusicVolume)
 
         settingValue = self.settingVolumeSlider.value()
-        linSettingVolume = self.calculateDependentVolume(masterValue, settingValue)
+        linSettingVolume = dependent_volume(masterValue, settingValue)
         self._setting_output.setVolume(linSettingVolume)
 
         weatherValue = self.weatherVolumeSlider.value()
-        linWeatherVolume = self.calculateDependentVolume(masterValue, weatherValue)
+        linWeatherVolume = dependent_volume(masterValue, weatherValue)
         self._weather_output.setVolume(linWeatherVolume)
 
         specialValue = self.specialVolumeSlider.value()
-        linSpecialVolume = self.calculateDependentVolume(masterValue, specialValue)
+        linSpecialVolume = dependent_volume(masterValue, specialValue)
         self._special_output.setVolume(linSpecialVolume)
         
     # individual volume sliders (dependent sliders)
     def on_musicVolumeSliderChanged(self, subValue)->None:
         masterValue = self.masterVolumeSlider.value()
-        linDepVal = self.calculateDependentVolume(masterValue, subValue)
+        linDepVal = dependent_volume(masterValue, subValue)
         self._music_output.setVolume(linDepVal)
         
     def on_settingVolumeSliderChanged(self, subValue)->None:
         masterValue = self.masterVolumeSlider.value()
-        linDepVal = self.calculateDependentVolume(masterValue, subValue)
+        linDepVal = dependent_volume(masterValue, subValue)
         self._setting_output.setVolume(linDepVal)
 
     def on_weatherVolumeSliderChanged(self, subValue)->None:
         masterValue = self.masterVolumeSlider.value()
-        linDepVal = self.calculateDependentVolume(masterValue, subValue)
+        linDepVal = dependent_volume(masterValue, subValue)
         self._weather_output.setVolume(linDepVal)
 
     def on_specialVolumeSliderChanged(self, subValue)->None:
         masterValue = self.masterVolumeSlider.value()
-        linDepVal = self.calculateDependentVolume(masterValue, subValue)
+        linDepVal = dependent_volume(masterValue, subValue)
         self._special_output.setVolume(linDepVal)
         
         
