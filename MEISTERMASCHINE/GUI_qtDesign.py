@@ -17,8 +17,8 @@ import sys
 import random
 
 import MEISTERMASCHINE.stylesheet as style
-from audio.volume import dependent_volume
-from preset_utilities.preset_io import save_mms, load_mms
+from MEISTERMASCHINE.audio.volume import dependent_volume
+from MEISTERMASCHINE.preset_utilities.preset_io import save_mms, load_mms
 
 
 
@@ -44,7 +44,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.settingIcon_lst = ["pub","dorf","landschaft","hohle","kampf"]
         self.weatherIcon_lst = ["nacht","welle","wind","sturm","schnee"]
         self.specialIcon_lst = ["icon_square","icon_plus","icon_triangle","icon_minus","icon_star"]
-        
+
         self.Btn_Display_Time = 20000   # how long is dice roll result displayed
 
         # get sys path depending on build condition (as *.exe or as script)
@@ -62,6 +62,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         default_icon_path = os.path.join(self.application_path, "icons")
 
         self.preset_lst=[]
+        self.btn_occupancy={}
 
         # Create Player Objects for Button Columns
         # music player
