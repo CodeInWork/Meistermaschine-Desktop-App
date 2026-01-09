@@ -19,7 +19,8 @@ import random
 import MEISTERMASCHINE.stylesheet as style
 from MEISTERMASCHINE.audio.volume import dependent_volume
 from MEISTERMASCHINE.preset_utilities.preset_io import save_mms, load_mms
-from MEISTERMASCHINE.buttons.btn_logic import btn_assign_playlist
+from MEISTERMASCHINE.buttons.btn_logic import btn_assign_playlist, handle_playlist_cleared
+from MEISTERMASCHINE.audio.playlist import Playlist
 
 
 
@@ -715,7 +716,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def new(self)->None:
         file = QtWidgets.QFileDialog.getSaveFileName(None, "Create new file", self.default_preset_path, "*.mms")
         self.clearAllPlaylists()
-        save_mms(file[0])
+        save_mms(file[0], self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
         self.listPresets()
 
     @Slot()
@@ -727,13 +728,41 @@ class Ui_MainWindow(QtWidgets.QWidget):
     @Slot()
     def save(self)->None:
         file = self.getCurrentPresetFile()
-        save_mms(file)
+        save_mms(file, self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
 
     @Slot()
     def save_as(self)->None:
         file = QtWidgets.QFileDialog.getSaveFileName(None, "Save file", self.default_preset_path, "*.mms")
-        save_mms(file[0])
+        save_mms(file[0], self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
         self.listPresets()
+
+    # Button Event Handlers
+    def onSongsDroppedOnButton(self, btn, paths: list[str]):
+        """
+        Central place where songs are added to a button playlist.
+        """
+
+        for path in paths:
+            title = self.extractTitle(path)
+            btn.playlist.add(path, title)
+
+        # Optional UX decisions
+        self.displayPlaylist(btn)
+
+        # Optional: auto-activate if nothing playing
+        if not btn.is_active:
+            btn.setChecked(True)
+
+    def onPlaylistCleared(self, btn):
+        active_btn = self.getActiveButton(self.musicBtn_lst)
+
+        actions = handle_playlist_cleared(btn, active_btn)
+
+        if "stop_player" in actions:
+            self.stopPlayerOfButton(btn)
+
+        if "clear_playlist_view" in actions:
+            self.currentSoundFilesListWidget.clear()
 
     # Preset Combobox
     def on_presetComboBoxChanged(self, idx)->None:
@@ -1038,6 +1067,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
     #############################################################################################################################
     # helper functions
 
+    def extractTitle(self, path: str) -> str:
+        return os.path.splitext(os.path.basename(path))[0]
+
+
     def stopPlayerOfButton(self, dropButton)->None:
         player = self.getPlayerForButton(dropButton)
         self.stopPlayers([player])
@@ -1095,38 +1128,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             filename = os.path.splitext(head_tail[1])
             self.preset_lst.append([file, filename[0]])
             self.presetCombobox.addItem(filename[0])
-
-    def saveFile_mms(self, file: str):
-        try:
-            f = open(file, 'w', encoding="utf-8")
-        except Exception as exc:
-            print(f"Unexpected {exc=}, {type(exc)=}")
-        else:
-            with f:
-                btn_idx=0
-                for btn in self.musicBtn_lst:
-                    for key in range(len(btn.playlist)):
-                        relPath = btn.playlist[key][0]
-                        f.write(f"{0} {btn_idx}\t{relPath}\n")
-                    btn_idx+=1
-                btn_idx=0
-                for btn in self.settingBtn_lst:
-                    for key in range(len(btn.playlist)):
-                        relPath = btn.playlist[key][0]
-                        f.write(f"{1} {btn_idx}\t{relPath}\n")
-                    btn_idx+=1
-                btn_idx=0
-                for btn in self.weatherBtn_lst:
-                    for key in range(len(btn.playlist)):
-                        relPath = btn.playlist[key][0]
-                        f.write(f"{2} {btn_idx}\t{relPath}\n")
-                    btn_idx+=1
-                btn_idx=0
-                for btn in self.specialBtn_lst:
-                    for key in range(len(btn.playlist)):
-                        relPath = btn.playlist[key][0]
-                        f.write(f"{3} {btn_idx}\t{relPath}\n")
-                    btn_idx+=1
         
 
     def calculateDependentVolume(self, masterValue: float, subValue: float)-> float:
@@ -1284,17 +1285,114 @@ class Ui_MainWindow(QtWidgets.QWidget):
             elif pos.y() > self.viewport().height():
                 self.verticalScrollBar().setValue(self.verticalScrollBar().value() + self.scroll_speed)
 
+    
+    class AcceptDropButton(QtWidgets.QPushButton):
+        songsDropped = QtCore.pyqtSignal(object, object)
         
+        playlistCleared = QtCore.pyqtSignal(object)
+        playlistHovered = QtCore.pyqtSignal(object)
+        playlistDropped = QtCore.pyqtSignal(object)
+
+        def __init__(self, parent=None, playlist_max_length=40, app_path=""):
+            super().__init__(parent)
+
+            self.app_path = app_path
+            self.playlist = Playlist(playlist_max_length)
+            self.is_active = False
+
+            self.setAcceptDrops(True)
+            self.setSizePolicy(
+                QtWidgets.QSizePolicy.Policy.Expanding,
+                QtWidgets.QSizePolicy.Policy.Expanding
+            )
+
+            self._init_context_menu()
+
+        # ---------- UI ----------
+
+        def sizeHint(self):
+            return QtCore.QSize(75, 75)
+
+        def minimumSizeHint(self):
+            return QtCore.QSize(50, 50)
+
+        def _init_context_menu(self):
+            self.menu = QtWidgets.QMenu(self)
+            clear_action = self.menu.addAction("Clear Playlist")
+            clear_action.triggered.connect(self.clear_playlist)
+
+        def contextMenuEvent(self, event):
+            self.menu.exec(event.globalPos())
+
+        # ---------- Playlist ----------
+
+        def clear_playlist(self):
+            self.playlist.clear()
+            self.is_active = False
+            self.setChecked(False)
+            self.playlistCleared.emit(self)
+
+        # ---------- Drag & Drop ----------
+
+        def dragEnterEvent(self, event):
+            if event.mimeData().hasUrls():
+                event.acceptProposedAction()
+                self.playlistHovered.emit(self)
+            else:
+                super().dragEnterEvent(event)
+
+        def dropEvent(self, event):
+            if event.mimeData().hasUrls():
+                paths = [
+                    os.path.relpath(url.toLocalFile(), self.app_path)
+                    for url in event.mimeData().urls()
+                ]
+                self.songsDropped.emit(self, paths)
+                event.acceptProposedAction()
+            else:
+                super().dropEvent(event)
+
+        def enterEvent(self, event):
+            if self.playlist.tracks:
+                self.playlistHovered.emit(self)
+            super().enterEvent(event)
+
+        def leaveEvent(self, event):
+            self.playlistHovered.emit(None)
+            super().leaveEvent(event)
+
+        # ---------- Helpers ----------
+
+        def _relative_path(self, url):
+            return os.path.relpath(url.toLocalFile(), self.app_path)
+
+        def _filename(self, path):
+            return os.path.splitext(os.path.basename(path))[0]
+
+    def create_acceptDropButton(self, parent=None, playlistMaxlength=40):
+        btn = self.AcceptDropButton(
+            parent=parent,
+            playlist_max_length=playlistMaxlength,
+            app_path=self.application_path
+        )
+
+        btn.playlistHovered.connect(self.displayPlaylist)
+        btn.playlistCleared.connect(self.onPlaylistCleared)
+        btn.playlistDropped.connect(self.displayPlaylist)
+        btn.songsDropped.connect(self.onSongsDroppedOnButton)
+
+        return btn
+
 
 
     # method to create Button overriding QtPushButton to handle drop events and access outer methods (e.g. displayPlaylist())
-    def create_acceptDropButton(self, parent=None, playlistMaxlength=40):
+    def create_acceptDropButton_old(self, parent=None, playlistMaxlength=40):
         outer_self = self
         
         # override for QPushButton to accept drag and drop events
-        class AcceptDropButton(QtWidgets.QPushButton):
+        class AcceptDropButton_old(QtWidgets.QPushButton):
             def __init__(self, parent, playlistMaxlength):
-                super(AcceptDropButton, self).__init__(parent)
+                super(AcceptDropButton_old, self).__init__(parent)
                 # Set appropriate size policy to allow resizing
                 self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
 
@@ -1387,10 +1485,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     event.acceptProposedAction()
                     outer_self.displayPlaylist(self)
                 else:
-                    super(AcceptDropButton, self).dragEnterEvent(event)
+                    super(AcceptDropButton_old, self).dragEnterEvent(event)
 
             def dragMoveEvent(self, event):
-                super(AcceptDropButton, self).dragMoveEvent(event)
+                super(AcceptDropButton_old, self).dragMoveEvent(event)
 
             def dropEvent(self, event):
                 if event.mimeData().hasUrls():
@@ -1399,7 +1497,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                         self.addSongToPlaylist(rePath)
                     event.acceptProposedAction()
                 else:
-                    super(AcceptDropButton,self).dropEvent(event)   
+                    super(AcceptDropButton_old, self).dropEvent(event)   
 
             def dragLeaveEvent(self, event) -> None:
                 activeBtn = outer_self.getActiveButton(outer_self.musicBtn_lst)
@@ -1430,6 +1528,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 nameExt = os.path.splitext(head_tail[1])
                 return nameExt[0]
 
-        return AcceptDropButton(parent, playlistMaxlength) 
+        return AcceptDropButton_old(parent, playlistMaxlength) 
         
         
