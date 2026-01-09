@@ -7,7 +7,7 @@ def save_mms(file, music, setting, weather, special):
                 for song in btn.playlist:
                     f.write(f"{t} {btn_idx}\t{song[0]}\n")
 
-def loadFile_mms(file):
+def load_mms(file):
     result = {0: [], 1: [], 2: [], 3: []}
     with open(file, "r", encoding="utf-8") as f:
         for line in f:

@@ -19,6 +19,7 @@ import random
 import MEISTERMASCHINE.stylesheet as style
 from MEISTERMASCHINE.audio.volume import dependent_volume
 from MEISTERMASCHINE.preset_utilities.preset_io import save_mms, load_mms
+from MEISTERMASCHINE.buttons.btn_logic import btn_assign_playlist
 
 
 
@@ -720,7 +721,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
     @Slot()
     def open(self)->None:
         file = QtWidgets.QFileDialog.getOpenFileName(None, "Select a file...", self.default_preset_path, "*.mms")
-        load_mms(file[0])
+        self.btn_occupancy = load_mms(file[0])
+        btn_assign_playlist(self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst, btn_occupancy)
 
     @Slot()
     def save(self)->None:
@@ -739,7 +741,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.uncheckAllButtons()
         if self.preset_lst:
             new_file = self.preset_lst[idx]
-            load_mms(new_file[0])
+            self.btn_occupancy = load_mms(new_file[0])
+            btn_assign_playlist(self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst, self.btn_occupancy)
 
     # Buttons
     # Dice Roll Tab in Utility Frame
@@ -1125,27 +1128,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
                         f.write(f"{3} {btn_idx}\t{relPath}\n")
                     btn_idx+=1
         
-    def loadFile_mms(self, file: str):
-        try:
-            f = open(file, 'r',  encoding="utf-8")
-        except FileNotFoundError:
-            print('File not found') # ToDo: display error in status bar
-        else:
-            with f:
-                data = f.readlines()
-                self.clearAllPlaylists()
-                for line in data:
-                    splitLine = line.split("\t")
-                    idLst = splitLine[0].split()
-                    soundFile = splitLine[1].rstrip()
-                    if int(idLst[0])==0:
-                        self.musicBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile) 
-                    if int(idLst[0])==1:
-                        self.settingBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile)
-                    if int(idLst[0])==2:
-                        self.weatherBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile)
-                    if int(idLst[0])==3:
-                        self.specialBtn_lst[int(idLst[1])].addSongToPlaylist(soundFile)
 
     def calculateDependentVolume(self, masterValue: float, subValue: float)-> float:
         depValue = subValue*masterValue / 100
