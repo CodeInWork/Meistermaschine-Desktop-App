@@ -1347,6 +1347,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             else:
                 super().dragEnterEvent(event)
 
+        def dragLeaveEvent(self, event):
+            self.playlistLeave.emit(self)
+            super().dragLeaveEvent(event)
+
         def dropEvent(self, event):
             if event.mimeData().hasUrls():
                 paths = [
@@ -1357,15 +1361,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 event.acceptProposedAction()
             else:
                 super().dropEvent(event)
-
-        def hoverEnterEvent(self, event):
-            if self.playlist.tracks:
-                self.playlistHovered.emit(self)
-            super().hoverEnterEvent(event)
-
-        def hoverLeaveEvent(self, event):
-            self.playlistLeave.emit(self)
-            super().hoverLeaveEvent(event)
 
         def event(self, event):
             if event.type() == QtCore.QEvent.Type.HoverEnter:
