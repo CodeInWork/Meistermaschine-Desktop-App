@@ -1196,6 +1196,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.currentSoundFilesListWidget.setCurrentRow(btn.playlist.active)
         else:
             self.currentSoundFilesListWidget.setCurrentRow(-1)
+
+    def displayActivePlaylist(self)->None:
+        activeBtn = self.getActiveButton(self.musicBtn_lst)
+        if activeBtn:
+            self.displayPlaylist(activeBtn)
+        else:
+            self.currentSoundFilesListWidget.clear()
     
     class RearrangeListWidget(QtWidgets.QListWidget):
         '''
@@ -1288,9 +1295,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         playlistCleared = QtCore.pyqtSignal(object)
         playlistHovered = QtCore.pyqtSignal(object)
         playlistDropped = QtCore.pyqtSignal(object)
+        playlistLeave = QtCore.pyqtSignal(object)
 
         def __init__(self, parent=None, playlist_max_length=40, app_path=""):
             super().__init__(parent)
+
+            self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
             self.app_path = app_path
             self.playlist = Playlist(playlist_max_length)
@@ -1348,14 +1358,28 @@ class Ui_MainWindow(QtWidgets.QWidget):
             else:
                 super().dropEvent(event)
 
-        def enterEvent(self, event):
+        def hoverEnterEvent(self, event):
             if self.playlist.tracks:
                 self.playlistHovered.emit(self)
-            super().enterEvent(event)
+            super().hoverEnterEvent(event)
 
-        def leaveEvent(self, event):
-            self.playlistHovered.emit(None)
-            super().leaveEvent(event)
+        def hoverLeaveEvent(self, event):
+            self.playlistLeave.emit(self)
+            super().hoverLeaveEvent(event)
+
+        def event(self, event):
+            if event.type() == QtCore.QEvent.Type.HoverEnter:
+                if self.playlist.tracks:
+                    self.playlistHovered.emit(self)
+                return True
+
+            if event.type() == QtCore.QEvent.Type.HoverLeave:
+                self.playlistLeave.emit(self)
+                return True
+
+            return super().event(event)
+
+
 
         # ---------- Helpers ----------
 
@@ -1376,6 +1400,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         btn.playlistCleared.connect(self.onPlaylistCleared)
         btn.playlistDropped.connect(self.displayPlaylist)
         btn.songsDropped.connect(self.onSongsDroppedOnButton)
+        btn.playlistLeave.connect(self.displayActivePlaylist)
 
         return btn
+
+
 
