@@ -27,6 +27,7 @@ from MEISTERMASCHINE.audio.playlist import Playlist
 
 
 # ToDo: 
+#   - mark active song in playlist widget when button pressed, not only when mouse hovered
 #   - make *.mms only hold the song title and make it recombine with application path on demand
 #   - when currentplaylist widget is rearranged, update button playlist
 #   - add inactive play icon when playstate is stopped (play button is inactive)
@@ -743,8 +744,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         """
 
         for path in paths:
-            title = self.extractTitle(path)
-            btn.playlist.add(path, title)
+            btn.playlist.add(path)
 
         # Optional UX decisions
         self.displayPlaylist(btn)
@@ -869,7 +869,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if soundBtn.isChecked():
             self.setActiveButton(idx, soundBtn_lst)
             self.uncheckInactiveButtons(soundBtn_lst)
-            activeSong = soundBtn.getActiveSong()
+            activeSong = soundBtn.playlist.current()
             if activeSong:
                 self.playPlayer(soundPlayer, activeSong)
                 if btn_Type == 'music': self.displayPlaylist(soundBtn)
@@ -887,19 +887,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def on_trackBackwardClicked(self)->None:
         activeBtn = self.getActiveButton(self.musicBtn_lst)
         if activeBtn:
-            previousSong = activeBtn.getPreviousSong()
+            previousSong = activeBtn.playlist.previous()
             self.stopPlayers([self.musicPlayer])
             self.playPlayer(self.musicPlayer, previousSong)
-            self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
+            self.currentSoundFilesListWidget.item(activeBtn.playlist.current()).setSelected(True)
         #Todo: set activated item
 
     def on_trackForwardClicked(self)->None:
         activeBtn = self.getActiveButton(self.musicBtn_lst)
         if activeBtn:
-            nextSong = activeBtn.getNextSong()
+            nextSong = activeBtn.playlist.next()
             self.stopPlayers([self.musicPlayer])
             self.playPlayer(self.musicPlayer, nextSong)
-            self.currentSoundFilesListWidget.item(activeBtn.activeSongKey).setSelected(True)
+            self.currentSoundFilesListWidget.item(activeBtn.playlist.current()).setSelected(True)
 
     def on_playPauseBtnClicked(self)->None:
         status = self.musicPlayer.playbackState()
@@ -912,7 +912,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         elif status == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
             activeBtn = self.getActiveButton(self.musicBtn_lst)
             if activeBtn:
-                activeSong = activeBtn.getActiveSong()
+                activeSong = activeBtn.playlist.current()
                 if activeSong:
                     self.playPlayer(self.musicPlayer, activeSong, fromBeginning=False)
                     self.playPauseButton.setIcon(self.pauseIcon)
@@ -927,7 +927,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             else:
                 itemIndex = self.currentSoundFilesListWidget.row(item)
                 activeBtn.setActiveSong(itemIndex)
-                activeSong = activeBtn.getActiveSong()
+                activeSong = activeBtn.playlist.current()
                 if activeSong:
                     self.playPlayer(self.musicPlayer, activeSong)
 
@@ -939,17 +939,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
             if not activeBtn: return
             else:
                 itemIndex = self.currentSoundFilesListWidget.row(item)
-                if itemIndex == activeBtn.activeSongKey:
+                if itemIndex == activeBtn.playlist.current():
                     player = self.getPlayerForButton(activeBtn)
                     self.stopPlayers([player])
-                    activeBtn.removeSongFromPlaylist(itemIndex)
+                    activeBtn.playlist.remove(itemIndex)
                     self.displayPlaylist(activeBtn)
-                    if not activeBtn.activeSongKey==-1:
-                        self.playPlayer(player, activeBtn.getActiveSong())
+                    if not activeBtn.playlist.current()==-1:
+                        self.playPlayer(player, activeBtn.playlist.current())
                 else:
-                    activeBtn.removeSongFromPlaylist(itemIndex)
+                    activeBtn.playlist.remove(itemIndex)
                     self.displayPlaylist(activeBtn)
-                if activeBtn.activeSongKey==-1:
+                if activeBtn.playlist.current()==-1:
                     activeBtn.setChecked(False)
                     activeBtn._isActive=False
 
@@ -958,7 +958,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.stopPlayers([self.musicPlayer])
         track = activeBtn.playlist.pop(old_index)
         activeBtn.playlist.insert(new_index, track)
-        activeBtn.activeSongKey = new_index
+        activeBtn.playlist.current() = new_index
         currentItem = self.currentSoundFilesListWidget.item(new_index)
         self.currentSoundFilesListWidget.setCurrentItem(currentItem)
 
@@ -968,7 +968,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             activeMusicBtn = self.getActiveButton(self.musicBtn_lst)
             nextsong = activeMusicBtn.getNextSong()
             self.playPlayer(self.musicPlayer, nextsong)
-            self.currentSoundFilesListWidget.setCurrentRow(activeMusicBtn.activeSongKey)
+            self.currentSoundFilesListWidget.setCurrentRow(activeMusicBtn.playlist.current())
 
     def on_musicPlaybackStateChanged(self, state)->None:
         if state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
@@ -1067,10 +1067,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
     #############################################################################################################################
     # helper functions
 
-    def extractTitle(self, path: str) -> str:
-        return os.path.splitext(os.path.basename(path))[0]
-
-
     def stopPlayerOfButton(self, dropButton)->None:
         player = self.getPlayerForButton(dropButton)
         self.stopPlayers([player])
@@ -1130,11 +1126,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.presetCombobox.addItem(filename[0])
         
 
-    def calculateDependentVolume(self, masterValue: float, subValue: float)-> float:
-        depValue = subValue*masterValue / 100
-        linDepVal = QtMultimedia.QAudio.convertVolume(depValue / 100, QtMultimedia.QAudio.VolumeScale.LogarithmicVolumeScale, QtMultimedia.QAudio.VolumeScale.LinearVolumeScale)
-        return linDepVal
-
     def stopPlayers(self, soundPlayer_lst: list[QtMultimedia.QMediaPlayer])->None:
         for player in soundPlayer_lst:
             player.stop()
@@ -1166,16 +1157,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def clearAllPlaylists(self)->None:
         for btn in self.musicBtn_lst:
             btn.playlist.clear()
-            btn.activeSongKey=-1
+            btn.playlist.current()=-1
         for btn in self.settingBtn_lst:
             btn.playlist.clear()
-            btn.activeSongKey=-1
+            btn.playlist.current()=-1
         for btn in self.weatherBtn_lst:
             btn.playlist.clear()
-            btn.activeSongKey=-1
+            btn.playlist.current()=-1
         for btn in self.specialBtn_lst:
             btn.playlist.clear()
-            btn.activeSongKey=-1
+            btn.playlist.current()=-1
 
     def uncheckInactiveButtons(self, btn_list: list[object])->None:
         for btn in btn_list:
@@ -1196,10 +1187,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def displayPlaylist(self, btn)->None:
         if not btn: return
         self.currentSoundFilesListWidget.clear()
-        for sound_key in range(len(btn.playlist)):
-            self.currentSoundFilesListWidget.addItem(btn.playlist[sound_key][1])
-        #self.currentSoundFilesListWidget.item(btn.activeSongKey).setSelected(True)
-        self.currentSoundFilesListWidget.setCurrentRow(btn.activeSongKey)
+        for sound_key in btn.playlist.tracks:
+            self.currentSoundFilesListWidget.addItem(sound_key[1])   # display title
+        #self.currentSoundFilesListWidget.item(btn.playlist.current()).setSelected(True)
+        self.currentSoundFilesListWidget.setCurrentRow(btn.playlist.active)
     
     class RearrangeListWidget(QtWidgets.QListWidget):
         '''
@@ -1404,7 +1395,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.setAcceptDrops(True)
                 self.playlist = []
                 self._isActive = False
-                self.activeSongKey = -1
+                self.playlist.current() = -1
 
             def sizeHint(self):
                 # Return a reasonable size hint for the widget
@@ -1421,7 +1412,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             def clearPlaylist(self)->None:
                 self.playlist.clear()
                 outer_self.currentSoundFilesListWidget.clear()
-                self.activeSongKey = -1
+                self.playlist.current() = -1
                 if self._isActive:  # if playing then inactivate
                     outer_self.stopPlayerOfButton(self)
                     self.setChecked(False)
@@ -1430,20 +1421,20 @@ class Ui_MainWindow(QtWidgets.QWidget):
             def getActiveSong(self)->list | None:
                 if not len(self.playlist):
                     return None
-                elif self.activeSongKey == -1:
+                elif self.playlist.current() == -1:
                     self.setActiveSong(0)
                     return self.playlist[0]
-                elif self.activeSongKey < len(self.playlist):
-                    return self.playlist[self.activeSongKey]
+                elif self.playlist.current() < len(self.playlist):
+                    return self.playlist[self.playlist.current()]
 
             def setActiveSong(self, key)->None:
-                self.activeSongKey = key
+                self.playlist.current() = key
 
             def getPreviousSong(self)->str:
-                if self.activeSongKey-1 < 0:
-                    self.activeSongKey = len(self.playlist)-1 #switch to last entry
+                if self.playlist.current()-1 < 0:
+                    self.playlist.current() = len(self.playlist)-1 #switch to last entry
                 else:
-                    self.activeSongKey -= 1
+                    self.playlist.current() -= 1
                 return self.getActiveSong()
 
             def getActiveSongTitle(self)->str | None:
@@ -1454,10 +1445,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     return activeSong[1]
                 
             def getNextSong(self)->list:
-                if self.activeSongKey+1 >= len(self.playlist) & len(self.playlist)!=0:
-                    self.activeSongKey = 0  #switch to first entry
+                if self.playlist.current()+1 >= len(self.playlist) & len(self.playlist)!=0:
+                    self.playlist.current() = 0  #switch to first entry
                 else:
-                    self.activeSongKey += 1
+                    self.playlist.current() += 1
                 return self.getActiveSong()
                 
             def addSongToPlaylist(self, soundFile: str)->None:
@@ -1471,13 +1462,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
             def removeSongFromPlaylist(self, index)->list[str]:
                 if len(self.playlist)-1 == 0:       #only one song in list
                     track=self.playlist.pop()
-                    self.activeSongKey=-1           #no active song left
+                    self.playlist.current()=-1           #no active song left
                 elif index==len(self.playlist)-1:   #last song erased
                     track=self.playlist.pop()
-                    self.activeSongKey=0            #jump to first
+                    self.playlist.current()=0            #jump to first
                 else:
                     track=self.playlist.pop(index)
-                    self.activeSongKey=index        #next song active
+                    self.playlist.current()=index        #next song active
                 return track
 
             def dragEnterEvent(self, event):
