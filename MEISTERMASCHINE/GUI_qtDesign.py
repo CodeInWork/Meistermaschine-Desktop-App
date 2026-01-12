@@ -27,7 +27,7 @@ from MEISTERMASCHINE.audio.playlist import Playlist
 
 
 # ToDo: 
-#   - mark active song in playlist widget when button pressed, not only when mouse hovered
+#   - always show playlist of active button (leaveHoverEvent)
 #   - make *.mms only hold the song title and make it recombine with application path on demand
 #   - when currentplaylist widget is rearranged, update button playlist
 #   - add inactive play icon when playstate is stopped (play button is inactive)
@@ -871,13 +871,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.uncheckInactiveButtons(soundBtn_lst)
             activeSong = soundBtn.playlist.current()
             if activeSong:
+                self.currentSoundFilesListWidget.setCurrentRow(soundBtn.playlist.active)
                 self.playPlayer(soundPlayer, activeSong)
                 if btn_Type == 'music': self.displayPlaylist(soundBtn)
             else:
                 soundBtn.setChecked(False)
         else:
             if btn_Type == 'music': self.currentSoundFilesListWidget.clear()    # clear playlist
-            soundBtn._isActive=False
+            soundBtn.is_active=False
+            self.currentSoundFilesListWidget.setCurrentRow(-1)
 
     def on_stopBtnClicked(self)->None:
         self.stopPlayers([self.musicPlayer, self.settingPlayer, self.weatherPlayer, self.specialPlayer])
@@ -890,7 +892,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             previousSong = activeBtn.playlist.previous()
             self.stopPlayers([self.musicPlayer])
             self.playPlayer(self.musicPlayer, previousSong)
-            self.currentSoundFilesListWidget.item(activeBtn.playlist.current()).setSelected(True)
+            self.currentSoundFilesListWidget.item(activeBtn.playlist.active).setSelected(True)
         #Todo: set activated item
 
     def on_trackForwardClicked(self)->None:
@@ -899,7 +901,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             nextSong = activeBtn.playlist.next()
             self.stopPlayers([self.musicPlayer])
             self.playPlayer(self.musicPlayer, nextSong)
-            self.currentSoundFilesListWidget.item(activeBtn.playlist.current()).setSelected(True)
+            self.currentSoundFilesListWidget.item(activeBtn.playlist.active).setSelected(True)
 
     def on_playPauseBtnClicked(self)->None:
         status = self.musicPlayer.playbackState()
@@ -951,14 +953,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     self.displayPlaylist(activeBtn)
                 if activeBtn.playlist.current()==-1:
                     activeBtn.setChecked(False)
-                    activeBtn._isActive=False
+                    activeBtn.is_active=False
 
     def currentSoundFilesListWidget_itemMoved(self, old_index, new_index)->None:
         activeBtn = self.getActiveButton(self.musicBtn_lst)
         self.stopPlayers([self.musicPlayer])
         track = activeBtn.playlist.pop(old_index)
         activeBtn.playlist.insert(new_index, track)
-        activeBtn.playlist.current() = new_index
+        activeBtn.playlist.active = new_index
         currentItem = self.currentSoundFilesListWidget.item(new_index)
         self.currentSoundFilesListWidget.setCurrentItem(currentItem)
 
@@ -998,7 +1000,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             activeSettingBtn = self.getActiveButton(self.specialBtn_lst)
             activeSettingBtn.setChecked(False)
-            activeSettingBtn._isActive = False
+            activeSettingBtn.is_active = False
             self.specialPlayer.setPosition(0)   #rewind
 
     def on_musicPlayerDurationChanged(self, duration)->None:
@@ -1143,44 +1145,44 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def uncheckAllButtons(self)->None:
         for btn in self.musicBtn_lst:
             btn.setChecked(False)
-            btn._isActive=False
+            btn.is_active=False
         for btn in self.settingBtn_lst:
             btn.setChecked(False)
-            btn._isActive=False
+            btn.is_active=False
         for btn in self.weatherBtn_lst:
             btn.setChecked(False)
-            btn._isActive=False
+            btn.is_active=False
         for btn in self.specialBtn_lst:
             btn.setChecked(False)
-            btn._isActive=False
+            btn.is_active=False
 
     def clearAllPlaylists(self)->None:
         for btn in self.musicBtn_lst:
             btn.playlist.clear()
-            btn.playlist.current()=-1
+            btn.playlist.active=-1
         for btn in self.settingBtn_lst:
             btn.playlist.clear()
-            btn.playlist.current()=-1
+            btn.playlist.active=-1
         for btn in self.weatherBtn_lst:
             btn.playlist.clear()
-            btn.playlist.current()=-1
+            btn.playlist.active=-1
         for btn in self.specialBtn_lst:
             btn.playlist.clear()
-            btn.playlist.current()=-1
+            btn.playlist.active=-1
 
     def uncheckInactiveButtons(self, btn_list: list[object])->None:
         for btn in btn_list:
-            if not btn._isActive:
+            if not btn.is_active:
                 btn.setChecked(False)
 
     def setActiveButton(self, btn_idx, btn_list)->None:
         for btn in btn_list:
-            btn._isActive = False
-        btn_list[btn_idx]._isActive = True
+            btn.is_active = False
+        btn_list[btn_idx].is_active = True
     
     def getActiveButton(self, btn_list)->object | None:
         for btn in btn_list:
-            if btn._isActive == True: 
+            if btn.is_active == True: 
                 return btn
         return None
 
@@ -1190,7 +1192,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for sound_key in btn.playlist.tracks:
             self.currentSoundFilesListWidget.addItem(sound_key[1])   # display title
         #self.currentSoundFilesListWidget.item(btn.playlist.current()).setSelected(True)
-        self.currentSoundFilesListWidget.setCurrentRow(btn.playlist.active)
+        if btn.is_active:
+            self.currentSoundFilesListWidget.setCurrentRow(btn.playlist.active)
+        else:
+            self.currentSoundFilesListWidget.setCurrentRow(-1)
     
     class RearrangeListWidget(QtWidgets.QListWidget):
         '''
@@ -1374,151 +1379,3 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         return btn
 
-
-
-    # method to create Button overriding QtPushButton to handle drop events and access outer methods (e.g. displayPlaylist())
-    def create_acceptDropButton_old(self, parent=None, playlistMaxlength=40):
-        outer_self = self
-        
-        # override for QPushButton to accept drag and drop events
-        class AcceptDropButton_old(QtWidgets.QPushButton):
-            def __init__(self, parent, playlistMaxlength):
-                super(AcceptDropButton_old, self).__init__(parent)
-                # Set appropriate size policy to allow resizing
-                self.setSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
-
-                self.musicBtnContextMenu = QtWidgets.QMenu(self)
-                clearPlaylistAction = self.musicBtnContextMenu.addAction("Clear Playlist")
-                clearPlaylistAction.triggered.connect(self.clearPlaylist)
-
-                self.playlistMaxlength = playlistMaxlength
-                self.setAcceptDrops(True)
-                self.playlist = []
-                self._isActive = False
-                self.playlist.current() = -1
-
-            def sizeHint(self):
-                # Return a reasonable size hint for the widget
-                return QtCore.QSize(75, 75)  # Adjust this size as needed
-
-            def minimumSizeHint(self):
-                # Optionally, return a minimum size hint
-                return QtCore.QSize(50, 50)   
-
-            def contextMenuEvent(self, event: QtGui.QContextMenuEvent | None) -> None:
-                #outer_self.displayPlaylist(self)
-                self.musicBtnContextMenu.exec(event.globalPos())
-
-            def clearPlaylist(self)->None:
-                self.playlist.clear()
-                outer_self.currentSoundFilesListWidget.clear()
-                self.playlist.current() = -1
-                if self._isActive:  # if playing then inactivate
-                    outer_self.stopPlayerOfButton(self)
-                    self.setChecked(False)
-                    self._isActive = False
-
-            def getActiveSong(self)->list | None:
-                if not len(self.playlist):
-                    return None
-                elif self.playlist.current() == -1:
-                    self.setActiveSong(0)
-                    return self.playlist[0]
-                elif self.playlist.current() < len(self.playlist):
-                    return self.playlist[self.playlist.current()]
-
-            def setActiveSong(self, key)->None:
-                self.playlist.current() = key
-
-            def getPreviousSong(self)->str:
-                if self.playlist.current()-1 < 0:
-                    self.playlist.current() = len(self.playlist)-1 #switch to last entry
-                else:
-                    self.playlist.current() -= 1
-                return self.getActiveSong()
-
-            def getActiveSongTitle(self)->str | None:
-                activeSong = self.getActiveSong()
-                if not activeSong:
-                    return None
-                else:
-                    return activeSong[1]
-                
-            def getNextSong(self)->list:
-                if self.playlist.current()+1 >= len(self.playlist) & len(self.playlist)!=0:
-                    self.playlist.current() = 0  #switch to first entry
-                else:
-                    self.playlist.current() += 1
-                return self.getActiveSong()
-                
-            def addSongToPlaylist(self, soundFile: str)->None:
-                # validdate if url with validator?
-                filename = self.getFilenameFromPath(soundFile)
-                if len(self.playlist) >= self.playlistMaxlength:
-                    self.playlist[0]=[soundFile, filename]  # replace entry
-                else:
-                    self.playlist.append([soundFile, filename])
-
-            def removeSongFromPlaylist(self, index)->list[str]:
-                if len(self.playlist)-1 == 0:       #only one song in list
-                    track=self.playlist.pop()
-                    self.playlist.current()=-1           #no active song left
-                elif index==len(self.playlist)-1:   #last song erased
-                    track=self.playlist.pop()
-                    self.playlist.current()=0            #jump to first
-                else:
-                    track=self.playlist.pop(index)
-                    self.playlist.current()=index        #next song active
-                return track
-
-            def dragEnterEvent(self, event):
-                if event.mimeData().hasUrls():
-                    event.acceptProposedAction()
-                    outer_self.displayPlaylist(self)
-                else:
-                    super(AcceptDropButton_old, self).dragEnterEvent(event)
-
-            def dragMoveEvent(self, event):
-                super(AcceptDropButton_old, self).dragMoveEvent(event)
-
-            def dropEvent(self, event):
-                if event.mimeData().hasUrls():
-                    for url in event.mimeData().urls():
-                        rePath = self.getRelativePath(url)
-                        self.addSongToPlaylist(rePath)
-                    event.acceptProposedAction()
-                else:
-                    super(AcceptDropButton_old, self).dropEvent(event)   
-
-            def dragLeaveEvent(self, event) -> None:
-                activeBtn = outer_self.getActiveButton(outer_self.musicBtn_lst)
-                outer_self.displayPlaylist(activeBtn)
-                return super().leaveEvent(event)
-            
-            def enterEvent(self, event: QtGui.QEnterEvent | None) -> None:
-                if len(self.playlist):
-                    #self.setToolTip(self.getActiveSongTitle())
-                    outer_self.displayPlaylist(self)
-                return super().enterEvent(event)
-            
-            def leaveEvent(self, event) -> None:
-                activeBtn = outer_self.getActiveButton(outer_self.musicBtn_lst)
-                if activeBtn:
-                    outer_self.displayPlaylist(activeBtn)
-                else:
-                    outer_self.currentSoundFilesListWidget.clear()
-                return super().leaveEvent(event)
-            
-            def getRelativePath(self, url: QtCore.QUrl)->str:
-                path = url.toLocalFile()
-                relPath = os.path.relpath(path, outer_self.application_path)
-                return relPath
-            
-            def getFilenameFromPath(self, path: str)->str:
-                head_tail = os.path.split(path)
-                nameExt = os.path.splitext(head_tail[1])
-                return nameExt[0]
-
-        return AcceptDropButton_old(parent, playlistMaxlength) 
-        
-        
