@@ -19,18 +19,5 @@ def btn_assign_playlist(
         specialBtn_lst[entry[0]].playlist.add(entry[1])
 
 
-def handle_playlist_cleared(btn, active_btn):
-    """
-    Returns instructions for what the UI/controller should do.
-    """
-    actions = []
-
-    if btn.is_active:
-        actions.append("stop_player")
-
-    if btn is active_btn:
-        actions.append("clear_playlist_view")
-
-    return actions
 
 

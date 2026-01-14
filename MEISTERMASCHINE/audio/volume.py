@@ -1,12 +1,12 @@
 # audio/volume.py
-from PyQt6.QtMultimedia import QAudio
+from PyQt6 import QtCore, QtGui, QtWidgets, QtMultimedia
 
 def dependent_volume(master: float, sub: float) -> float:
     dep = sub * master / 100
-    return QAudio.convertVolume(
+    return QtMultimedia.QAudio.convertVolume(
         dep / 100,
-        QAudio.VolumeScale.LogarithmicVolumeScale,
-        QAudio.VolumeScale.LinearVolumeScale
+        QtMultimedia.QAudio.VolumeScale.LogarithmicVolumeScale,
+        QtMultimedia.QAudio.VolumeScale.LinearVolumeScale
     )
 
 #deprecated in favor of dependent_volume

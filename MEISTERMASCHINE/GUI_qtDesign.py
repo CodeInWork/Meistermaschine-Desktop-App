@@ -19,7 +19,7 @@ import random
 import MEISTERMASCHINE.stylesheet as style
 from MEISTERMASCHINE.audio.volume import dependent_volume
 from MEISTERMASCHINE.preset_utilities.preset_io import save_mms, load_mms
-from MEISTERMASCHINE.buttons.btn_logic import btn_assign_playlist, handle_playlist_cleared
+from MEISTERMASCHINE.buttons.btn_logic import btn_assign_playlist
 from MEISTERMASCHINE.audio.playlist import Playlist
 from MEISTERMASCHINE.audio.player_channel import PlayerChannel, PlayerController
 
@@ -78,6 +78,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Create Players and add it to Channel Controller
 
         # Create Player Objects for Button Columns
+        
+        # Player signals
+        # music player enables position change and is displayed on interface (playlist and position)
+        # setting and weather are repeated upon end of media is reached
+        # special is only played once
+        
         # music player
         self._music_output = QtMultimedia.QAudioOutput()
         self._music_output.setVolume(1.0) # initial volume is max
@@ -104,9 +110,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.playerController = PlayerController()
 
-        self.playerController.add_channel(
-            PlayerChannel("music", self.musicPlayer, self.musicBtn_lst)
+        # add music channel explicitly to allow direct music control
+        self.musicChannel = PlayerChannel(
+            "music", self.musicPlayer, self.musicBtn_lst
         )
+
+        self.playerController.add_channel(self.musicChannel)
+
         self.playerController.add_channel(
             PlayerChannel("setting", self.settingPlayer, self.settingBtn_lst)
         )
@@ -120,21 +130,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for ch in self.playerController.channels.values():
             self.connect_player_signals(ch)
 
-        
-        
-        """
-        # Player signals
-        # music player enables position change and is displayed on interface (playlist and position)
-        # setting and weather are repeated upon end of media is reached
-        # special is only played once
-        self.musicPlayer.mediaStatusChanged.connect(self.on_musicPlayerStatusChanged)
-        self.musicPlayer.positionChanged.connect(self.on_musicPlayerPositionChanged)
-        self.musicPlayer.durationChanged.connect(self.on_musicPlayerDurationChanged)
-        self.musicPlayer.playbackStateChanged.connect(self.on_musicPlaybackStateChanged)
-        self.settingPlayer.mediaStatusChanged.connect(self.on_settingPlayerStatusChanged)
-        self.weatherPlayer.mediaStatusChanged.connect(self.on_weatherPlayerStatusChanged)
-        self.specialPlayer.mediaStatusChanged.connect(self.on_specialPlayerStatusChanged)
-        """
 
         ########################################################################################################
 
@@ -789,8 +784,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     # Preset Combobox
     def on_presetComboBoxChanged(self, idx)->None:
-        self.stopPlayers([self.musicPlayer, self.settingPlayer, self.weatherPlayer, self.specialPlayer])
-        self.uncheckAllButtons()
+        self.playerController.stop_all_channels()
         if self.preset_lst:
             new_file = self.preset_lst[idx]
             self.btn_occupancy = load_mms(new_file[0])
@@ -849,8 +843,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             textWidget.setStyleSheet(style.CSS_Dice_Roll_Text_Big)
         textWidget.setText(outPutStr)
         self.destinyBtn_clear_timer.start(self.Btn_Display_Time)
-        
-        
 
     def on_fileTree_doubleClicked(self)->None:
         index = self.fileTreeListView.currentIndex()
@@ -859,50 +851,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.fileTreeListView.expand(index.parent())
         # play sound file when double clicked in fileTree (SD card frame)?
         # add auxilliary player?
-        '''if os.path.isfile(filePath):
-            self.stopAllPlayers()
-            self.musicPlayer.setSource(filePath)
-            self.musicPlayer.play()'''
 
     def on_rootFolderDialogBtnClicked(self)->None:
         path = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Folder")
         if path:
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
-
-    """def on_soundBtnclicked(self, idx: int, btn_Type: str)->None:
-        if btn_Type == 'music':
-            soundBtn = self.musicBtn_lst[idx]
-            soundPlayer = self.musicPlayer
-            soundBtn_lst = self.musicBtn_lst
-        elif btn_Type == 'setting':
-            soundBtn = self.settingBtn_lst[idx]
-            soundPlayer = self.settingPlayer
-            soundBtn_lst = self.settingBtn_lst
-        elif btn_Type == 'weather':
-            soundBtn = self.weatherBtn_lst[idx]
-            soundPlayer = self.weatherPlayer
-            soundBtn_lst = self.weatherBtn_lst
-        elif btn_Type == 'special':
-            soundBtn = self.specialBtn_lst[idx]
-            soundPlayer = self.specialPlayer
-            soundBtn_lst = self.specialBtn_lst
-        
-        self.stopPlayers([soundPlayer])
-
-        if soundBtn.isChecked():
-            self.setActiveButton(idx, soundBtn_lst)
-            self.uncheckInactiveButtons(soundBtn_lst)
-            activeSong = soundBtn.playlist.current()
-            if activeSong:
-                self.currentSoundFilesListWidget.setCurrentRow(soundBtn.playlist.active)
-                self.playChannel(soundPlayer, activeSong)
-                if btn_Type == 'music': self.displayPlaylist(soundBtn)
-            else:
-                soundBtn.setChecked(False)
-        else:
-            if btn_Type == 'music': self.currentSoundFilesListWidget.clear()    # clear playlist
-            soundBtn.is_active=False
-            self.currentSoundFilesListWidget.setCurrentRow(-1)"""
     
     def on_soundButtonClicked(self, btn):
         channel = self.playerController.find_channel_for_button(btn)
@@ -918,97 +871,113 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         channel.active_button = btn
 
+        """ Resume if paused??????
+        # Resume if paused
+        if channel.paused:
+            self.playerController.resume_channel(channel)
+            return"""
+
         song = btn.playlist.current()
         if song:
-            self.playerController.play_channel(channel, song, self.application_path)
+            QtCore.QTimer.singleShot(
+                0,
+                lambda: self.playerController.play_channel(
+                    channel, song, self.application_path
+                )
+            )
 
     def on_stopBtnClicked(self)->None:
         self.playerController.stop_all_channels()
-        self.uncheckAllButtons()
         self.currentSoundFilesListWidget.clear()    # clear playlist
 
     def on_trackBackwardClicked(self)->None:
-        activeBtn = self.getActiveButton(self.musicBtn_lst)
+        activeBtn = self.musicChannel.active_button
         if activeBtn:
-            channel = self.playerController.find_channel_for_button(activeBtn)
             previousSong = activeBtn.playlist.previous()
-            self.stopPlayers([self.musicPlayer])
-            self.playerController.playChannel(channel, previousSong, self.application_path)
+            self.playerController.stop_channel(self.musicChannel)
+            self.playerController.play_channel(self.musicChannel, previousSong, self.application_path)
             self.currentSoundFilesListWidget.item(activeBtn.playlist.active).setSelected(True)
         #Todo: set activated item
 
     def on_trackForwardClicked(self)->None:
-        activeBtn = self.getActiveButton(self.musicBtn_lst)
+        activeBtn = self.musicChannel.active_button
         if activeBtn:
-            channel = self.playerController.find_channel_for_button(activeBtn)
             nextSong = activeBtn.playlist.next()
-            self.stopPlayers([self.musicPlayer])
-            self.playerController.playChannel(channel, nextSong, self.application_path)
+            self.playerController.stop_channel(self.musicChannel)
+            self.playerController.play_channel(self.musicChannel, nextSong, self.application_path)
             self.currentSoundFilesListWidget.item(activeBtn.playlist.active).setSelected(True)
+    
+    def on_playPauseBtnClicked(self) -> None:
+        channel = self.musicChannel
+        player = channel.player
 
-    def on_playPauseBtnClicked(self)->None:
-        status = self.musicPlayer.playbackState()
-        if status == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState:
+        state = player.playbackState()
+
+        # PLAYING → PAUSE
+        if state == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState:
+            self.playerController.pause_channel(channel)
             self.playPauseButton.setIcon(self.playIcon)
-            self.musicPlayer.pause()
-        if status == QtMultimedia.QMediaPlayer.PlaybackState.PausedState:
-            self.musicPlayer.play()
+            return
+
+        # PAUSED → RESUME
+        if state == QtMultimedia.QMediaPlayer.PlaybackState.PausedState:
+            self.playerController.resume_channel(channel)
             self.playPauseButton.setIcon(self.pauseIcon)
-        elif status == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
-            activeBtn = self.getActiveButton(self.musicBtn_lst)
-            if activeBtn:
-                channel = self.playerController.find_channel_for_button(activeBtn)
-                activeSong = activeBtn.playlist.current()
-                if activeSong:
-                    self.playerController.playChannel(channel, activeSong, self.application_path, fromBeginning=False)
-                    self.playPauseButton.setIcon(self.pauseIcon)
+            return
+
+        # STOPPED → START (resume last active button)
+        if state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
+            btn = channel.active_button
+            if not btn:
+                return
+
+            song = btn.playlist.current()
+            if song:
+                self.playerController.play_channel(channel, song, self.application_path, fromBeginning=False)
+                self.playPauseButton.setIcon(self.pauseIcon)
+
 
     def on_currentSoundFilesListWidget_clicked(self)->None:
         selection = self.currentSoundFilesListWidget.selectedItems()
         if not selection: return
-        self.stopPlayers([self.musicPlayer])
+        self.playerController.stop_channel(self.musicChannel)
         for item in selection:
-            activeBtn = self.getActiveButton(self.musicBtn_lst)
+            activeBtn = self.musicChannel.active_button
             if not activeBtn: return
             else:
                 itemIndex = self.currentSoundFilesListWidget.row(item)
-                activeBtn.setActiveSong(itemIndex)
+                self.musicChannel.active_button = activeBtn.playlist.get(itemIndex)
                 activeSong = activeBtn.playlist.current()
                 if activeSong:
-                    channel = self.playerController.find_channel_for_button(activeBtn)
-                    self.playerController.playChannel(channel, activeSong, self.application_path)
+                    self.playerController.playChannel(self.musicChannel, activeSong, self.application_path)
 
     def on_currentSoundFilesListWidget_doubleClicked(self)->None:
         selection = self.currentSoundFilesListWidget.selectedItems()
         if not selection: return
         for item in selection:
-            activeBtn = self.getActiveButton(self.musicBtn_lst)
+            activeBtn = self.musicChannel.active_button
             if not activeBtn: return
             else:
                 itemIndex = self.currentSoundFilesListWidget.row(item)
-                if itemIndex == activeBtn.playlist.current():
-                    player = self.getPlayerForButton(activeBtn)
-                    self.stopPlayers([player])
+                if itemIndex == activeBtn.playlist.active:
+                    self.playerController.stop_channel(self.musicChannel)
                     activeBtn.playlist.remove(itemIndex)
                     self.displayPlaylist(activeBtn)
-                    if not activeBtn.playlist.current()==-1:
+                    if not activeBtn.playlist.current():
                         activeSong = activeBtn.playlist.current()
-                        channel = self.playerController.find_channel_for_button(activeBtn)
-                        self.playerController.playChannel(channel, activeSong, self.application_path)
+                        self.playerController.playChannel(self.musicChannel, activeSong, self.application_path)
                 else:
                     activeBtn.playlist.remove(itemIndex)
                     self.displayPlaylist(activeBtn)
-                if activeBtn.playlist.current()==-1:
+                if activeBtn.playlist.current() is None:
                     activeBtn.setChecked(False)
 
-    def currentSoundFilesListWidget_itemMoved(self, old_index, new_index)->None:
-        activeBtn = self.getActiveButton(self.musicBtn_lst)
-        self.stopPlayers([self.musicPlayer])
-        track = activeBtn.playlist.pop(old_index)
-        activeBtn.playlist.insert(new_index, track)
-        activeBtn.playlist.active = new_index
-        currentItem = self.currentSoundFilesListWidget.item(new_index)
-        self.currentSoundFilesListWidget.setCurrentItem(currentItem)
+    def currentSoundFilesListWidget_itemMoved(self, old_index, new_index):
+        self.musicChannel.reorder_active_playlist(old_index, new_index)
+
+        item = self.currentSoundFilesListWidget.item(new_index)
+        self.currentSoundFilesListWidget.setCurrentItem(item)
+
 
     # media status changed
     def on_mediaStatusChanged(self, channel, status):
@@ -1023,64 +992,51 @@ class Ui_MainWindow(QtWidgets.QWidget):
             else:
                 self.playerController.stop_channel(channel)
 
+    def on_playbackStateChanged(self, channel, state) -> None:
+        print("playbackStateChanged", state)
 
-    def on_playbackStateChanged(self, channel, state)->None:
+        if channel is not self.musicChannel:
+            return
+
         if state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
-            self.statusbar.showMessage(f"Music Player: Stopped")
+            self.soundSlider.setEnabled(False)
+            self.soundSlider.setValue(0)
             self.playPauseButton.setIcon(self.playIcon)
+
         elif state == QtMultimedia.QMediaPlayer.PlaybackState.PausedState:
-            self.statusbar.showMessage(f"Music Player: Paused")
+            self.soundSlider.setEnabled(True)
             self.playPauseButton.setIcon(self.playIcon)
+
         elif state == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState:
-            self.statusbar.showMessage(f"Music Player: Playing")
+            self.soundSlider.setEnabled(True)
             self.playPauseButton.setIcon(self.pauseIcon)
 
-
-    """
-    # music player
-    def on_musicPlayerStatusChanged(self, status)->None:
-        if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
-            activeMusicBtn = self.getActiveButton(self.musicBtn_lst)
-            nextsong = activeMusicBtn.getNextSong()
-            self.playChannel(self.musicPlayer, nextsong)
-            self.currentSoundFilesListWidget.setCurrentRow(activeMusicBtn.playlist.current())
-    # setting player   
-    def on_settingPlayerStatusChanged(self, status)->None:
-        if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
-            activeSettingBtn = self.getActiveButton(self.settingBtn_lst)
-            nextsong = activeSettingBtn.getNextSong()
-            self.playChannel(self.settingPlayer, nextsong)
-    # weather player
-    def on_weatherPlayerStatusChanged(self, status)->None:
-        if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
-            activeSettingBtn = self.getActiveButton(self.weatherBtn_lst)
-            nextsong = activeSettingBtn.getNextSong()
-            self.playChannel(self.weatherPlayer, nextsong)
-    # special player
-    def on_specialPlayerStatusChanged(self, status)->None:
-        if status == QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
-            activeSettingBtn = self.getActiveButton(self.specialBtn_lst)
-            activeSettingBtn.setChecked(False)
-            activeSettingBtn.is_active = False
-            self.specialPlayer.setPosition(0)   #rewind"""
-
-    def on_durationChanged(self, channel, duration)->None:
-        duration_sec = duration
-        self.soundSlider.setMaximum(int(duration_sec))
-
-    def on_positionChanged(self, channel, position)->None:
-        position_sec = position
-        self.soundSlider.setValue(int(position_sec))
-
     # soundSlider
-    def on_soundSliderPressed(self)->None:
-        self.musicPlayer.pause()
+    def on_durationChanged(self, channel, duration) -> None:
+        if channel is not self.musicChannel:
+            return
 
-    def on_soundSliderReleased(self)->None:
+        self.soundSlider.setMaximum(int(duration))
+
+
+    def on_positionChanged(self, channel, position) -> None:
+        if channel is not self.musicChannel:
+            return
+
+        self.soundSlider.setValue(int(position))
+
+    def on_soundSliderPressed(self) -> None:
+        self.playerController.pause_channel(self.musicChannel)
+
+
+    def on_soundSliderReleased(self) -> None:
         position = self.soundSlider.sliderPosition()
-        self.musicPlayer.pause()
-        self.musicPlayer.setPosition(position)
-        self.musicPlayer.play()
+
+        player = self.musicChannel.player
+        player.setPosition(position)
+
+        self.playerController.resume_channel(self.musicChannel)
+
 
     # master volume slider
     def on_masterVolumeSliderChanged(self, masterValue)->None:
@@ -1144,25 +1100,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         p.playbackStateChanged.connect(
             lambda state, ch=channel: self.on_playbackStateChanged(ch, state)
         )
-
-
-    def stopPlayerOfButton(self, dropButton)->None:
-        player = self.getPlayerForButton(dropButton)
-        self.stopPlayers([player])
-        
-    def getPlayerForButton(self, dropButton)->QtMultimedia.QMediaPlayer:
-        for btn in self.musicBtn_lst:
-            if id(btn)==id(dropButton):
-                return self.musicPlayer
-        for btn in self.settingBtn_lst:
-            if id(btn)==id(dropButton):
-                return self.settingPlayer
-        for btn in self.weatherBtn_lst:
-            if id(btn)==id(dropButton):
-                return self.weatherPlayer
-        for btn in self.specialBtn_lst:
-            if id(btn)==id(dropButton):
-                return self.specialPlayer
         
     def getCurrentPresetFile(self)->str:
         current_idx=self.presetCombobox.currentIndex()
@@ -1196,29 +1133,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             if testVal == 0:
                 break
 
-    def uncheckAllButtons(self)->None:
-        for btn in self.musicBtn_lst:
-            btn.setChecked(False)
-        for btn in self.settingBtn_lst:
-            btn.setChecked(False)
-        for btn in self.weatherBtn_lst:
-            btn.setChecked(False)
-        for btn in self.specialBtn_lst:
-            btn.setChecked(False)
-
-    def uncheckInactiveButtons(self, btn_list: list[object])->None:
-        for btn in btn_list:
-            channel = self.playerController.find_channel_for_button(btn)
-            if channel.active_button is btn:
-                btn.setChecked(False)
-    
-    def getActiveButton(self, btn_list)->object | None:
-        for btn in btn_list:
-            channel = self.playerController.find_channel_for_button(btn)
-            if channel.active_button is btn:
-                return btn
-        return None
-
     def displayPlaylist(self, btn)->None:
         if not btn: return
         self.currentSoundFilesListWidget.clear()
@@ -1232,7 +1146,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.currentSoundFilesListWidget.setCurrentRow(-1)
 
     def displayActivePlaylist(self)->None:
-        activeBtn = self.getActiveButton(self.musicBtn_lst)
+        activeBtn = self.musicChannel.active_button
         if activeBtn:
             self.displayPlaylist(activeBtn)
         else:

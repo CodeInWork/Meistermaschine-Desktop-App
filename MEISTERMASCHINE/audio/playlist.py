@@ -7,12 +7,20 @@ class Playlist:
         self.tracks: list[tuple[str, str]] = []
         self.active = -1
 
+    def get(self, index: int) -> tuple[str, str]:
+        return self.tracks[index]
+
     def add(self, path: str):
         title = self.extractTitle(path)
         if len(self.tracks) >= self.max_length:
             self.tracks[0] = (path, title)
         else:
             self.tracks.append((path, title))
+
+    def insert(self, index: int, track: tuple[str, str]):
+        if len(self.tracks) >= self.max_length:
+            self.tracks.pop(0)
+        self.tracks.insert(index, track)
 
     def clear(self):
         self.tracks.clear()
@@ -44,6 +52,17 @@ class Playlist:
         else:
             self.active = min(index, len(self.tracks) - 1)
         return track
+    
+    def move(self, old_index: int, new_index: int):
+        track = self.tracks.pop(old_index)
+        self.tracks.insert(new_index, track)
+
+        if self.active == old_index:
+            self.active = new_index
+        elif old_index < self.active <= new_index:
+            self.active -= 1
+        elif new_index <= self.active < old_index:
+            self.active += 1
     
     def extractTitle(self, path: str) -> str:
         return os.path.splitext(os.path.basename(path))[0]
