@@ -22,6 +22,7 @@ from MEISTERMASCHINE.preset_utilities.preset_io import save_mms, load_mms
 from MEISTERMASCHINE.buttons.btn_logic import btn_assign_playlist
 from MEISTERMASCHINE.audio.playlist import Playlist
 from MEISTERMASCHINE.audio.player_channel import PlayerChannel, PlayerController
+from MEISTERMASCHINE.dice.dice_logic import roll_destiny
 
 
 
@@ -820,27 +821,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.color_timer.stop()
         self.colorChanges = 0
 
-        diceRoll = random.randint(1, 20)
-        if diceRoll == 1:
-            outPutStr = "\u2620"
-            self.color_timer.start(100)  # Change color every 100 ms
-        elif 1 < diceRoll <= 5:
-            outPutStr = "\u2620\u2620"
-        elif 5 < diceRoll <= 9:
-            outPutStr = "\u2620"
-        elif 9 < diceRoll <= 11:
-            outPutStr = "\u2665 \u2620"
-        elif 11 < diceRoll <=15:
-            outPutStr = "\u2665" 
-        elif 15 < diceRoll <= 19:
-            outPutStr = "\u2665\u2665"
-        elif diceRoll == 20:
-            outPutStr =  "\u2665"
-            self.color_timer.start(100)  # Change color every 100 ms
+        diceRoll, outPutStr = roll_destiny()
+        
         if 1 < diceRoll < 20: 
             textWidget.setStyleSheet(style.CSS_Dice_Roll_Text)
         else:
             textWidget.setStyleSheet(style.CSS_Dice_Roll_Text_Big)
+            self.color_timer.start(100)  # Change color every 100 ms
         textWidget.setText(outPutStr)
         self.destinyBtn_clear_timer.start(self.Btn_Display_Time)
 
@@ -879,12 +866,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         song = btn.playlist.current()
         if song:
-            QtCore.QTimer.singleShot(
-                0,
-                lambda: self.playerController.play_channel(
-                    channel, song, self.application_path
-                )
-            )
+            self.playerController.switch_track(self.musicChannel, song, self.application_path)
 
     def on_stopBtnClicked(self)->None:
         self.playerController.stop_all_channels()
@@ -894,18 +876,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
         activeBtn = self.musicChannel.active_button
         if activeBtn:
             previousSong = activeBtn.playlist.previous()
-            self.playerController.stop_channel(self.musicChannel)
-            self.playerController.play_channel(self.musicChannel, previousSong, self.application_path)
-            self.currentSoundFilesListWidget.item(activeBtn.playlist.active).setSelected(True)
-        #Todo: set activated item
+            self.playerController.switch_track(self.musicChannel, previousSong, self.application_path)
+            self.select_active_track()
 
     def on_trackForwardClicked(self)->None:
         activeBtn = self.musicChannel.active_button
         if activeBtn:
             nextSong = activeBtn.playlist.next()
-            self.playerController.stop_channel(self.musicChannel)
-            self.playerController.play_channel(self.musicChannel, nextSong, self.application_path)
-            self.currentSoundFilesListWidget.item(activeBtn.playlist.active).setSelected(True)
+            self.playerController.switch_track(self.musicChannel, nextSong, self.application_path)
+            self.select_active_track()
     
     def on_playPauseBtnClicked(self) -> None:
         channel = self.musicChannel
@@ -949,7 +928,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.musicChannel.active_button = activeBtn.playlist.get(itemIndex)
                 activeSong = activeBtn.playlist.current()
                 if activeSong:
-                    self.playerController.playChannel(self.musicChannel, activeSong, self.application_path)
+                    self.playerController.switch_track(self.musicChannel, activeSong, self.application_path)
 
     def on_currentSoundFilesListWidget_doubleClicked(self)->None:
         selection = self.currentSoundFilesListWidget.selectedItems()
@@ -965,7 +944,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     self.displayPlaylist(activeBtn)
                     if not activeBtn.playlist.current():
                         activeSong = activeBtn.playlist.current()
-                        self.playerController.playChannel(self.musicChannel, activeSong, self.application_path)
+                        self.playerController.switch_track(self.musicChannel, activeSong, self.application_path)
                 else:
                     activeBtn.playlist.remove(itemIndex)
                     self.displayPlaylist(activeBtn)
@@ -1085,6 +1064,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     #############################################################################################################################
     # helper functions
+
+    def select_active_track(self):
+        btn = self.musicChannel.active_button
+        if not btn:
+            return
+
+        idx = btn.playlist.active
+        item = self.currentSoundFilesListWidget.item(idx)
+        if item:
+            item.setSelected(True)
+
 
     def connect_player_signals(self, channel: PlayerChannel):
         p = channel.player

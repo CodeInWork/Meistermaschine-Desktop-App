@@ -12,7 +12,6 @@ class PlayerChannel:
 class PlayerController:
     def __init__(self):
         self.channels: dict[str, PlayerChannel] = {}
-        self._switching = False
 
     def add_channel(self, channel):
         for btn in channel.buttons:
@@ -37,21 +36,20 @@ class PlayerController:
         raise RuntimeError("Button not assigned to any channel")
     
     def play_channel(self, channel, songFile, app_path, fromBeginning=True):
-        if self._switching:
-            return
+        player = channel.player
+        path = os.path.join(app_path, songFile[0])
+        player.setSource(QtCore.QUrl.fromLocalFile(path))
+        if fromBeginning:
+            player.setPosition(0)
+        player.play()
 
-        self._switching = True
-        
-        try:
-            player = channel.player
-            path = os.path.join(app_path, songFile[0])
-            player.setSource(QtCore.QUrl.fromLocalFile(path))
-            if fromBeginning:
-                player.setPosition(0)
-            player.play()
-        finally:
-            self._switching = False
-            
+    def switch_track(self, channel, track, app_path, fromBeginning=True):
+        channel.player.stop()
+        channel.paused = False
+        QtCore.QTimer.singleShot(
+            0,
+            lambda: self.play_channel(channel, track, app_path, fromBeginning)
+        )
 
     def stop_channel(self, channel):
         if channel.active_button:
