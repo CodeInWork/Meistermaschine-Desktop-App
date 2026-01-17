@@ -2,12 +2,43 @@ from PyQt6 import QtCore, QtMultimedia
 import os
 
 class PlayerChannel:
-    def __init__(self, name: str, player: QtMultimedia.QMediaPlayer, buttons: list):
+    def __init__(self, name: str, player: QtMultimedia.QMediaPlayer, buttons: list, loop=False):
         self.name = name
         self.player = player
         self.buttons = buttons
+        self.loop = loop
         self.active_button = None
         self.paused = False
+
+    def get_next_track(self):
+        if not self.active_button:
+            return None
+
+        playlist = self.active_button.playlist
+
+        # Normal forward
+        if playlist.has_next():
+            return playlist.next()
+
+        # End reached → loop?
+        if self.loop and playlist.tracks:
+            playlist.active = 0
+            return playlist.current()
+
+        # End reached, no loop
+        return None
+
+    def play_track_at_index(self, index, app_path, controller):
+        if not self.active_button:
+            return
+
+        playlist = self.active_button.playlist
+        playlist.set_active(index)
+        song = playlist.current()
+        if song:
+            controller.switch_track(self, song, app_path)
+
+
 
 class PlayerController:
     def __init__(self):
@@ -18,7 +49,6 @@ class PlayerController:
             if any(btn in ch.buttons for ch in self.channels.values()):
                 raise ValueError("Button assigned to multiple channels")
         self.channels[channel.name] = channel
-
 
     def all_buttons(self):
         for ch in self.channels.values():
@@ -68,6 +98,25 @@ class PlayerController:
         for channel in self.channels.values():
             self.stop_channel(channel)
 
+    def deactivate_channel(self, channel):
+        btn = channel.active_button
+        if not btn:
+            return
+
+        # 🔒 Clear logical state FIRST
+        channel.active_button = None
+        channel.paused = False
+
+        # 🔕 Block UI feedback
+        btn.blockSignals(True)
+        btn.setChecked(False)
+        btn.blockSignals(False)
+
+        # 🛑 Stop last (may emit signals, but state is already clean)
+        channel.player.stop()
+
+
+
     def stop_button(self, btn):
         channel = self.find_channel_for_button(btn)
         if channel.active_button is btn:
@@ -98,6 +147,24 @@ class PlayerController:
             track = channel.active_button.playlist.current()
             if track:
                 self.play_channel(channel, track, app_path, fromBeginning=False)
+
+    def remove_track_from_channel(self, channel, index, app_path):
+        btn = channel.active_button
+        if not btn:
+            return
+
+        playlist = btn.playlist
+        was_active = index == playlist.active
+
+        playlist.remove_at(index)
+
+        if playlist.current() is None:
+            self.stop_channel(channel)
+            btn.setChecked(False)
+            return
+
+        if was_active:
+            self.switch_track(channel, playlist.current(), app_path)
 
 
 

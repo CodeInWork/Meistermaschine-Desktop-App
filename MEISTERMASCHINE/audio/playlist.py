@@ -7,6 +7,10 @@ class Playlist:
         self.tracks: list[tuple[str, str]] = []
         self.active = -1
 
+    def set_active(self, index: int):
+        if 0 <= index < len(self.tracks):
+            self.active = index
+
     def get(self, index: int) -> tuple[str, str]:
         return self.tracks[index]
 
@@ -33,10 +37,13 @@ class Playlist:
             self.active = 0
         return self.tracks[self.active]
 
+    def has_next(self) -> bool:
+        return 0 <= self.active + 1 < len(self.tracks)
+
     def next(self):
-        if not self.tracks:
+        if not self.has_next():
             return None
-        self.active = (self.active + 1) % len(self.tracks)
+        self.active += 1
         return self.current()
 
     def previous(self):
@@ -52,6 +59,21 @@ class Playlist:
         else:
             self.active = min(index, len(self.tracks) - 1)
         return track
+    
+    def remove_at(self, index: int):
+        if not (0 <= index < len(self.tracks)):
+            return
+
+        self.tracks.pop(index)
+
+        if self.active == index:
+            if index >= len(self.tracks):
+                self.active = len(self.tracks) - 1
+        elif index < self.active:
+            self.active -= 1
+
+        if not self.tracks:
+            self.active = -1
     
     def move(self, old_index: int, new_index: int):
         track = self.tracks.pop(old_index)
