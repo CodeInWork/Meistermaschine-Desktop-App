@@ -7,6 +7,7 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets, QtMultimedia
+
 from PySide6.QtCore import Slot
 import time as t
 import glob as gl
@@ -76,6 +77,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.specialBtn_lst = [self.create_acceptDropButton(playlistMaxlength=1) for b in range(self.btn_rows)]
 
         ########################################################################################################
+        # audio control classes and objects
+
+        # media devices change detection (changed system audio output)
+        self.mediaDevices = QtMultimedia.QMediaDevices()
+        self.mediaDevices.audioOutputsChanged.connect(self.on_audio_outputs_changed)
+
         # Create Players and add it to Channel Controller
 
         # Create Player Objects for Button Columns
@@ -84,7 +91,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # music player enables position change and is displayed on interface (playlist and position)
         # setting and weather are repeated upon end of media is reached
         # special is only played once
-        
+
         # music player
         self._music_output = QtMultimedia.QAudioOutput()
         self._music_output.setVolume(1.0) # initial volume is max
@@ -113,19 +120,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         # add music channel explicitly to allow direct music control
         self.musicChannel = PlayerChannel(
-            "music", self.musicPlayer, self.musicBtn_lst, loop=True
+            "music", self.musicPlayer, self.musicBtn_lst, self._music_output, loop=True
         )
 
         self.playerController.add_channel(self.musicChannel)
 
         self.playerController.add_channel(
-            PlayerChannel("setting", self.settingPlayer, self.settingBtn_lst, loop=False)
+            PlayerChannel("setting", self.settingPlayer, self.settingBtn_lst, self._setting_output, loop=True)
         )
         self.playerController.add_channel(
-            PlayerChannel("weather", self.weatherPlayer, self.weatherBtn_lst, loop=False)
+            PlayerChannel("weather", self.weatherPlayer, self.weatherBtn_lst, self._weather_output, loop=True)
         )
         self.playerController.add_channel(
-            PlayerChannel("special", self.specialPlayer, self.specialBtn_lst, loop=False)
+            PlayerChannel("special", self.specialPlayer, self.specialBtn_lst, self._special_output, loop=True)
         )
 
         for ch in self.playerController.channels.values():
@@ -791,6 +798,76 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.btn_occupancy = load_mms(new_file[0])
             btn_assign_playlist(self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst, self.btn_occupancy)
 
+    # audio handlers
+    
+    def on_mediaStatusChanged(self, channel, status):
+        if status != QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
+            return
+
+        next_song = channel.get_next_track()
+
+        if next_song:
+            self.playerController.switch_track(
+                channel, next_song, self.application_path, fromBeginning=True
+            )
+        else:
+            self.playerController.deactivate_channel(channel)
+
+
+    def on_playbackStateChanged(self, channel, state) -> None:
+        print("playbackStateChanged", state)
+
+        if channel is not self.musicChannel:
+            return
+
+        if state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
+            self.soundSlider.setEnabled(False)
+            self.soundSlider.setValue(0)
+            self.playPauseButton.setIcon(self.playIcon)
+
+        elif state == QtMultimedia.QMediaPlayer.PlaybackState.PausedState:
+            self.soundSlider.setEnabled(True)
+            self.playPauseButton.setIcon(self.playIcon)
+
+        elif state == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState:
+            self.soundSlider.setEnabled(True)
+            self.playPauseButton.setIcon(self.pauseIcon)
+
+    def on_audio_outputs_changed(self):
+        device = self.mediaDevices.defaultAudioOutput()
+
+        if device.isNull():
+            return
+
+        QtCore.QTimer.singleShot(
+            0,
+            lambda d=device: self._applyAudioDevice(d)
+        )
+
+    def _applyAudioDevice(self, device):
+        for channel in self.playerController.channels.values():
+            player = channel.player
+            output = channel.audio_output
+
+            vol = channel.audio_output.volume()
+            if vol > 1.0:
+                vol /= 100.0
+
+            was_playing = player.playbackState() == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState
+            pos = player.position()
+
+            player.stop()
+            output.setDevice(device)
+            output.setVolume(vol)
+
+            player.setAudioOutput(output)
+
+            if was_playing:
+                player.setPosition(pos)
+                player.play()
+
+
+    ##########################################################################################################################
     # Buttons
     # Dice Roll Tab in Utility Frame
     def on_clear_sum_Btn_clicked(self)->None:
@@ -866,7 +943,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         song = btn.playlist.current()
         if song:
-            self.playerController.switch_track(self.musicChannel, song, self.application_path)
+            self.playerController.switch_track(channel, song, self.application_path)
 
     def on_stopBtnClicked(self)->None:
         self.playerController.stop_all_channels()
@@ -887,6 +964,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.select_active_track()
     
     def on_playPauseBtnClicked(self) -> None:
+        # only music reacts to it. Make all channels react???
+        # if so, a global paused state has to be introduced which leads to an un-pause in 
+        # the event of an addistional channel being activated while some are paused. -> checking states must be handled
         channel = self.musicChannel
         player = channel.player
 
@@ -915,6 +995,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 self.playerController.play_channel(channel, song, self.application_path, fromBeginning=False)
                 self.playPauseButton.setIcon(self.pauseIcon)
 
+    # currentSoundFilesListWidget
     def on_currentSoundFilesListWidget_clicked(self):
         item = self.currentSoundFilesListWidget.currentItem()
         if not item:
@@ -945,51 +1026,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item = self.currentSoundFilesListWidget.item(new_index)
         self.currentSoundFilesListWidget.setCurrentItem(item)
 
-
-    def on_mediaStatusChanged(self, channel, status):
-        if status != QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
-            return
-
-        btn = channel.active_button
-        if not btn:
-            return
-
-        next_song = channel.get_next_track()
-
-        if next_song:
-            self.playerController.switch_track(
-                channel, next_song, self.application_path, fromBeginning=True
-            )
-        else:
-            self.playerController.deactivate_channel(channel)
-
-
-    def on_playbackStateChanged(self, channel, state) -> None:
-        print("playbackStateChanged", state)
-
-        if channel is not self.musicChannel:
-            return
-
-        if state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
-            self.soundSlider.setEnabled(False)
-            self.soundSlider.setValue(0)
-            self.playPauseButton.setIcon(self.playIcon)
-
-        elif state == QtMultimedia.QMediaPlayer.PlaybackState.PausedState:
-            self.soundSlider.setEnabled(True)
-            self.playPauseButton.setIcon(self.playIcon)
-
-        elif state == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState:
-            self.soundSlider.setEnabled(True)
-            self.playPauseButton.setIcon(self.pauseIcon)
-
     # soundSlider
     def on_durationChanged(self, channel, duration) -> None:
         if channel is not self.musicChannel:
             return
 
         self.soundSlider.setMaximum(int(duration))
-
 
     def on_positionChanged(self, channel, position) -> None:
         if channel is not self.musicChannel:

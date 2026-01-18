@@ -2,10 +2,11 @@ from PyQt6 import QtCore, QtMultimedia
 import os
 
 class PlayerChannel:
-    def __init__(self, name: str, player: QtMultimedia.QMediaPlayer, buttons: list, loop=False):
+    def __init__(self, name: str, player: QtMultimedia.QMediaPlayer, buttons: list, audio_output, loop=False):
         self.name = name
         self.player = player
         self.buttons = buttons
+        self.audio_output = audio_output
         self.loop = loop
         self.active_button = None
         self.paused = False
