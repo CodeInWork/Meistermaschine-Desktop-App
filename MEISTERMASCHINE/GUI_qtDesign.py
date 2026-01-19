@@ -25,27 +25,60 @@ from MEISTERMASCHINE.audio.playlist import Playlist
 from MEISTERMASCHINE.audio.player_channel import PlayerChannel, PlayerController
 from MEISTERMASCHINE.dice.dice_logic import roll_destiny
 
-
+CHANNEL_CONFIG = {
+    "music": {
+        "buttons": lambda self: self.musicBtn_lst,
+        "loop": True,
+        "expose": True,
+        "audio_index": 0,
+        "max_playlist_length": 10,
+    },
+    "setting": {
+        "buttons": lambda self: self.settingBtn_lst,
+        "loop": True,
+        "audio_index": 1,
+        "max_playlist_length": 1,
+    },
+    "weather": {
+        "buttons": lambda self: self.weatherBtn_lst,
+        "loop": True,
+        "audio_index": 2,
+        "max_playlist_length": 1,
+    },
+    "special": {
+        "buttons": lambda self: self.specialBtn_lst,
+        "loop": False,
+        "audio_index": 3,
+        "max_playlist_length": 1,
+    },
+}
 
 
 
 # ToDo: 
-#   - always show playlist of active button (leaveHoverEvent)
+#   Major:
+#   - implement icon tab and allow drag and drop of icons upon buttons to change them
+#   - allow saving of complete presets WITH sound files so they are immune to soundfile path changes
+
+# Minor
+#   - always show playlist of active button (leaveHoverEvent) -> done
 #   - make *.mms only hold the song title and make it recombine with application path on demand
 #   - when currentplaylist widget is rearranged, update button playlist
 #   - add inactive play icon when playstate is stopped (play button is inactive)
-#   - erase unnecessary public declarators (self.*) for garbage collection
+#   - erase unnecessary public declarators (self.*) for garbage collection -> done
 #   - shift stylesheets into own source file -> done
 #   - make window resizable (or disable resize) -> done
 #   - make functions to handle frame creation -> done for Utility frame
-#   - make program react to audio output changes
+#   - make program react to audio output changes -> done
 
 
 class Ui_MainWindow(QtWidgets.QWidget):
+    
     def setupUi(self, MainWindow):
         ########################################################################################################
         # variables and settings
         self.btn_rows = 5
+        self.channel_count = 4
         self.musicIcon_lst = ["smiley_star","smiley_grin","smiley_neutral","smiley_scary","smiley_death"]
         self.settingIcon_lst = ["pub","dorf","landschaft","hohle","kampf"]
         self.weatherIcon_lst = ["nacht","welle","wind","sturm","schnee"]
@@ -70,12 +103,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.preset_lst=[]
         self.btn_occupancy={}
 
-        # create sound buttons
-        self.musicBtn_lst = [self.create_acceptDropButton() for b in range(self.btn_rows)]
-        self.settingBtn_lst = [self.create_acceptDropButton(playlistMaxlength=1) for b in range(self.btn_rows)]
-        self.weatherBtn_lst = [self.create_acceptDropButton(playlistMaxlength=1) for b in range(self.btn_rows)]
-        self.specialBtn_lst = [self.create_acceptDropButton(playlistMaxlength=1) for b in range(self.btn_rows)]
-
         ########################################################################################################
         # audio control classes and objects
 
@@ -84,56 +111,37 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.mediaDevices.audioOutputsChanged.connect(self.on_audio_outputs_changed)
 
         # Create Players and add it to Channel Controller
-
+        self.playerController = PlayerController()
         # Create Player Objects for Button Columns
         
-        # Player signals
         # music player enables position change and is displayed on interface (playlist and position)
         # setting and weather are repeated upon end of media is reached
         # special is only played once
 
-        # music player
-        self._music_output = QtMultimedia.QAudioOutput()
-        self._music_output.setVolume(1.0) # initial volume is max
-        self.musicPlayer = QtMultimedia.QMediaPlayer()
-        self.musicPlayer.setAudioOutput(self._music_output)
+        self.audio_output_lst = [QtMultimedia.QAudioOutput() for _ in range(self.channel_count)]
+        for ao in self.audio_output_lst: 
+            ao.setVolume(1.0) # initial volume is max
 
-        # setting player
-        self._setting_output = QtMultimedia.QAudioOutput()
-        self._setting_output.setVolume(1.0) # initial volume is max
-        self.settingPlayer = QtMultimedia.QMediaPlayer()
-        self.settingPlayer.setAudioOutput(self._setting_output)
+        for name, cfg in CHANNEL_CONFIG.items():
+            audio_output = self.audio_output_lst[cfg["audio_index"]]
 
-        # weather player
-        self._weather_output = QtMultimedia.QAudioOutput()
-        self._weather_output.setVolume(1.0) # initial volume is max
-        self.weatherPlayer = QtMultimedia.QMediaPlayer()
-        self.weatherPlayer.setAudioOutput(self._weather_output)
+            channel = self.create_channel(
+                name=name,
+                buttons=[], # initially set empty, will be when buttons are created
+                audio_output=audio_output,
+                loop=cfg.get("loop", False),
+                max_playlist_length=cfg.get("max_playlist_length", 40),
+            )
 
-        # special player
-        self._special_output = QtMultimedia.QAudioOutput()
-        self._special_output.setVolume(1.0) # initial volume is max
-        self.specialPlayer = QtMultimedia.QMediaPlayer()
-        self.specialPlayer.setAudioOutput(self._special_output)
+            if cfg.get("expose"):
+                setattr(self, f"{name}Channel", channel)
 
-        self.playerController = PlayerController()
+        # create sound buttons
+        self.musicBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["music"]) for b in range(self.btn_rows)]
+        self.settingBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["setting"]) for b in range(self.btn_rows)]
+        self.weatherBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["weather"]) for b in range(self.btn_rows)]
+        self.specialBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["special"]) for b in range(self.btn_rows)]
 
-        # add music channel explicitly to allow direct music control
-        self.musicChannel = PlayerChannel(
-            "music", self.musicPlayer, self.musicBtn_lst, self._music_output, loop=True
-        )
-
-        self.playerController.add_channel(self.musicChannel)
-
-        self.playerController.add_channel(
-            PlayerChannel("setting", self.settingPlayer, self.settingBtn_lst, self._setting_output, loop=True)
-        )
-        self.playerController.add_channel(
-            PlayerChannel("weather", self.weatherPlayer, self.weatherBtn_lst, self._weather_output, loop=True)
-        )
-        self.playerController.add_channel(
-            PlayerChannel("special", self.specialPlayer, self.specialBtn_lst, self._special_output, loop=True)
-        )
 
         for ch in self.playerController.channels.values():
             self.connect_player_signals(ch)
@@ -240,7 +248,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.masterVolumeSlider.setStyleSheet(style.CSS_Slider)
         self.masterVolumeSlider.setObjectName("masterVolumeSlider")
         self.masterVolumeSlider.setRange(0, 100)
-        self.masterVolumeSlider.setValue(100*int(self._music_output.volume()))
+        self.masterVolumeSlider.setValue(100*int(self.playerController.channels["music"].audio_output.volume()))
         self.masterVolumeSlider.valueChanged[int].connect(self.on_masterVolumeSliderChanged)
 
         Sound_Frame_Slider_Layout.addWidget(self.masterVolumeSlider, alignment=QtCore.Qt.AlignmentFlag.AlignBottom)
@@ -841,30 +849,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         QtCore.QTimer.singleShot(
             0,
-            lambda d=device: self._applyAudioDevice(d)
+            lambda d=device: self._apply_audio_device(d)
         )
 
-    def _applyAudioDevice(self, device):
-        for channel in self.playerController.channels.values():
-            player = channel.player
-            output = channel.audio_output
+    def _apply_audio_device(self, device):
+        for ao in self.audio_output_lst:
+            vol = ao.volume()
+            ao.setDevice(device)
+            ao.setVolume(vol)
 
-            vol = channel.audio_output.volume()
-            if vol > 1.0:
-                vol /= 100.0
-
-            was_playing = player.playbackState() == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState
-            pos = player.position()
-
-            player.stop()
-            output.setDevice(device)
-            output.setVolume(vol)
-
-            player.setAudioOutput(output)
-
-            if was_playing:
-                player.setPosition(pos)
-                player.play()
 
 
     ##########################################################################################################################
@@ -1057,40 +1050,40 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # convert linear scale to logarithmic to match dB perception
         musicValue = self.musicVolumeSlider.value()
         linMusicVolume = dependent_volume(masterValue, musicValue)
-        self._music_output.setVolume(linMusicVolume)
+        self.playerController.channels["music"].audio_output.setVolume(linMusicVolume)
 
         settingValue = self.settingVolumeSlider.value()
         linSettingVolume = dependent_volume(masterValue, settingValue)
-        self._setting_output.setVolume(linSettingVolume)
-
+        self.playerController.channels["setting"].audio_output.setVolume(linSettingVolume)
+        
         weatherValue = self.weatherVolumeSlider.value()
         linWeatherVolume = dependent_volume(masterValue, weatherValue)
-        self._weather_output.setVolume(linWeatherVolume)
+        self.playerController.channels["weather"].audio_output.setVolume(linWeatherVolume)
 
         specialValue = self.specialVolumeSlider.value()
         linSpecialVolume = dependent_volume(masterValue, specialValue)
-        self._special_output.setVolume(linSpecialVolume)
+        self.playerController.channels["special"].audio_output.setVolume(linSpecialVolume)
         
     # individual volume sliders (dependent sliders)
     def on_musicVolumeSliderChanged(self, subValue)->None:
         masterValue = self.masterVolumeSlider.value()
         linDepVal = dependent_volume(masterValue, subValue)
-        self._music_output.setVolume(linDepVal)
+        self.playerController.channels["music"].audio_output.setVolume(linDepVal)
         
     def on_settingVolumeSliderChanged(self, subValue)->None:
         masterValue = self.masterVolumeSlider.value()
         linDepVal = dependent_volume(masterValue, subValue)
-        self._setting_output.setVolume(linDepVal)
+        self.playerController.channels["setting"].audio_output.setVolume(linDepVal)
 
     def on_weatherVolumeSliderChanged(self, subValue)->None:
         masterValue = self.masterVolumeSlider.value()
         linDepVal = dependent_volume(masterValue, subValue)
-        self._weather_output.setVolume(linDepVal)
+        self.playerController.channels["weather"].audio_output.setVolume(linDepVal)
 
     def on_specialVolumeSliderChanged(self, subValue)->None:
         masterValue = self.masterVolumeSlider.value()
         linDepVal = dependent_volume(masterValue, subValue)
-        self._special_output.setVolume(linDepVal)
+        self.playerController.channels["special"].audio_output.setVolume(linDepVal)
         
         
         
@@ -1109,7 +1102,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         item = self.currentSoundFilesListWidget.item(idx)
         if item:
             item.setSelected(True)
-
 
     def connect_player_signals(self, channel: PlayerChannel):
         p = channel.player
@@ -1176,6 +1168,24 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.displayPlaylist(activeBtn)
         else:
             self.currentSoundFilesListWidget.clear()
+
+    def create_channel(self, name, buttons, audio_output, loop=True, max_playlist_length=40)->PlayerChannel:
+        player = QtMultimedia.QMediaPlayer()
+        player.setAudioOutput(audio_output)
+
+        channel = PlayerChannel(
+            name=name,
+            player=player,
+            audio_output=audio_output,
+            loop=loop,
+            max_playlist_length=max_playlist_length,
+        )
+
+        self.playerController.add_channel(channel)
+        self.connect_player_signals(channel)
+
+        return channel
+
     
     class RearrangeListWidget(QtWidgets.QListWidget):
         '''
@@ -1270,13 +1280,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         playlistDropped = QtCore.pyqtSignal(object)
         playlistLeave = QtCore.pyqtSignal(object)
 
-        def __init__(self, parent=None, playlist_max_length=40, app_path=""):
+        def __init__(self, parent=None, channel=None, app_path=""):
             super().__init__(parent)
 
             self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
+            self.channel = channel
             self.app_path = app_path
-            self.playlist = Playlist(playlist_max_length)
+            self.playlist = Playlist(channel.max_playlist_length)
 
             self.setAcceptDrops(True)
             self.setSizePolicy(
@@ -1355,13 +1366,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
         def _filename(self, path):
             return os.path.splitext(os.path.basename(path))[0]
 
-    def create_acceptDropButton(self, parent=None, playlistMaxlength=40):
+    def create_acceptDropButton(self, parent=None, channel=None):
         btn = self.AcceptDropButton(
             parent=parent,
-            playlist_max_length=playlistMaxlength,
+            channel=channel,
             app_path=self.application_path
         )
+        # add the button to its channel
+        channel.buttons.append(btn)
 
+         # Connect signals
         btn.playlistHovered.connect(self.displayPlaylist)
         btn.playlistCleared.connect(self.onPlaylistCleared)
         btn.playlistDropped.connect(self.displayPlaylist)
