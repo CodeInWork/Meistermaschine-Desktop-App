@@ -1,10 +1,10 @@
 
-from random import random
+from random import randint
 
 
 def roll_destiny()->tuple[int, str]:
 
-    diceRoll = random.randint(1, 20)
+    diceRoll = randint(1, 20)
     if diceRoll == 1:
         outPutStr = "\u2620"
         
