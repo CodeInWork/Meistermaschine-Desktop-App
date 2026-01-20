@@ -163,12 +163,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         Central_Layout.setSpacing(0)
         Central_Layout.setContentsMargins(0,0,0,0)
 
-        # add here: create_frame() for all frames
-        # then: central_layout.addwidget(frame_xy)
-        # after that: centralwidget.setLayout()
-
-        
-
         ########################################################################################################
         # Sound Control Frame
         Sound_Frame_Layout = QtWidgets.QGridLayout()
@@ -283,7 +277,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         ########################################################################################################
         # Utilitiey frame
         # Tab 1: Dice roll interface
-        # Tab 2: Audio file system and SD card managment
+        # Tab 2: Audio file system and SD card management
+        # Tab 3: Icon file system and interface -> ToDo
 
         Utility_Frame = QtWidgets.QFrame()
         Utility_Frame.setStyleSheet(style.CSS_Utility_Frame)
@@ -293,7 +288,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         # Create a layout for the utility frame
         Utility_Frame_Layout = QtWidgets.QVBoxLayout(Utility_Frame)
-        
 
         # Create the tab widget
         utilityTab = QtWidgets.QTabWidget()
@@ -301,18 +295,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         diceTab = QtWidgets.QWidget()
         audioTab = QtWidgets.QWidget()
+        iconsTab = QtWidgets.QWidget()
         utilityTab.addTab(diceTab,"Dice")
         utilityTab.addTab(audioTab,"Audio")
+        utilityTab.addTab(iconsTab,"Icons")
 
-        # Tab 1: Dice roll
         utilityTab.setTabText(0,"Dice")
         utilityTab.setTabText(1,"Audio")
+        utilityTab.setTabText(2, "Icons")
 
         # create layouts and add it to tab
         self.create_Dice_Tab_Layout(diceTab)
 
         # Tab 2: Audio file system and SD card
         self.create_Audio_Tab_Layout(audioTab)
+
+        # Teb 3: Icons
+        self.create_Icons_Tab_Layout(iconsTab)
         
         # Add the tab widget to the frame's layout
         Utility_Frame_Layout.addWidget(utilityTab)
@@ -520,6 +519,26 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
     
+    def create_Icons_Tab_Layout(self, iconsTab: QtWidgets.QTabWidget)->None:
+        layout = QtWidgets.QVBoxLayout(iconsTab)
+        layout.setContentsMargins(6, 6, 6, 6)
+
+        iconList = self.IconListWidget()
+        iconList.setViewMode(QtWidgets.QListView.ViewMode.IconMode)
+        iconList.setResizeMode(QtWidgets.QListView.ResizeMode.Adjust)
+        iconList.setMovement(QtWidgets.QListView.Movement.Static)
+        iconList.setIconSize(QtCore.QSize(48, 48))
+        iconList.setSpacing(8)
+        iconList.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.SingleSelection)
+        iconList.setUniformItemSizes(True)
+        iconList.setGridSize(QtCore.QSize(64, 64))
+        iconList.setDragEnabled(True)
+        iconList.setStyleSheet(style.CSS_List)
+
+        layout.addWidget(iconList)
+
+        self._populate_icon_list(iconList)
+
     def create_Audio_Tab_Layout(self, tab_widget: QtWidgets.QTabWidget)->None:
         Audio_Tab_Layout = QtWidgets.QGridLayout()
         
@@ -1093,6 +1112,26 @@ class Ui_MainWindow(QtWidgets.QWidget):
     #############################################################################################################################
     # helper functions
 
+    def _populate_icon_list(self, iconList):
+        icon_dir = os.path.join(self.application_path, "icons")
+
+        if not os.path.isdir(icon_dir):
+            return
+
+        for fname in sorted(os.listdir(icon_dir)):
+            if not fname.lower().endswith((".png", ".jpg", ".jpeg", ".svg")):
+                continue
+
+            path = os.path.join(icon_dir, fname)
+            icon = QtGui.QIcon(path)
+
+            item = QtWidgets.QListWidgetItem(icon, "")
+            item.setToolTip(fname)
+            item.setData(QtCore.Qt.ItemDataRole.UserRole, path)
+
+            iconList.addItem(item)
+
+
     def select_active_track(self):
         btn = self.musicChannel.active_button
         if not btn:
@@ -1384,5 +1423,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         return btn
 
+    class IconListWidget(QtWidgets.QListWidget):
+        def mimeData(self, items):
+            mime = QtCore.QMimeData()
+            urls = []
+
+            for item in items:
+                path = item.data(QtCore.Qt.ItemDataRole.UserRole)
+                if path:
+                    urls.append(QtCore.QUrl.fromLocalFile(path))
+
+            mime.setUrls(urls)
+            return mime
 
 
