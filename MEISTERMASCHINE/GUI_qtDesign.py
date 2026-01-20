@@ -53,14 +53,19 @@ CHANNEL_CONFIG = {
     },
 }
 
+# accepted audio and icon file types
+AUDIO_EXTS = (".mp3", ".wav", ".ogg", ".flac", ".m4a")
+ICON_EXTS = (".png", ".jpg", ".jpeg", ".svg")
 
 
 # ToDo: 
 #   Major:
 #   - implement icon tab and allow drag and drop of icons upon buttons to change them
+#       > ALLOW ICON TO BE SAVED
 #   - allow saving of complete presets WITH sound files so they are immune to soundfile path changes
 
 # Minor
+#   - change line when track ends and next is played (update display playlist)
 #   - always show playlist of active button (leaveHoverEvent) -> done
 #   - make *.mms only hold the song title and make it recombine with application path on demand
 #   - when currentplaylist widget is rearranged, update button playlist
@@ -137,10 +142,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 setattr(self, f"{name}Channel", channel)
 
         # create sound buttons
-        self.musicBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["music"]) for b in range(self.btn_rows)]
-        self.settingBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["setting"]) for b in range(self.btn_rows)]
-        self.weatherBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["weather"]) for b in range(self.btn_rows)]
-        self.specialBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["special"]) for b in range(self.btn_rows)]
+        self.musicBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["music"], styleSheet=style.CSS_PB_music) for b in range(self.btn_rows)]
+        self.settingBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["setting"], styleSheet=style.CSS_PB_setting) for b in range(self.btn_rows)]
+        self.weatherBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["weather"], styleSheet=style.CSS_PB_weather) for b in range(self.btn_rows)]
+        self.specialBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["special"], styleSheet=style.CSS_PB_special_lst[b]) for b in range(self.btn_rows)]
 
 
         for ch in self.playerController.channels.values():
@@ -334,7 +339,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         for btn in self.musicBtn_lst:
             curBtnIndex = self.musicBtn_lst.index(btn)
             btn.setCheckable(True)
-            btn.setStyleSheet(style.CSS_PB_music)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.musicIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -349,7 +353,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             curBtnIndex = self.settingBtn_lst.index(btn)
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
-            btn.setStyleSheet(style.CSS_PB_setting)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.settingIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -364,7 +367,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             curBtnIndex = self.weatherBtn_lst.index(btn)
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
-            btn.setStyleSheet(style.CSS_PB_weather)
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.weatherIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -379,7 +381,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             curBtnIndex = self.specialBtn_lst.index(btn)
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
-            btn.setStyleSheet(style.CSS_PB_special_lst[curBtnIndex])
             btn.setText("")
             icon = QtGui.QIcon()
             icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.specialIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
@@ -1319,13 +1320,16 @@ class Ui_MainWindow(QtWidgets.QWidget):
         playlistDropped = QtCore.pyqtSignal(object)
         playlistLeave = QtCore.pyqtSignal(object)
 
-        def __init__(self, parent=None, channel=None, app_path=""):
+        def __init__(self, parent=None, channel=None, app_path="", styleSheet=None):
             super().__init__(parent)
 
             self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
 
             self.channel = channel
             self.app_path = app_path
+            self.base_styleSheet = styleSheet  
+            self.setStyleSheet(styleSheet) 
+
             self.playlist = Playlist(channel.max_playlist_length)
 
             self.setAcceptDrops(True)
@@ -1335,6 +1339,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             )
 
             self._init_context_menu()
+
 
         # ---------- UI ----------
 
@@ -1362,26 +1367,90 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # ---------- Drag & Drop ----------
 
         def dragEnterEvent(self, event):
-            if event.mimeData().hasUrls():
+            if not event.mimeData().hasUrls():
+                event.ignore()
+                return
+
+            has_icon = False
+            has_audio = False
+
+            for url in event.mimeData().urls():
+                path = url.toLocalFile().lower()
+                if path.endswith(ICON_EXTS):
+                    has_icon = True
+                elif path.endswith(AUDIO_EXTS):
+                    has_audio = True
+
+            if has_icon or has_audio:
+                mode = "icon" if has_icon else "audio"
+                self._set_drag_highlight(True, mode)
                 event.acceptProposedAction()
-                self.playlistHovered.emit(self)
             else:
-                super().dragEnterEvent(event)
+                event.ignore()
 
         def dragLeaveEvent(self, event):
+            self._set_drag_highlight(False)
             self.playlistLeave.emit(self)
-            super().dragLeaveEvent(event) 
+            super().dragLeaveEvent(event)
 
+        
         def dropEvent(self, event):
-            if event.mimeData().hasUrls():
-                paths = [
-                    os.path.relpath(url.toLocalFile(), self.app_path)
-                    for url in event.mimeData().urls()
-                ]
-                self.songsDropped.emit(self, paths)
+            if not event.mimeData().hasUrls():
+                super().dropEvent(event)
+                return
+
+            self._set_drag_highlight(False)
+
+            audio_paths = []
+            icon_path = None
+
+            for url in event.mimeData().urls():
+                path = url.toLocalFile()
+
+                if path.lower().endswith(ICON_EXTS):
+                    icon_path = path  # last one wins
+                elif path.lower().endswith(AUDIO_EXTS):
+                    rel = os.path.relpath(path, self.app_path)
+                    audio_paths.append(rel)
+
+            if icon_path:
+                self.set_button_icon(icon_path)
+
+            if audio_paths:
+                self.songsDropped.emit(self, audio_paths)
+
+            if icon_path or audio_paths:
                 event.acceptProposedAction()
             else:
-                super().dropEvent(event)
+                event.ignore()
+
+        def set_button_icon(self, path):
+            self.setIcon(QtGui.QIcon(path))
+            self.setIconSize(QtCore.QSize(48, 48))
+            self.icon_path = path
+
+        def _set_drag_highlight(self, enabled, mode=None):
+            if not enabled:
+                self.setStyleSheet(self.base_styleSheet)
+                return
+
+            if mode == "icon":
+                color = "#66ccff"
+            elif mode == "audio":
+                color = "#66ff99"
+            else:
+                color = "#aaaaaa"
+
+            highlight = f"""
+            QPushButton {{
+                border: 2px dashed {color};
+                background-color: {style.gray};
+            }}
+            """
+
+            self.setStyleSheet(self.base_styleSheet + highlight)
+
+
 
         def event(self, event):
             if event.type() == QtCore.QEvent.Type.HoverEnter:
@@ -1395,8 +1464,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             return super().event(event)
 
-
-
         # ---------- Helpers ----------
 
         def _relative_path(self, url):
@@ -1405,11 +1472,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         def _filename(self, path):
             return os.path.splitext(os.path.basename(path))[0]
 
-    def create_acceptDropButton(self, parent=None, channel=None):
+    def create_acceptDropButton(self, parent=None, channel=None, styleSheet=None):
         btn = self.AcceptDropButton(
             parent=parent,
             channel=channel,
-            app_path=self.application_path
+            app_path=self.application_path,
+            styleSheet=styleSheet
         )
         # add the button to its channel
         channel.buttons.append(btn)
