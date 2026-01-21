@@ -19,7 +19,7 @@ import random
 
 import MEISTERMASCHINE.stylesheet as style
 from MEISTERMASCHINE.audio.volume import dependent_volume
-from MEISTERMASCHINE.preset_utilities.preset_io import save_mms, load_mms
+from MEISTERMASCHINE.preset_utilities.preset_io import save_mms, load_mms, save_preset_json, load_preset_json
 from MEISTERMASCHINE.buttons.btn_logic import btn_assign_playlist
 from MEISTERMASCHINE.audio.playlist import Playlist
 from MEISTERMASCHINE.audio.player_channel import PlayerChannel, PlayerController
@@ -493,9 +493,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         save_action = QtGui.QAction(icon, "&Save...",MainWindow, triggered=self.save) 
         save_action.setShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Save))
         file_menu.addAction(save_action)
-        # save as
+        # save as *.mms
         icon = QtGui.QIcon.fromTheme("document-save")
-        save_as_action = QtGui.QAction(icon, "&Save as...",MainWindow, triggered=self.save_as) 
+        save_as_action = QtGui.QAction(icon, "&Save as mms",MainWindow, triggered=self.save_as_mms) 
+        file_menu.addAction(save_as_action)
+        # save as *.json
+        icon = QtGui.QIcon.fromTheme("document-save")
+        save_as_action = QtGui.QAction(icon, "&Save as json",MainWindow, triggered=self.save_as_json) 
         file_menu.addAction(save_as_action)
 
         
@@ -776,6 +780,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
     @Slot()
     def new(self)->None:
         file = QtWidgets.QFileDialog.getSaveFileName(None, "Create new file", self.default_preset_path, "*.mms")
+        if not file:
+            return
         self.playerController.clear_all_playlists()
         save_mms(file[0], self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
         self.listPresets()
@@ -783,6 +789,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
     @Slot()
     def open(self)->None:
         file = QtWidgets.QFileDialog.getOpenFileName(None, "Select a file...", self.default_preset_path, "*.mms")
+        if not file:
+            return
         self.btn_occupancy = load_mms(file[0])
         btn_assign_playlist(self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst, btn_occupancy)
 
@@ -792,9 +800,19 @@ class Ui_MainWindow(QtWidgets.QWidget):
         save_mms(file, self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
 
     @Slot()
-    def save_as(self)->None:
-        file = QtWidgets.QFileDialog.getSaveFileName(None, "Save file", self.default_preset_path, "*.mms")
+    def save_as_mms(self)->None:
+        file = QtWidgets.QFileDialog.getSaveFileName(None, "Save mms", self.default_preset_path, "*.mms")
+        if not file:
+            return
         save_mms(file[0], self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
+        self.listPresets()
+
+    @Slot()
+    def save_as_json(self)->None:
+        file = QtWidgets.QFileDialog.getSaveFileName(None, "Save json", self.default_preset_path, "*.json")
+        if not file:
+            return
+        save_preset_json(self.playerController, file[0])
         self.listPresets()
 
     # Button Event Handlers
