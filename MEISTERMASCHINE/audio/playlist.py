@@ -15,6 +15,8 @@ class Playlist:
         return self.tracks[index]
 
     def add(self, path: str):
+        if not isinstance(path, str) or not path:
+            return
         title = self.extractTitle(path)
         if len(self.tracks) >= self.max_length:
             self.tracks[0] = (path, title)

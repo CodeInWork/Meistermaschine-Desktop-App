@@ -147,11 +147,11 @@
         },
         {
           "index": 2,
-          "icon": "icons\\landschaft.png",
+          "icon": "icons\\fluss.png",
           "playlist": [
             [
-              "sounds\\Setting\\fields - medieval summerday.wav",
-              "fields - medieval summerday"
+              "sounds\\17_Alien_Night_Club.mp3",
+              "17_Alien_Night_Club"
             ]
           ]
         },

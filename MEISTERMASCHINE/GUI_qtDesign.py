@@ -84,10 +84,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # variables and settings
         self.btn_rows = 5
         self.channel_count = 4
-        self.musicIcon_lst = ["smiley_star","smiley_grin","smiley_neutral","smiley_scary","smiley_death"]
-        self.settingIcon_lst = ["pub","dorf","landschaft","hohle","kampf"]
-        self.weatherIcon_lst = ["nacht","welle","wind","sturm","schnee"]
-        self.specialIcon_lst = ["icon_square","icon_plus","icon_triangle","icon_minus","icon_star"]
+        # default icons
+        self.musicIcon_lst = ["icons\\smiley_star.png","icons\\smiley_grin.png","icons\\smiley_neutral.png","icons\\smiley_scary.png","icons\\smiley_death.png"]
+        self.settingIcon_lst = ["icons\\pub.png","icons\\dorf.png","icons\\landschaft.png","icons\\hohle.png","icons\\kampf.png"]
+        self.weatherIcon_lst = ["icons\\nacht.png","icons\\welle.png","icons\\wind.png","icons\\sturm.png","icons\\schnee.png"]
+        self.specialIcon_lst = ["icons\\icon_square.png","icons\\icon_plus.png","icons\\icon_triangle.png","icons\\icon_minus.png","icons\\icon_star.png"]
 
         self.Btn_Display_Time = 20000   # how long is dice roll result displayed
 
@@ -142,10 +143,38 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 setattr(self, f"{name}Channel", channel)
 
         # create sound buttons
-        self.musicBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["music"], styleSheet=style.CSS_PB_music) for b in range(self.btn_rows)]
-        self.settingBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["setting"], styleSheet=style.CSS_PB_setting) for b in range(self.btn_rows)]
-        self.weatherBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["weather"], styleSheet=style.CSS_PB_weather) for b in range(self.btn_rows)]
-        self.specialBtn_lst = [self.create_acceptDropButton(channel=self.playerController.channels["special"], styleSheet=style.CSS_PB_special_lst[b]) for b in range(self.btn_rows)]
+        self.musicBtn_lst = [
+            self.create_acceptDropButton(
+                channel=self.playerController.channels["music"],
+                styleSheet=style.CSS_PB_music,
+                icon_path=self.musicIcon_lst[b]
+            )
+            for b in range(self.btn_rows)
+        ]
+        self.settingBtn_lst = [
+            self.create_acceptDropButton(
+                channel=self.playerController.channels["setting"], 
+                styleSheet=style.CSS_PB_setting,
+                icon_path=self.settingIcon_lst[b]
+            ) 
+            for b in range(self.btn_rows)
+        ]
+        self.weatherBtn_lst = [
+            self.create_acceptDropButton(
+                channel=self.playerController.channels["weather"], 
+                styleSheet=style.CSS_PB_weather,
+                icon_path=self.weatherIcon_lst[b]
+            ) 
+            for b in range(self.btn_rows)
+        ]
+        self.specialBtn_lst = [
+            self.create_acceptDropButton(
+                channel=self.playerController.channels["special"], 
+                styleSheet=style.CSS_PB_special_lst[b],
+                icon_path=self.specialIcon_lst[b]
+            ) 
+            for b in range(self.btn_rows)
+        ]
 
 
         for ch in self.playerController.channels.values():
@@ -340,9 +369,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             curBtnIndex = self.musicBtn_lst.index(btn)
             btn.setCheckable(True)
             btn.setText("")
-            icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.musicIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
-            btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"musicBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
@@ -354,9 +380,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setText("")
-            icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.settingIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
-            btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"settingBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
@@ -368,9 +391,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setText("")
-            icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.weatherIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
-            btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"weatherBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
@@ -382,9 +402,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setText("")
-            icon = QtGui.QIcon()
-            icon.addPixmap(QtGui.QPixmap(f"{default_icon_path}/{self.specialIcon_lst[curBtnIndex]}.png"), QtGui.QIcon.Mode.Normal, QtGui.QIcon.State.Off)
-            btn.setIcon(icon)
             btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"specialBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
@@ -788,20 +805,28 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     @Slot()
     def open(self)->None:
+        file = QtWidgets.QFileDialog.getOpenFileName(None, "Select a file...", self.default_preset_path, "*.json")
+        if not file:
+            return
+        load_preset_json(self.playerController, file[0])
+
+    @Slot()
+    def import_mms(self)->None:
         file = QtWidgets.QFileDialog.getOpenFileName(None, "Select a file...", self.default_preset_path, "*.mms")
         if not file:
             return
         self.btn_occupancy = load_mms(file[0])
-        btn_assign_playlist(self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst, btn_occupancy)
+        btn_assign_playlist(self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst, self.btn_occupancy)
 
     @Slot()
     def save(self)->None:
         file = self.getCurrentPresetFile()
-        save_mms(file, self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
+        #save_mms(file, self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
+        save_preset_json(self.playerController, file[0])
 
     @Slot()
     def save_as_mms(self)->None:
-        file = QtWidgets.QFileDialog.getSaveFileName(None, "Save mms", self.default_preset_path, "*.mms")
+        file = QtWidgets.QFileDialog.getSaveFileName(None, "Save SD format", self.default_preset_path, "*.mms")
         if not file:
             return
         save_mms(file[0], self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
@@ -809,7 +834,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     @Slot()
     def save_as_json(self)->None:
-        file = QtWidgets.QFileDialog.getSaveFileName(None, "Save json", self.default_preset_path, "*.json")
+        file = QtWidgets.QFileDialog.getSaveFileName(None, "Save preset", self.default_preset_path, "*.json")
         if not file:
             return
         save_preset_json(self.playerController, file[0])
@@ -1176,7 +1201,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             lambda state, ch=channel: self.on_playbackStateChanged(ch, state)
         )
         
-    def getCurrentPresetFile(self)->str:
+    """def getCurrentPresetFile(self)->str:
         current_idx=self.presetCombobox.currentIndex()
         currentPreset = self.preset_lst[current_idx]
         return currentPreset[0]
@@ -1191,8 +1216,29 @@ class Ui_MainWindow(QtWidgets.QWidget):
             head_tail = os.path.split(file)
             filename = os.path.splitext(head_tail[1])
             self.preset_lst.append([file, filename[0]])
-            self.presetCombobox.addItem(filename[0])
-        
+            self.presetCombobox.addItem(filename[0])"""
+    
+    def listPresets(self) -> None:
+        self.presetCombobox.blockSignals(True)
+        try:
+            self.presetCombobox.clear()
+
+            pattern = os.path.join(self.default_preset_path, "*.json")
+            presets = gl.glob(pattern)
+            presets.sort(key=os.path.getmtime, reverse=True)
+
+            for file_path in presets:
+                base = os.path.splitext(os.path.basename(file_path))[0]
+                # Display name, but store the full path as user data
+                self.presetCombobox.addItem(base, file_path)
+
+        finally:
+            self.presetCombobox.blockSignals(False)
+
+    def getCurrentPresetFile(self) -> str:
+        file_path = self.presetCombobox.currentData()
+        return file_path or ""
+
 
     def stopPlayers(self, soundPlayer_lst: list[QtMultimedia.QMediaPlayer])->None:
         for player in soundPlayer_lst:
@@ -1338,7 +1384,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         playlistDropped = QtCore.pyqtSignal(object)
         playlistLeave = QtCore.pyqtSignal(object)
 
-        def __init__(self, parent=None, channel=None, app_path="", styleSheet=None):
+        def __init__(self, parent=None, channel=None, app_path="", styleSheet=None, icon_path=None):
             super().__init__(parent)
 
             self.setAttribute(QtCore.Qt.WidgetAttribute.WA_Hover, True)
@@ -1347,6 +1393,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.app_path = app_path
             self.base_styleSheet = styleSheet  
             self.setStyleSheet(styleSheet) 
+            self.icon_path=icon_path
+            self.set_button_icon(icon_path)
 
             self.playlist = Playlist(channel.max_playlist_length)
 
@@ -1426,7 +1474,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 path = url.toLocalFile()
 
                 if path.lower().endswith(ICON_EXTS):
-                    icon_path = path  # last one wins
+                    try:
+                        icon_path = os.path.relpath(path, self.app_path)
+                    except ValueError:
+                        icon_path = path  # fallback to absolute (for different drive errors)
                 elif path.lower().endswith(AUDIO_EXTS):
                     rel = os.path.relpath(path, self.app_path)
                     audio_paths.append(rel)
@@ -1443,9 +1494,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 event.ignore()
 
         def set_button_icon(self, path):
-            self.setIcon(QtGui.QIcon(path))
-            self.setIconSize(QtCore.QSize(48, 48))
-            self.icon_path = path
+            if path:
+                self.icon_path = path
+            
+            abs_path = self.icon_path
+            if abs_path and not os.path.isabs(abs_path):
+                abs_path = os.path.join(self.app_path, abs_path)
+
+            self.setIcon(QtGui.QIcon(abs_path))
+            self.setIconSize(QtCore.QSize(50, 50))
 
         def _set_drag_highlight(self, enabled, mode=None):
             if not enabled:
@@ -1490,12 +1547,13 @@ class Ui_MainWindow(QtWidgets.QWidget):
         def _filename(self, path):
             return os.path.splitext(os.path.basename(path))[0]
 
-    def create_acceptDropButton(self, parent=None, channel=None, styleSheet=None):
+    def create_acceptDropButton(self, parent=None, channel=None, styleSheet=None, icon_path=None):
         btn = self.AcceptDropButton(
             parent=parent,
             channel=channel,
             app_path=self.application_path,
-            styleSheet=styleSheet
+            styleSheet=styleSheet,
+            icon_path=icon_path
         )
         # add the button to its channel
         channel.buttons.append(btn)

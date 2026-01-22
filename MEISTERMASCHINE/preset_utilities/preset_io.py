@@ -60,9 +60,29 @@ def load_preset_json(controller, path):
             btn = channel.buttons[idx]
 
             btn.playlist.clear()
-            for track in btn_data.get("playlist", []):
-                btn.playlist.add(track)
+            for item in btn_data.get("playlist", []):
+                track_path = _track_path_from_json(item)
+                btn.playlist.add(track_path)
 
             icon = btn_data.get("icon")
             if icon:
                 btn.set_button_icon(icon)
+
+def _track_path_from_json(item):
+    # Accept "path" as str
+    if isinstance(item, str):
+        return item
+
+    # Accept ["path", "title"] or ("path", "title")
+    if isinstance(item, (list, tuple)) and item:
+        if isinstance(item[0], str):
+            return item[0]
+
+    # Accept {"path": "..."} (or {"file": "..."})
+    if isinstance(item, dict):
+        p = item.get("path") or item.get("file")
+        if isinstance(p, str):
+            return p
+
+    return None
+
