@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "channels": {
+    "music": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": "icons\\star-struck.png",
+          "playlist": []
+        },
+        {
+          "index": 1,
+          "icon": "icons\\grin.png",
+          "playlist": []
+        },
+        {
+          "index": 2,
+          "icon": "icons\\neutral.png",
+          "playlist": []
+        },
+        {
+          "index": 3,
+          "icon": "icons\\scary.png",
+          "playlist": []
+        },
+        {
+          "index": 4,
+          "icon": "icons\\death.png",
+          "playlist": []
+        }
+      ]
+    },
+    "setting": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": "icons\\pub.png",
+          "playlist": []
+        },
+        {
+          "index": 1,
+          "icon": "icons\\dorf.png",
+          "playlist": []
+        },
+        {
+          "index": 2,
+          "icon": "icons\\landschaft.png",
+          "playlist": []
+        },
+        {
+          "index": 3,
+          "icon": "icons\\hohle.png",
+          "playlist": []
+        },
+        {
+          "index": 4,
+          "icon": "icons\\kampf.png",
+          "playlist": []
+        }
+      ]
+    },
+    "weather": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": "icons\\nacht.png",
+          "playlist": []
+        },
+        {
+          "index": 1,
+          "icon": "icons\\welle.png",
+          "playlist": []
+        },
+        {
+          "index": 2,
+          "icon": "icons\\wind.png",
+          "playlist": []
+        },
+        {
+          "index": 3,
+          "icon": "icons\\sturm.png",
+          "playlist": []
+        },
+        {
+          "index": 4,
+          "icon": "icons\\schnee.png",
+          "playlist": []
+        }
+      ]
+    },
+    "special": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": "icons\\icon_star.png",
+          "playlist": []
+        },
+        {
+          "index": 1,
+          "icon": "icons\\icon_circle.png",
+          "playlist": []
+        },
+        {
+          "index": 2,
+          "icon": "icons\\icon_triangle.png",
+          "playlist": []
+        },
+        {
+          "index": 3,
+          "icon": "icons\\icon_plus.png",
+          "playlist": []
+        },
+        {
+          "index": 4,
+          "icon": "icons\\icon_square.png",
+          "playlist": []
+        }
+      ]
+    }
+  }
+}

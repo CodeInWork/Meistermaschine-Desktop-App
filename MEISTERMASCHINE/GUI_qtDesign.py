@@ -369,7 +369,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             curBtnIndex = self.musicBtn_lst.index(btn)
             btn.setCheckable(True)
             btn.setText("")
-            btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"musicBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
             Interface_Frame_Layout.addWidget(btn, curBtnIndex, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -380,7 +379,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setText("")
-            btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"settingBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
             Interface_Frame_Layout.addWidget(btn, curBtnIndex, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -391,7 +389,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setText("")
-            btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"weatherBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
             Interface_Frame_Layout.addWidget(btn, curBtnIndex, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -402,7 +399,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setCheckable(True)
             btn.setMaximumSize(QtCore.QSize(75, 75))
             btn.setText("")
-            btn.setIconSize(QtCore.QSize(50, 50))
             btn.setObjectName(f"specialBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
             Interface_Frame_Layout.addWidget(btn, curBtnIndex, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)    
@@ -537,6 +533,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         # init functions
         self.listPresets()
+        self.restore_last_preset()
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -795,20 +792,59 @@ class Ui_MainWindow(QtWidgets.QWidget):
     # event handlers
     # Slots
     @Slot()
-    def new(self)->None:
-        file = QtWidgets.QFileDialog.getSaveFileName(None, "Create new file", self.default_preset_path, "*.mms")
-        if not file:
+    def new(self) -> None:
+        path, _ = QtWidgets.QFileDialog.getSaveFileName(
+            None,
+            "Create new preset",
+            self.default_preset_path,
+            "Meistermaschine Preset (*.json)"
+        )
+        if not path:
             return
+        
+        # make sure it's a *.jsaon
+        if not path.lower().endswith(".json"):
+            path += ".json"
+
+        # 1) Reset current runtime state (stop audio, clear playlists, uncheck buttons, clear UI)
+        self.playerController.stop_all_channels()
         self.playerController.clear_all_playlists()
-        save_mms(file[0], self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
+        #self.uncheckAllButtons()
+        self.currentSoundFilesListWidget.clear()
+
+        # 2) Save an empty preset to the chosen path
+        # Option A: save current (now empty) controller state
+        save_preset_json(self.playerController, path)
+
+        # 3) Refresh preset list + select the new one in the combobox
         self.listPresets()
+        idx = self.presetCombobox.findData(path)
+        if idx >= 0:
+            self.presetCombobox.blockSignals(True)
+            try:
+                self.presetCombobox.setCurrentIndex(idx)
+            finally:
+                self.presetCombobox.blockSignals(False)
+
+        # 4) Remember it as "last used"
+        self._remember_last_preset(path)
+
 
     @Slot()
-    def open(self)->None:
+    def open(self) -> None:
         file = QtWidgets.QFileDialog.getOpenFileName(None, "Select a file...", self.default_preset_path, "*.json")
-        if not file:
+        if not file or not file[0]:
             return
+
         load_preset_json(self.playerController, file[0])
+        self._remember_last_preset(file[0])
+        self.listPresets()
+
+        # select it in combobox if present
+        idx = self.presetCombobox.findData(file[0])
+        if idx >= 0:
+            self.presetCombobox.setCurrentIndex(idx)
+
 
     @Slot()
     def import_mms(self)->None:
@@ -821,7 +857,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
     @Slot()
     def save(self)->None:
         file = self.getCurrentPresetFile()
-        #save_mms(file, self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
         save_preset_json(self.playerController, file[0])
 
     @Slot()
@@ -862,15 +897,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.currentSoundFilesListWidget.clear()
 
     # Preset Combobox
-    def on_presetComboBoxChanged(self, idx)->None:
+    def on_presetComboBoxChanged(self, idx) -> None:
+        path = self.presetCombobox.itemData(idx)
+        if not path:
+            return
+
         self.playerController.stop_all_channels()
-        if self.preset_lst:
-            new_file = self.preset_lst[idx]
-            self.btn_occupancy = load_mms(new_file[0])
-            btn_assign_playlist(self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst, self.btn_occupancy)
+        load_preset_json(self.playerController, path)
+        self._remember_last_preset(path)
+
 
     # audio handlers
-    
     def on_mediaStatusChanged(self, channel, status):
         if status != QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             return
@@ -1156,6 +1193,38 @@ class Ui_MainWindow(QtWidgets.QWidget):
     #############################################################################################################################
     # helper functions
 
+    # make App remember preset with QSettings
+    def _settings(self) -> QtCore.QSettings:
+        # Pick stable names for your app
+        return QtCore.QSettings("Meistermaschine", "Meistermaschine-Desktop-App")
+
+    def _remember_last_preset(self, preset_path: str) -> None:
+            if preset_path:
+                self._settings().setValue("lastPresetPath", preset_path)
+
+    def restore_last_preset(self) -> None:
+        last = self._settings().value("lastPresetPath", "", str)
+        if not last:
+            return
+
+        # If the file no longer exists, don’t crash or load nonsense
+        if not os.path.exists(last):
+            return
+
+        # Find matching item by userData (path)
+        idx = self.presetCombobox.findData(last)
+        if idx >= 0:
+            # Set combobox without triggering load twice
+            self.presetCombobox.blockSignals(True)
+            try:
+                self.presetCombobox.setCurrentIndex(idx)
+            finally:
+                self.presetCombobox.blockSignals(False)
+
+            # Actually load it once
+            load_preset_json(self.playerController, last)
+
+
     def _populate_icon_list(self, iconList):
         icon_dir = os.path.join(self.application_path, "icons")
 
@@ -1200,23 +1269,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         p.playbackStateChanged.connect(
             lambda state, ch=channel: self.on_playbackStateChanged(ch, state)
         )
-        
-    """def getCurrentPresetFile(self)->str:
-        current_idx=self.presetCombobox.currentIndex()
-        currentPreset = self.preset_lst[current_idx]
-        return currentPreset[0]
- 
-    def listPresets(self)->None:
-        self.preset_lst.clear()
-        self.presetCombobox.clear()
-        presets = gl.glob(f"{self.default_preset_path}\\*.mms")
-        presets.sort(key=os.path.getmtime)
-        presets.reverse()
-        for file in presets:
-            head_tail = os.path.split(file)
-            filename = os.path.splitext(head_tail[1])
-            self.preset_lst.append([file, filename[0]])
-            self.presetCombobox.addItem(filename[0])"""
     
     def listPresets(self) -> None:
         self.presetCombobox.blockSignals(True)
