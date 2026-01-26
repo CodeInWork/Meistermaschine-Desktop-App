@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "channels": {
+    "music": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": "icons\\smiley_star.png",
+          "playlist": []
+        },
+        {
+          "index": 1,
+          "icon": "icons\\smiley_grin.png",
+          "playlist": []
+        },
+        {
+          "index": 2,
+          "icon": "icons\\smiley_neutral.png",
+          "playlist": []
+        },
+        {
+          "index": 3,
+          "icon": "icons\\smiley_scary.png",
+          "playlist": []
+        },
+        {
+          "index": 4,
+          "icon": "icons\\smiley_death.png",
+          "playlist": [
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Unholy March.mp3",
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 To The Hilt.mp3",
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Te Extinguo.mp3"
+          ]
+        }
+      ]
+    },
+    "setting": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": "icons\\pub.png",
+          "playlist": []
+        },
+        {
+          "index": 1,
+          "icon": "icons\\dorf.png",
+          "playlist": []
+        },
+        {
+          "index": 2,
+          "icon": "icons\\landschaft.png",
+          "playlist": []
+        },
+        {
+          "index": 3,
+          "icon": "icons\\hohle.png",
+          "playlist": []
+        },
+        {
+          "index": 4,
+          "icon": "icons\\kampf.png",
+          "playlist": []
+        }
+      ]
+    },
+    "weather": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": "icons\\nacht.png",
+          "playlist": []
+        },
+        {
+          "index": 1,
+          "icon": "icons\\welle.png",
+          "playlist": []
+        },
+        {
+          "index": 2,
+          "icon": "icons\\wind.png",
+          "playlist": []
+        },
+        {
+          "index": 3,
+          "icon": "icons\\sturm.png",
+          "playlist": []
+        },
+        {
+          "index": 4,
+          "icon": "icons\\schnee.png",
+          "playlist": []
+        }
+      ]
+    },
+    "special": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": "icons\\icon_square.png",
+          "playlist": []
+        },
+        {
+          "index": 1,
+          "icon": "icons\\icon_plus.png",
+          "playlist": []
+        },
+        {
+          "index": 2,
+          "icon": "icons\\icon_triangle.png",
+          "playlist": []
+        },
+        {
+          "index": 3,
+          "icon": "icons\\icon_minus.png",
+          "playlist": []
+        },
+        {
+          "index": 4,
+          "icon": "icons\\icon_star.png",
+          "playlist": []
+        }
+      ]
+    }
+  }
+}

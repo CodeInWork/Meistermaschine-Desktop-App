@@ -147,7 +147,7 @@ class PlayerController:
         activeBtn.playlist.move(old_index, new_index)
 
         if was_playing:
-            track = channel.active_button.playlist.current()
+            track = activeBtn.playlist.current()
             if track:
                 self.play_channel(channel, track, app_path, fromBeginning=False)
 
