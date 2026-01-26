@@ -6,30 +6,44 @@
         {
           "index": 0,
           "icon": "icons\\smiley_star.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Musik\\medieval&fantasy\\Epic Medieval Fantasy Fanfare.mp3",
+            "sounds\\Musik\\medieval&fantasy\\Royal Fanfare The Entrance of The King.mp3"
+          ]
         },
         {
           "index": 1,
           "icon": "icons\\smiley_grin.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Musik\\medieval&fantasy\\World of Warcraft Music - Lion's Pride.mp3"
+          ]
         },
         {
           "index": 2,
           "icon": "icons\\smiley_neutral.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Musik\\medieval&fantasy\\Village-theme.mp3",
+            "sounds\\Musik\\medieval&fantasy\\Medieval Music Wild Boar's Inn.mp3",
+            "sounds\\Musik\\medieval&fantasy\\Medieval Music Troubadour.mp3",
+            "sounds\\Musik\\medieval&fantasy\\471510__shadydave__small-adventurers-music-loop.mp3"
+          ]
         },
         {
           "index": 3,
           "icon": "icons\\smiley_scary.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Evil Under The Surface.mp3",
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 The Lurking Horror.mp3",
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 How Deep Can We Go.mp3"
+          ]
         },
         {
           "index": 4,
           "icon": "icons\\smiley_death.png",
           "playlist": [
             "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Unholy March.mp3",
-            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 To The Hilt.mp3",
-            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Te Extinguo.mp3"
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Te Extinguo.mp3",
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 To The Hilt.mp3"
           ]
         }
       ]
@@ -39,27 +53,37 @@
         {
           "index": 0,
           "icon": "icons\\pub.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Setting\\tavern - pirates.wav"
+          ]
         },
         {
           "index": 1,
           "icon": "icons\\dorf.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Setting\\city - medieval.wav"
+          ]
         },
         {
           "index": 2,
           "icon": "icons\\landschaft.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Setting\\fields - medieval summerday.wav"
+          ]
         },
         {
           "index": 3,
           "icon": "icons\\hohle.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Setting\\dungeon-water-drops.mp3"
+          ]
         },
         {
           "index": 4,
           "icon": "icons\\kampf.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Setting\\fight - medieval.mp3"
+          ]
         }
       ]
     },
@@ -68,27 +92,37 @@
         {
           "index": 0,
           "icon": "icons\\nacht.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Weather\\nght - forest.mp3"
+          ]
         },
         {
           "index": 1,
           "icon": "icons\\welle.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Weather\\waves.mp3"
+          ]
         },
         {
           "index": 2,
           "icon": "icons\\wind.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Weather\\wind.ogg"
+          ]
         },
         {
           "index": 3,
           "icon": "icons\\sturm.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Weather\\thunder_storm-light.wav"
+          ]
         },
         {
           "index": 4,
           "icon": "icons\\schnee.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Weather\\blizzard.wav"
+          ]
         }
       ]
     },
@@ -97,7 +131,9 @@
         {
           "index": 0,
           "icon": "icons\\icon_square.png",
-          "playlist": []
+          "playlist": [
+            "sounds\\Special\\Monster roar.wav"
+          ]
         },
         {
           "index": 1,

@@ -1035,6 +1035,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         song = btn.playlist.current()
         if song:
             self.playerController.switch_track(channel, song, self.application_path)
+            self.displayPlaylist(btn)
 
     def on_stopBtnClicked(self)->None:
         self.playerController.stop_all_channels()
@@ -1109,13 +1110,24 @@ class Ui_MainWindow(QtWidgets.QWidget):
         )
 
         self.displayPlaylist(self.musicChannel.active_button)
+    
+    def currentSoundFilesListWidget_itemMoved(self, old_index, new_index) -> None:
+        btn = self.playerController.channels["music"].active_button
+        if not btn:
+            return
 
+        # Reorder in controller without stopping playback
+        self.playerController.reorder_playlist(self.musicChannel, old_index, new_index, self.application_path)
 
-    def currentSoundFilesListWidget_itemMoved(self, old_index, new_index):
-        self.playerController.reorder_playlist(self.playerController.channels["music"], old_index, new_index, self.application_path)
-
-        item = self.currentSoundFilesListWidget.item(new_index)
-        self.currentSoundFilesListWidget.setCurrentItem(item)
+        # Update UI selection without re-triggering playback logic
+        self.currentSoundFilesListWidget.blockSignals(True)
+        try:
+            item = self.currentSoundFilesListWidget.item(btn.playlist.active)
+            if item:
+                self.currentSoundFilesListWidget.setCurrentItem(item)
+                item.setSelected(True)
+        finally:
+            self.currentSoundFilesListWidget.blockSignals(False)
 
     # soundSlider
     def on_durationChanged(self, channel, duration) -> None:
