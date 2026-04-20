@@ -24,11 +24,14 @@ Hier können mit den gängigen Buttons (Play, Zurück, Vor, Stop) das Abspielen 
 
 
 3. Optionale Reiter (rechts)
+
 a) Dateisystem
 Hier befinden sich die Soundfiles die via Drag and Drop den jeweiligen Buttons zugeordnet werden können. Der Button 'Change Folder' ändert hierbei den Root Folder, sodass auch files z.Bsp. von der Festplatte angezeigt werden können. Es wird aber empfohlen die gewünschten Stücke in die angezeigten Ordner zu kopieren und von dort den Buttons zuzuordnen. Im Moment werden die Formate *.mp3, *.wav und *.ogg unterstützt.
 Die SD-Kartenoption ist für zukünftige Anwendungen vorgesehen und ist noch nicht einsatzbereit.
+
 b) Würfel
 Hier finden sich alle gängigen Rollenspielwürfel (W2, W4, W6, W8, W10, W12, W20 und W100). Das Ergebnis wird 30 Sekunden angezeigt. Wird innerhalb dieser Zeit der selbe Würfelbutton erneut betätigt, so wird zusätzlich zum Ergebnis auch die Summe der vorhergegangenen Augen angezeigt. Nach Ablauf der Zeit wird der Würfel gelöscht. Zusätzlich steht der Schicksalswürfel zur Verfügung. Er verfügt über keine Augen, sondern gibt ein Spektrum zwischen sehr schlecht (Kritischer Misserfolg) und sehr gut (kritischer Erfolg) an. Die Wahrscheinlichkeiten sind:
+  
   Kritischer Misserfolg   (Leuchtender Totenschädel)    1/20
   sehr schlecht           (zwei Totenschädel)           3/20
   schlecht                (Totenschädel)                4/20
