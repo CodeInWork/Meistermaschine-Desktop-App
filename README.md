@@ -4,7 +4,7 @@ Diese App wurde speziell für Table-Top-Rollenspiele entwickelt und soll es dem 
 
 Die App ist gegliedert in drei Bereiche:
 
-1: Interface (mitte)
+1. Sound Interface (mitte)
 
 Hier befinden sich die Buttons die das Abspielen von Soundfiles während des Abenteuers ermöglichen. Sie sind in vier Spalten gegliedert, von denen jeweils nur ein Button aktiviert werden kann Jede und über einen eigenen Lautstärkeregler verfügt. Es können also insgesamt vier Soundfiles gleichzeitig abgespielt werden.
 Die Buttons können zwar frei mit Audiofiles via drag and drop vom rechten Dateibaum belegt werden, snd jedoch für unterschiedliche Situationen konzipiert:
@@ -23,13 +23,22 @@ Bunt: Spezial;  jeder Button kann nur mit einem einzigen Soundfile belegt werden
 Hier können mit den gängigen Buttons (Play, Zurück, Vor, Stop) das Abspielen der Musik (Grüne Buttons), die Gesamtlautstärke (Master Volume) und die Position im Stück (Progress Bar) kontrolliert bzw. angezeigt werden. Das rechte Feld zeigt die Playlist des aktiven Buttons an über dem sich der Mauszeiger befindet. Ist der Zeiger nicht über einem Button wird die Playlist des aktiven Musikbuttons (Grüne Buttons) angezeigt. Die Liste kann mit Drag and Drop neu angeordnet oder durch Klicken ein anderes File abgespielt werden. Ein Doppelklick löscht das Soundfile aus der Liste.
 
 
-3. Dateisystem (rechts)
-
+3. Optionale Reiter (rechts)
+a) Dateisystem
 Hier befinden sich die Soundfiles die via Drag and Drop den jeweiligen Buttons zugeordnet werden können. Der Button 'Change Folder' ändert hierbei den Root Folder, sodass auch files z.Bsp. von der Festplatte angezeigt werden können. Es wird aber empfohlen die gewünschten Stücke in die angezeigten Ordner zu kopieren und von dort den Buttons zuzuordnen. Im Moment werden die Formate *.mp3, *.wav und *.ogg unterstützt.
 Die SD-Kartenoption ist für zukünftige Anwendungen vorgesehen und ist noch nicht einsatzbereit.
+b) Würfel
+Hier finden sich alle gängigen Rollenspielwürfel (W2, W4, W6, W8, W10, W12, W20 und W100). Das Ergebnis wird 30 Sekunden angezeigt. Wird innerhalb dieser Zeit der selbe Würfelbutton erneut betätigt, so wird zusätzlich zum Ergebnis auch die Summe der vorhergegangenen Augen angezeigt. Nach Ablauf der Zeit wird der Würfel gelöscht. Zusätzlich steht der Schicksalswürfel zur Verfügung. Er verfügt über keine Augen, sondern gibt ein Spektrum zwischen sehr schlecht (Kritischer Misserfolg) und sehr gut (kritischer Erfolg) an. Die Wahrscheinlichkeiten sind:
+  Kritischer Misserfolg   (Leuchtender Totenschädel)    1/20
+  sehr schlecht           (zwei Totenschädel)           3/20
+  schlecht                (Totenschädel)                4/20
+  neutral                 (Herz/Totenschädel)           4/20
+  gut                     (Herz)                        4/20
+  sehr gut                (Zwei Herzen)                 3/20
+  Kritischer Erfolg       (Leuchtendes Herz)            1/20  
 
 
-4. Menüleiste (oben)
+5. Menüleiste (oben)
 
 Hier befinden sich die Optionen zum anlegen und speichern neuer Presets (Gespeicherte Belegungen von Buttons).
 Im Reiter 'File' können neue Presets angelegt ('New'), alte geöffnet ('Open'), die jetzige Konfiguration überschrieben ('Save', 'Strg+S') oder unter neuem Namen gespeichert werden ('Save as'). Rechts befindet sich ein Drop-Down-Menü aller im gleichnamigen Ordner gespeicherten Presets. Durch Auswahl wird das neue Preset automatisch geladen.
