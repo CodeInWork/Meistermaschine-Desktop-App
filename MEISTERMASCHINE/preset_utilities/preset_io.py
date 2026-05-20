@@ -34,7 +34,7 @@ def save_preset_json(controller, path):
         for idx, btn in enumerate(channel.buttons):
             buttons.append({
                 "index": idx,
-                "icon": getattr(btn, "icon_path", None),
+                "icon": getattr(btn, "btn_icon", None),
                 "playlist": btn.playlist.tracks[:]
             })
 
