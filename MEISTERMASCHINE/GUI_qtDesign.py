@@ -506,15 +506,14 @@ class Ui_MainWindow(QtWidgets.QWidget):
         save_action = QtGui.QAction(icon, "&Save...",MainWindow, triggered=self.save) 
         save_action.setShortcut(QtGui.QKeySequence(QtGui.QKeySequence.StandardKey.Save))
         file_menu.addAction(save_action)
-        # save as *.mms
-        icon = QtGui.QIcon.fromTheme("document-save")
-        save_as_action = QtGui.QAction(icon, "&Save as mms",MainWindow, triggered=self.save_as_mms) 
-        file_menu.addAction(save_as_action)
         # save as *.json
         icon = QtGui.QIcon.fromTheme("document-save")
-        save_as_action = QtGui.QAction(icon, "&Save as json",MainWindow, triggered=self.save_as_json) 
+        save_as_action = QtGui.QAction(icon, "&Save as preset",MainWindow, triggered=self.save_as_json) 
         file_menu.addAction(save_as_action)
-
+        # save as *.mms
+        icon = QtGui.QIcon.fromTheme("document-save")
+        save_as_action = QtGui.QAction(icon, "&Esport to SD",MainWindow, triggered=self.save_as_mms) 
+        file_menu.addAction(save_as_action)
         
         menuBar.setStyleSheet(style.CSS_menubar)
         MainWindow.setMenuBar(menuBar)
@@ -857,7 +856,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
     @Slot()
     def save(self)->None:
         file = self.getCurrentPresetFile()
-        save_preset_json(self.playerController, file[0])
+        save_preset_json(self.playerController, file)
 
     @Slot()
     def save_as_mms(self)->None:
@@ -905,7 +904,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.playerController.stop_all_channels()
         load_preset_json(self.playerController, path)
         self._remember_last_preset(path)
-
 
     # audio handlers
     def on_mediaStatusChanged(self, channel, status):
@@ -1037,6 +1035,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         song = btn.playlist.current()
         if song:
             self.playerController.switch_track(channel, song, self.application_path)
+            self.displayPlaylist(btn)
 
     def on_stopBtnClicked(self)->None:
         self.playerController.stop_all_channels()
@@ -1110,13 +1109,24 @@ class Ui_MainWindow(QtWidgets.QWidget):
         )
 
         self.displayPlaylist(self.musicChannel.active_button)
+    
+    def currentSoundFilesListWidget_itemMoved(self, old_index, new_index) -> None:
+        btn = self.playerController.channels["music"].active_button
+        if not btn:
+            return
 
+        # Reorder in controller without stopping playback
+        self.playerController.reorder_playlist(self.musicChannel, old_index, new_index, self.application_path)
 
-    def currentSoundFilesListWidget_itemMoved(self, old_index, new_index):
-        self.musicChannel.reorder_active_playlist(old_index, new_index)
-
-        item = self.currentSoundFilesListWidget.item(new_index)
-        self.currentSoundFilesListWidget.setCurrentItem(item)
+        # Update UI selection without re-triggering playback logic
+        self.currentSoundFilesListWidget.blockSignals(True)
+        try:
+            item = self.currentSoundFilesListWidget.item(btn.playlist.active)
+            if item:
+                self.currentSoundFilesListWidget.setCurrentItem(item)
+                item.setSelected(True)
+        finally:
+            self.currentSoundFilesListWidget.blockSignals(False)
 
     # soundSlider
     def on_durationChanged(self, channel, duration) -> None:
@@ -1198,19 +1208,21 @@ class Ui_MainWindow(QtWidgets.QWidget):
         return QtCore.QSettings("Meistermaschine", "Meistermaschine-Desktop-App")
 
     def _remember_last_preset(self, preset_path: str) -> None:
-            if preset_path:
-                self._settings().setValue("lastPresetPath", preset_path)
+        if preset_path:
+            preset_path = os.path.normcase(os.path.abspath(preset_path))
+            self._settings().setValue("lastPresetPath", preset_path)
+
 
     def restore_last_preset(self) -> None:
         last = self._settings().value("lastPresetPath", "", str)
         if not last:
             return
 
-        # If the file no longer exists, don’t crash or load nonsense
+        last = os.path.normcase(os.path.abspath(last))
+
         if not os.path.exists(last):
             return
 
-        # Find matching item by userData (path)
         idx = self.presetCombobox.findData(last)
         if idx >= 0:
             # Set combobox without triggering load twice
@@ -1279,9 +1291,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             presets.sort(key=os.path.getmtime, reverse=True)
 
             for file_path in presets:
+                file_path = os.path.normcase(os.path.abspath(file_path))
                 base = os.path.splitext(os.path.basename(file_path))[0]
-                # Display name, but store the full path as user data
                 self.presetCombobox.addItem(base, file_path)
+
 
         finally:
             self.presetCombobox.blockSignals(False)

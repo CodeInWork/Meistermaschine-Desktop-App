@@ -135,7 +135,7 @@ class PlayerController:
             channel.player.play()
             channel.paused = False
 
-    def reorder_playlist(self, channel, old_index, new_index, app_path: str):
+    """def reorder_playlist(self, channel, old_index, new_index, app_path: str):
         was_playing = channel.player.playbackState() == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState
 
         activeBtn = channel.active_button
@@ -147,9 +147,54 @@ class PlayerController:
         activeBtn.playlist.move(old_index, new_index)
 
         if was_playing:
-            track = channel.active_button.playlist.current()
+            track = activeBtn.playlist.current()
             if track:
-                self.play_channel(channel, track, app_path, fromBeginning=False)
+                self.play_channel(channel, track, app_path, fromBeginning=False)"""
+    
+    def reorder_playlist(self, channel, old_index: int, new_index: int, app_path: str) -> None:
+        btn = channel.active_button
+        if not btn:
+            return
+
+        pl = btn.playlist
+        if not pl.tracks:
+            return
+
+        # Snapshot what is currently playing (absolute file path), plus position/state
+        player = channel.player
+        state = player.playbackState()
+        pos = player.position()
+
+        src_abs = player.source().toLocalFile()  # "" if nothing loaded
+        src_abs_norm = os.path.normcase(os.path.abspath(src_abs)) if src_abs else ""
+
+        # Reorder tracks (this updates pl.active correctly)
+        pl.move(old_index, new_index)
+
+        # Keep "active" pointed at the currently-playing file, if we can identify it
+        if src_abs_norm:
+            for i, track in enumerate(pl.tracks):
+                # track is (rel_path, title) in your model
+                rel_path = track[0]
+                abs_path = os.path.normcase(os.path.abspath(os.path.join(app_path, rel_path)))
+                if abs_path == src_abs_norm:
+                    pl.active = i
+                    break
+
+        # Do NOT stop/restart playback.
+        # Only if the player lost its source somehow, restore it without changing check state.
+        if not src_abs_norm:
+            cur = pl.current()
+            if cur:
+                rel_path = cur[0]
+                abs_path = os.path.join(app_path, rel_path)
+                player.setSource(QtCore.QUrl.fromLocalFile(abs_path))
+                player.setPosition(pos)
+                if state == QtMultimedia.QMediaPlayer.PlaybackState.PlayingState:
+                    player.play()
+                elif state == QtMultimedia.QMediaPlayer.PlaybackState.PausedState:
+                    player.pause()
+
 
     def remove_track_from_channel(self, channel, index, app_path):
         btn = channel.active_button

@@ -23,25 +23,21 @@ def load_mms(file):
 
 # *.json presets hold audio and icon information needed by the App
 def save_preset_json(controller, path):
-    data = {
-        "version": 1,
-        "channels": {}
-    }
+    data = {"version": 1, "channels": {}}
 
     for name, channel in controller.channels.items():
         buttons = []
-
         for idx, btn in enumerate(channel.buttons):
             buttons.append({
                 "index": idx,
-                "icon": getattr(btn, "btn_icon", None),
-                "playlist": btn.playlist.tracks[:]
+                "icon": getattr(btn, "icon_path", None),
+                "playlist": [p for (p, _t) in btn.playlist.tracks],
             })
-
         data["channels"][name] = {"buttons": buttons}
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
 
 def load_preset_json(controller, path):
     with open(path, "r", encoding="utf-8") as f:

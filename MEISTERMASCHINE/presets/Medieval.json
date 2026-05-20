@@ -7,50 +7,43 @@
           "index": 0,
           "icon": "icons\\smiley_star.png",
           "playlist": [
-            "sounds\\Mozart-The Marriage of Figaro.mp3"
+            "sounds\\Musik\\medieval&fantasy\\Epic Medieval Fantasy Fanfare.mp3",
+            "sounds\\Musik\\medieval&fantasy\\Royal Fanfare The Entrance of The King.mp3"
           ]
         },
         {
           "index": 1,
           "icon": "icons\\smiley_grin.png",
           "playlist": [
-            "sounds\\Telemann - Kleine Cammer-Music.mp3"
+            "sounds\\Musik\\medieval&fantasy\\World of Warcraft Music - Lion's Pride.mp3"
           ]
         },
         {
           "index": 2,
           "icon": "icons\\smiley_neutral.png",
           "playlist": [
-            "sounds\\J. S. Bach - Prelude in C Minor pour le luth BWV 999 - Evangelina Mascardi, baroque lute.mp3",
-            "sounds\\J. S. Bach - Fugue in G minor BWV 1000 - Evangelina Mascardi, baroque lute.mp3",
-            "sounds\\J. S. Bach - Prelude, Fugue and Allegro in E-flat major BWV 998 - Evangelina Mascardi, baroque lute.mp3",
-            "sounds\\J. S. Bach - Prelude in C Minor pour le luth BWV 999 - Evangelina Mascardi, baroque lute.mp3",
-            "sounds\\J. S. Bach - Fugue in G minor BWV 1000 - Evangelina Mascardi, baroque lute.mp3",
-            "sounds\\J. S. Bach - Prelude, Fugue and Allegro in E-flat major BWV 998 - Evangelina Mascardi, baroque lute.mp3",
-            "sounds\\Farya Faraji - Le Tourdion.mp3"
+            "sounds\\Musik\\medieval&fantasy\\Village-theme.mp3",
+            "sounds\\Musik\\medieval&fantasy\\Medieval Music Wild Boar's Inn.mp3",
+            "sounds\\Musik\\medieval&fantasy\\Medieval Music Troubadour.mp3",
+            "sounds\\Musik\\medieval&fantasy\\471510__shadydave__small-adventurers-music-loop.mp3"
           ]
         },
         {
           "index": 3,
           "icon": "icons\\smiley_scary.png",
           "playlist": [
-            "sounds\\Musik\\medieval&fantasy\\559389__szegvari__mystic-forest-ambient.wav"
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Evil Under The Surface.mp3",
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 The Lurking Horror.mp3",
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 How Deep Can We Go.mp3"
           ]
         },
         {
           "index": 4,
           "icon": "icons\\smiley_death.png",
           "playlist": [
-            "sounds\\Musik\\1800\\Prokofiev Romeo and Juliet, No 13 Dance of the Knights (Valery Gergiev, LSO).mp3",
-            "sounds\\Vivaldi The Four Seasons, Winter. Allegro non molto.mp3",
-            "sounds\\Bela Banfalvi, Budapest Strings - The 4 Seasons_ Violin Concerto in G Minor, Op. 8, No. 2, RV 315, L'estate (Summer)_ III. Presto.mp3",
-            "sounds\\Metamorphose String Orchestra, Pavel Lyubomudrov & Joseph Haydn - Die Worte des Erl\u00f6sers am Kreuze, Hob. XX_1_ IX. Il Terremoto.mp3",
-            "sounds\\Musik\\10hoch60\\Epic Orchestra and Choir - Rafael Krux.mp3",
-            "sounds\\Metamorphose String Orchestra & Pavel Lyubomudrov - Concerto Grosso for Strings Palladio_ I. Allegretto.mp3",
-            "sounds\\Vivaldi The Four Seasons, Winter. Allegro non molto.mp3",
-            "sounds\\Bela Banfalvi, Budapest Strings - The 4 Seasons_ Violin Concerto in G Minor, Op. 8, No. 2, RV 315, L'estate (Summer)_ III. Presto.mp3",
-            "sounds\\Metamorphose String Orchestra, Pavel Lyubomudrov & Joseph Haydn - Die Worte des Erl\u00f6sers am Kreuze, Hob. XX_1_ IX. Il Terremoto.mp3",
-            "sounds\\Musik\\10hoch60\\Epic Orchestra and Choir - Rafael Krux.mp3"
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Unholy March.mp3",
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Te Extinguo.mp3",
+            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 To The Hilt.mp3"
           ]
         }
       ]
@@ -61,7 +54,7 @@
           "index": 0,
           "icon": "icons\\pub.png",
           "playlist": [
-            "sounds\\Setting\\club chatter.wav"
+            "sounds\\Setting\\tavern - pirates.wav"
           ]
         },
         {
@@ -89,7 +82,7 @@
           "index": 4,
           "icon": "icons\\kampf.png",
           "playlist": [
-            "sounds\\Setting\\fight - 1800.m4a"
+            "sounds\\Setting\\fight - medieval.mp3"
           ]
         }
       ]
@@ -121,7 +114,7 @@
           "index": 3,
           "icon": "icons\\sturm.png",
           "playlist": [
-            "sounds\\Weather\\thunder_storm-heavy.ogg"
+            "sounds\\Weather\\thunder_storm-light.wav"
           ]
         },
         {
@@ -137,17 +130,15 @@
       "buttons": [
         {
           "index": 0,
-          "icon": "icons\\icon_star.png",
+          "icon": "icons\\icon_square.png",
           "playlist": [
-            "sounds\\Special\\musket shot.wav"
+            "sounds\\Special\\Monster roar.wav"
           ]
         },
         {
           "index": 1,
-          "icon": "icons\\icon_circle.png",
-          "playlist": [
-            "sounds\\Special\\A sirens song.wav"
-          ]
+          "icon": "icons\\icon_plus.png",
+          "playlist": []
         },
         {
           "index": 2,
@@ -156,12 +147,12 @@
         },
         {
           "index": 3,
-          "icon": "icons\\icon_plus.png",
+          "icon": "icons\\icon_minus.png",
           "playlist": []
         },
         {
           "index": 4,
-          "icon": "icons\\icon_square.png",
+          "icon": "icons\\icon_star.png",
           "playlist": []
         }
       ]
