@@ -1098,7 +1098,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             index, self.application_path, self.playerController
         )
 
-
     def on_currentSoundFilesListWidget_doubleClicked(self):
         item = self.currentSoundFilesListWidget.currentItem()
         if not item:
@@ -1458,7 +1457,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.app_path = app_path
             self.base_styleSheet = styleSheet  
             self.setStyleSheet(styleSheet) 
-            self.icon_path=icon_path
+            self.btn_icon=icon_path
             self.set_button_icon(icon_path)
 
             self.playlist = Playlist(channel.max_playlist_length)
@@ -1560,9 +1559,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         def set_button_icon(self, path):
             if path:
-                self.icon_path = path
+                self.btn_icon = path
             
-            abs_path = self.icon_path
+            abs_path = self.btn_icon
             if abs_path and not os.path.isabs(abs_path):
                 abs_path = os.path.join(self.app_path, abs_path)
 
