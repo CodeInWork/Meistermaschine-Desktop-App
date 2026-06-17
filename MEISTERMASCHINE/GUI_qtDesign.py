@@ -7,8 +7,8 @@
 
 
 from PyQt6 import QtCore, QtGui, QtWidgets, QtMultimedia
+from PyQt6.QtCore import pyqtSlot as Slot
 
-from PySide6.QtCore import Slot
 import time as t
 import glob as gl
 
