@@ -1,5 +1,81 @@
 # Meistermaschine-Desktop-App
 
+How to run it
+
+The app is set up to use uv. So, install instruction beneath.
+Simply execute:
+</> Bash
+
+uv sync
+uv run python cli.py
+
+in the project root folder
+
+## Requirements
+
+- Python 3.11 or newer
+- uv
+
+Install uv:
+
+https://docs.astral.sh/uv/
+
+## First-time setup
+
+Clone the repository:
+
+```bash
+git clone <repository-url>
+cd Meistermaschine-Desktop-App
+```
+
+Create the project environment and install all dependencies:
+
+```bash
+uv sync
+```
+
+## Running the application
+
+Start the application with:
+
+```bash
+uv run python cli.py
+```
+
+## Development
+
+If additional packages are required (PyQt6):
+
+```bash
+uv add <package>
+```
+
+Install a development dependency:
+
+```bash
+uv add --dev <package>
+```
+
+Update the lockfile:
+
+```bash
+uv lock
+```
+
+Synchronize the environment:
+
+```bash
+uv sync
+```
+
+Run via:
+```bash
+uv run python cli.py
+```
+
+
+
 Diese App wurde speziell für Table-Top-Rollenspiele entwickelt und soll es dem Meister ermöglichen für jede Spielsituation die passende Musik und Hintergrundgeräusche auszuwählen ohne dabei von seiner Rolle als Spielmeister abgelenkt zu werden. Dazu ermöglicht die App das Zusammenstellen von Presets die sich den jeweiligen Anforderungen des Abenteuers und der dazugehörigen Welt anpassen lassen.
 
 Die App ist gegliedert in drei Bereiche:
