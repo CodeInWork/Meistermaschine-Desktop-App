@@ -4,9 +4,11 @@ How to run it
 
 The app is set up to use uv. So, install instruction beneath.
 Simply execute:
+
 </> Bash
 
 uv sync
+
 uv run python cli.py
 
 in the project root folder
