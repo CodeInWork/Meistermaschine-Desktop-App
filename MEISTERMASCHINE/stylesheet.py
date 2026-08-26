@@ -48,7 +48,15 @@ CSS_Sound_Control_Btns = f"background-color:{green}"
 CSS_Root_Folder_Btn = f"background-color:{green}"
 
 # Refresh SD Cards Button
-CSS_Refresh_SD_Btn = f"background-color:{green}"
+CSS_Refresh_SD_Btn = f"""
+QPushButton {{
+    background-color: {green};
+}}
+
+QPushButton:pressed {{
+    background-color: {dark_gray};
+}}
+"""
 
 # Save To SD Button
 CSS_Save_SD_Btn = f"background-color: {blue}"

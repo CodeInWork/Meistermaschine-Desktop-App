@@ -1,15 +1,24 @@
 # presets/preset_io.py
 
 import json
+from pathlib import Path
 
 # *.mms files are for SD cards used in the physical Meistermaschine
-def save_mms(file, musicBtn_lst, settingBtn_lst, weatherBtn_lst, specialBtn_lst):
-
+def save_mms(file, musicBtn_lst, settingBtn_lst, weatherBtn_lst, specialBtn_lst, filenames_only: bool=False):
     with open(file, "w", encoding="utf-8") as f:
-        for t, group in enumerate([musicBtn_lst, settingBtn_lst, weatherBtn_lst, specialBtn_lst]):
+        groups = [musicBtn_lst, settingBtn_lst, weatherBtn_lst, specialBtn_lst]
+
+        for channel_idx, group in enumerate(groups):
             for btn_idx, btn in enumerate(group):
                 for song in btn.playlist:
-                    f.write(f"{t} {btn_idx}\t{song[0]}\n")
+                    song_path = song[0]
+
+                    if filenames_only:
+                        song_path = Path(song_path).name
+
+                    f.write(
+                        f"{channel_idx} {btn_idx}\t{song_path}\n"
+                    )
 
 def load_mms(file):
     result = {0: [], 1: [], 2: [], 3: []}

@@ -24,6 +24,8 @@ from MEISTERMASCHINE.buttons.btn_logic import btn_assign_playlist
 from MEISTERMASCHINE.audio.playlist import Playlist
 from MEISTERMASCHINE.audio.player_channel import PlayerChannel, PlayerController
 from MEISTERMASCHINE.dice.dice_logic import roll_destiny
+from MEISTERMASCHINE.sd_utilities.sd_export import export_preset_to_sd
+from MEISTERMASCHINE.sd_utilities.sd_detection import find_removable_drives
 
 CHANNEL_CONFIG = {
     "music": {
@@ -530,9 +532,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # set Layout
         centralwidget.setLayout(Central_Layout)
 
-        # init functions
+        # find presets and restore last preset
         self.listPresets()
         self.restore_last_preset()
+
+        # find SD cards and populate combobox
+        self.refresh_sd_cards()
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -592,6 +597,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.saveToSDButton = QtWidgets.QPushButton()
         self.saveToSDButton.setStyleSheet(style.CSS_Save_SD_Btn)
         self.saveToSDButton.setObjectName("saveToSDButton")
+        self.saveToSDButton.clicked.connect(self.on_saveToSDButton_clicked)
 
         Audio_Tab_Layout.addWidget(self.saveToSDButton, 6, 2, 1, 1)
 
@@ -599,11 +605,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         Audio_Tab_Layout.addItem(spacer, 7, 0)
 
-        listOfFoundSDCardsCombobox = QtWidgets.QComboBox()
-        listOfFoundSDCardsCombobox.setStyleSheet(style.CSS_Found_SD_Combobox)
-        listOfFoundSDCardsCombobox.setObjectName("listOfFoundSDCardsCombobox")
+        self.listOfFoundSDCardsCombobox = QtWidgets.QComboBox()
+        self.listOfFoundSDCardsCombobox.setStyleSheet(style.CSS_Found_SD_Combobox)
+        self.listOfFoundSDCardsCombobox.setObjectName("listOfFoundSDCardsCombobox")
 
-        Audio_Tab_Layout.addWidget(listOfFoundSDCardsCombobox, 8, 0, 1, 3)
+        Audio_Tab_Layout.addWidget(self.listOfFoundSDCardsCombobox, 8, 0, 1, 3)
 
         SDcardsLabel = QtWidgets.QLabel()
         SDcardsLabel.setStyleSheet(style.CSS_Label)
@@ -617,6 +623,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.refreshButton = QtWidgets.QPushButton()
         self.refreshButton.setStyleSheet(style.CSS_Refresh_SD_Btn)
         self.refreshButton.setObjectName("refreshButton")
+        self.refreshButton.clicked.connect(self.on_refreshButton_clicked)
 
         Audio_Tab_Layout.addWidget(self.refreshButton, 9, 2, 1, 1)
         tab_widget.setLayout(Audio_Tab_Layout)
@@ -1011,6 +1018,62 @@ class Ui_MainWindow(QtWidgets.QWidget):
         path = QtWidgets.QFileDialog.getExistingDirectory(None, "Select Folder")
         if path:
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
+
+    def on_saveToSDButton_clicked(self)->None:
+        sd_root = self.listOfFoundSDCardsCombobox.currentData()
+
+        if not sd_root:
+            QtWidgets.QMessageBox.warning(
+                None,
+                "No SD card selected",
+                "Please select an SD card before exporting.",
+            )
+            return
+
+        preset_name = self.presetCombobox.currentText().strip()
+
+        if not preset_name:
+            QtWidgets.QMessageBox.warning(
+                None,
+                "No preset selected",
+                "Please select or create a preset before exporting.",
+            )
+            return
+
+        try:
+            export_directory = export_preset_to_sd(
+                sd_root=sd_root,
+                preset_name=preset_name,
+                application_path=self.application_path,
+                music_buttons=self.musicBtn_lst,
+                setting_buttons=self.settingBtn_lst,
+                weather_buttons=self.weatherBtn_lst,
+                special_buttons=self.specialBtn_lst,
+            )
+
+        except (OSError, ValueError) as error:
+            QtWidgets.QMessageBox.critical(
+                None,
+                "SD export failed",
+                str(error),
+            )
+            return
+
+        QtWidgets.QMessageBox.information(
+            None,
+            "Export completed",
+            f"The preset was exported to:\n{export_directory}",
+        )
+
+    def on_refreshButton_clicked(self) -> None:
+        self.refreshButton.setDown(True)
+
+        self.refresh_sd_cards()
+
+        QtCore.QTimer.singleShot(
+            150,
+            lambda: self.refreshButton.setDown(False)
+        )
     
     def on_soundButtonClicked(self, btn):
         channel = self.playerController.find_channel_for_button(btn)
@@ -1201,6 +1264,23 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     #############################################################################################################################
     # helper functions
+
+    # fins SD cards and populate combobox
+    def refresh_sd_cards(self) -> None:
+        self.listOfFoundSDCardsCombobox.clear()
+
+        drives = find_removable_drives()
+
+        for drive in drives:
+            if drive.label:
+                display_name = f"{drive.label} ({drive.path})"
+            else:
+                display_name = drive.path
+
+            self.listOfFoundSDCardsCombobox.addItem(
+                display_name,
+                drive.path,
+            )
 
     # make App remember preset with QSettings
     def _settings(self) -> QtCore.QSettings:
