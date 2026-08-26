@@ -1,12 +1,14 @@
 # Meistermaschine-Desktop-App
 
-How to run it
+## How to run it
 
 The app is set up to use uv. So, install instruction beneath.
 Simply execute:
+
 </> Bash
 
 uv sync
+
 uv run python cli.py
 
 in the project root folder
@@ -74,7 +76,7 @@ Run via:
 uv run python cli.py
 ```
 
-
+## Beschreibung
 
 Diese App wurde speziell für Table-Top-Rollenspiele entwickelt und soll es dem Meister ermöglichen für jede Spielsituation die passende Musik und Hintergrundgeräusche auszuwählen ohne dabei von seiner Rolle als Spielmeister abgelenkt zu werden. Dazu ermöglicht die App das Zusammenstellen von Presets die sich den jeweiligen Anforderungen des Abenteuers und der dazugehörigen Welt anpassen lassen.
 
