@@ -1273,7 +1273,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         for drive in drives:
             if drive.label:
-                display_name = f"{drive.label} ({drive.path})"
+                drive_letter = drive.path.rstrip("\\")
+                display_name = f"{drive.label} ({drive_letter})"
             else:
                 display_name = drive.path
 

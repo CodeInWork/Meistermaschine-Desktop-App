@@ -15,7 +15,7 @@ def collect_audio_files(button_groups, application_path: str) -> list[Path]:
 
     for group in button_groups:
         for button in group:
-            for track in button.playlist:
+            for track in button.playlist.tracks:
                 stored_path = Path(track[0])
 
                 if stored_path.is_absolute():

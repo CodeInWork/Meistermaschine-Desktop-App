@@ -10,8 +10,8 @@ def save_mms(file, musicBtn_lst, settingBtn_lst, weatherBtn_lst, specialBtn_lst,
 
         for channel_idx, group in enumerate(groups):
             for btn_idx, btn in enumerate(group):
-                for song in btn.playlist:
-                    song_path = song[0]
+                for tracks in btn.playlist.tracks:
+                    song_path = tracks[0]
 
                     if filenames_only:
                         song_path = Path(song_path).name

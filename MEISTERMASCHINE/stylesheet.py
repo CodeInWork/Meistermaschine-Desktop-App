@@ -68,7 +68,10 @@ CSS_Clear_Sum_Btn = f"""QPushButton{{
     }}"""
 
 # List of found SD cards Combo Box
-CSS_Found_SD_Combobox = f"background-color: {dark_gray}"
+CSS_Found_SD_Combobox = f"""QComboBox {{
+    background-color: {dark_gray};
+    color: {white};
+}}"""
 
 # Label
 CSS_Label = f"color: {white}"
