@@ -49,17 +49,25 @@ CSS_Root_Folder_Btn = f"background-color:{green}"
 
 # Refresh SD Cards Button
 CSS_Refresh_SD_Btn = f"""
-QPushButton {{
-    background-color: {green};
-}}
+    QPushButton {{
+        background-color: {green};
+    }}
 
-QPushButton:pressed {{
-    background-color: {dark_gray};
-}}
-"""
+    QPushButton:pressed {{
+        background-color: {dark_gray};
+    }}
+    """
 
 # Save To SD Button
-CSS_Save_SD_Btn = f"background-color: {blue}"
+CSS_Save_SD_Btn = f"""
+    QPushButton {{
+        background-color: {blue};
+    }}
+
+    QPushButton:pressed {{
+        background-color: {dark_gray};
+    }}
+    """
 
 # Clear Sum Button
 CSS_Clear_Sum_Btn = f"""QPushButton{{

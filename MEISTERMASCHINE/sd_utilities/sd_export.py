@@ -1,17 +1,22 @@
 from pathlib import Path
 import shutil
+import time
+from collections.abc import Callable
 
 from MEISTERMASCHINE.preset_utilities.preset_io import save_mms
+
+
+ProgressCallback = Callable[[int, int, Path], None]
 
 
 def collect_audio_files(button_groups, application_path: str) -> list[Path]:
     """
     Return all unique audio files referenced by the supplied button groups.
     """
-
     application_dir = Path(application_path)
-    audio_files: list[Path] = []
-    seen_paths: set[Path] = set()
+
+    audio_files = []
+    seen_paths = set()
 
     for group in button_groups:
         for button in group:
@@ -40,13 +45,9 @@ def export_preset_to_sd(
     setting_buttons,
     weather_buttons,
     special_buttons,
+    progress_callback: ProgressCallback | None = None,
+    replace_existing: bool = False,
 ) -> Path:
-    """
-    Export an MMS file and all required audio files into a preset folder
-    on the selected SD card.
-
-    Returns the created preset directory.
-    """
 
     safe_name = sanitize_folder_name(preset_name)
 
@@ -56,8 +57,6 @@ def export_preset_to_sd(
     sd_path = Path(sd_root)
     export_dir = sd_path / safe_name
 
-    export_dir.mkdir(parents=True, exist_ok=True)
-
     button_groups = [
         music_buttons,
         setting_buttons,
@@ -66,12 +65,25 @@ def export_preset_to_sd(
     ]
 
     audio_files = collect_audio_files(
-        button_groups=button_groups,
-        application_path=application_path,
+        button_groups,
+        application_path,
     )
 
     _validate_audio_files(audio_files)
     _validate_unique_filenames(audio_files)
+
+    total_bytes = sum(
+        path.stat().st_size
+        for path in audio_files
+    )
+
+    copied_bytes = 0
+
+    _prepare_export_directory(
+        sd_root=sd_path,
+        export_dir=export_dir,
+        replace_existing=replace_existing,
+    )
 
     mms_path = export_dir / f"{safe_name}.mms"
 
@@ -86,9 +98,60 @@ def export_preset_to_sd(
 
     for source_path in audio_files:
         destination_path = export_dir / source_path.name
-        shutil.copy2(source_path, destination_path)
+
+        copied_bytes = _copy_file_with_progress(
+            source_path=source_path,
+            destination_path=destination_path,
+            copied_bytes=copied_bytes,
+            total_bytes=total_bytes,
+            progress_callback=progress_callback,
+        )
 
     return export_dir
+
+
+def _copy_file_with_progress(
+    source_path: Path,
+    destination_path: Path,
+    copied_bytes: int,
+    total_bytes: int,
+    progress_callback: ProgressCallback | None,
+) -> int:
+    """
+    Copy one file in chunks and report byte-level progress.
+
+    Returns the updated total number of copied bytes.
+    """
+
+    chunk_size = 1024 * 1024  # 1 MB
+
+    with source_path.open("rb") as source_file:
+        with destination_path.open("wb") as destination_file:
+
+            while True:
+                chunk = source_file.read(chunk_size)
+
+                if not chunk:
+                    break
+
+                destination_file.write(chunk)
+
+                copied_bytes += len(chunk)
+
+                if progress_callback is not None:
+                    progress_callback(
+                        copied_bytes,
+                        total_bytes,
+                        source_path,
+                    )
+
+    shutil.copystat(
+        source_path,
+        destination_path,
+    )
+
+    return copied_bytes
+
 
 def _validate_audio_files(audio_files: list[Path]) -> None:
     missing_files = [
@@ -99,13 +162,15 @@ def _validate_audio_files(audio_files: list[Path]) -> None:
 
     if missing_files:
         formatted = "\n".join(missing_files)
+
         raise FileNotFoundError(
-            f"The following audio files could not be found:\n{formatted}"
+            "The following audio files could not be found:\n"
+            f"{formatted}"
         )
 
 
 def _validate_unique_filenames(audio_files: list[Path]) -> None:
-    filenames: dict[str, Path] = {}
+    filenames = {}
 
     for path in audio_files:
         normalized_name = path.name.casefold()
@@ -126,8 +191,86 @@ def sanitize_folder_name(name: str) -> str:
     invalid_characters = '<>:"/\\|?*'
 
     sanitized = "".join(
-        "_" if character in invalid_characters else character
+        "_"
+        if character in invalid_characters
+        else character
         for character in name.strip()
     )
 
     return sanitized.rstrip(". ")
+
+
+
+def _prepare_export_directory(
+    sd_root: Path,
+    export_dir: Path,
+    replace_existing: bool,
+) -> None:
+
+    if not export_dir.exists():
+        export_dir.mkdir(
+            parents=True,
+            exist_ok=False,
+        )
+        return
+
+    if not replace_existing:
+        raise FileExistsError(
+            f"The preset folder already exists:\n{export_dir}"
+        )
+
+    _validate_safe_export_path(
+        sd_root=sd_root,
+        export_dir=export_dir,
+    )
+
+    shutil.rmtree(export_dir)
+
+    _create_directory_with_retry(export_dir)
+
+
+def _validate_safe_export_path(
+    sd_root: Path,
+    export_dir: Path,
+) -> None:
+    """
+    Ensure that only a direct child directory of the selected SD root
+    can be removed.
+    """
+
+    sd_root = sd_root.resolve()
+    export_dir = export_dir.resolve()
+
+    if export_dir == sd_root:
+        raise ValueError(
+            "Refusing to delete the root directory of the SD card."
+        )
+
+    if export_dir.parent != sd_root:
+        raise ValueError(
+            "Refusing to delete an unexpected directory:\n"
+            f"{export_dir}"
+        )
+
+
+
+def _create_directory_with_retry(
+    directory: Path,
+    timeout: float = 2.0,
+) -> None:
+
+    start_time = time.monotonic()
+
+    while True:
+        try:
+            directory.mkdir(
+                parents=True,
+                exist_ok=False,
+            )
+            return
+
+        except PermissionError:
+            if time.monotonic() - start_time > timeout:
+                raise
+
+            time.sleep(0.05)

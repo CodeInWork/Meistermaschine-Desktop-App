@@ -17,6 +17,8 @@ import sys
 
 import random
 
+from pathlib import Path
+
 import MEISTERMASCHINE.stylesheet as style
 from MEISTERMASCHINE.audio.volume import dependent_volume
 from MEISTERMASCHINE.preset_utilities.preset_io import save_mms, load_mms, save_preset_json, load_preset_json
@@ -24,8 +26,8 @@ from MEISTERMASCHINE.buttons.btn_logic import btn_assign_playlist
 from MEISTERMASCHINE.audio.playlist import Playlist
 from MEISTERMASCHINE.audio.player_channel import PlayerChannel, PlayerController
 from MEISTERMASCHINE.dice.dice_logic import roll_destiny
-from MEISTERMASCHINE.sd_utilities.sd_export import export_preset_to_sd
 from MEISTERMASCHINE.sd_utilities.sd_detection import find_removable_drives
+from MEISTERMASCHINE.sd_utilities.sd_worker import SDExportWorker
 
 CHANNEL_CONFIG = {
     "music": {
@@ -1020,6 +1022,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
 
     def on_saveToSDButton_clicked(self)->None:
+        self.saveToSDButton.setDown(True)
         sd_root = self.listOfFoundSDCardsCombobox.currentData()
 
         if not sd_root:
@@ -1031,6 +1034,28 @@ class Ui_MainWindow(QtWidgets.QWidget):
             return
 
         preset_name = self.presetCombobox.currentText().strip()
+        export_dir = Path(sd_root) / preset_name
+
+        replace_existing = False
+
+        if export_dir.exists():
+            answer = QtWidgets.QMessageBox.question(
+                self,
+                "Preset already exists",
+                (
+                    f'A preset named "{preset_name}" already exists '
+                    "on the selected SD card.\n\n"
+                    "Do you want to replace it?"
+                ),
+                QtWidgets.QMessageBox.StandardButton.Yes
+                | QtWidgets.QMessageBox.StandardButton.No,
+                QtWidgets.QMessageBox.StandardButton.No,
+            )
+
+            if answer != QtWidgets.QMessageBox.StandardButton.Yes:
+                return
+
+            replace_existing = True
 
         if not preset_name:
             QtWidgets.QMessageBox.warning(
@@ -1040,31 +1065,74 @@ class Ui_MainWindow(QtWidgets.QWidget):
             )
             return
 
-        try:
-            export_directory = export_preset_to_sd(
-                sd_root=sd_root,
-                preset_name=preset_name,
-                application_path=self.application_path,
-                music_buttons=self.musicBtn_lst,
-                setting_buttons=self.settingBtn_lst,
-                weather_buttons=self.weatherBtn_lst,
-                special_buttons=self.specialBtn_lst,
-            )
+        self.sd_export_thread = QtCore.QThread()
 
-        except (OSError, ValueError) as error:
-            QtWidgets.QMessageBox.critical(
-                None,
-                "SD export failed",
-                str(error),
-            )
-            return
-
-        QtWidgets.QMessageBox.information(
-            None,
-            "Export completed",
-            f"The preset was exported to:\n{export_directory}",
+        self.sd_export_worker = SDExportWorker(
+            sd_root=sd_root,
+            preset_name=preset_name,
+            application_path=self.application_path,
+            music_buttons=self.musicBtn_lst,
+            setting_buttons=self.settingBtn_lst,
+            weather_buttons=self.weatherBtn_lst,
+            special_buttons=self.specialBtn_lst,
+            replace_existing=replace_existing,
         )
 
+        self.sd_export_worker.moveToThread(
+            self.sd_export_thread
+        )
+
+        self.sd_export_thread.started.connect(
+            self.sd_export_worker.run
+        )
+
+        self.sd_export_worker.finished.connect(
+            self.on_sd_export_finished
+        )
+
+        self.sd_export_worker.failed.connect(
+            self.on_sd_export_failed
+        )
+
+        self.sd_export_worker.finished.connect(
+            self.sd_export_thread.quit
+        )
+
+        self.sd_export_worker.failed.connect(
+            self.sd_export_thread.quit
+        )
+
+        self.sd_export_thread.finished.connect(
+            self.sd_export_worker.deleteLater
+        )
+
+        self.sd_export_thread.finished.connect(
+            self.sd_export_thread.deleteLater
+        )
+
+        self.sd_progress_dialog = QtWidgets.QProgressDialog(
+            "Preparing export...",
+            None,   # no Cancel button for now
+            0,
+            100,
+            self,
+        )
+
+        self.sd_progress_dialog.setWindowTitle("Exporting preset")
+        self.sd_progress_dialog.setWindowModality(
+            QtCore.Qt.WindowModality.WindowModal
+        )
+
+        self.sd_progress_dialog.setAutoClose(False)
+        self.sd_progress_dialog.setAutoReset(False)
+        self.sd_progress_dialog.setValue(0)
+        self.sd_progress_dialog.show()
+
+        self.sd_export_worker.progress.connect(self.on_sd_export_progress)
+
+        self.sd_export_thread.start()
+        self.saveToSDButton.setDown(False)
+            
     def on_refreshButton_clicked(self) -> None:
         self.refreshButton.setDown(True)
 
@@ -1264,6 +1332,59 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     #############################################################################################################################
     # helper functions
+
+    # SD export progress dialog
+    def on_sd_export_progress(
+        self,
+        copied_bytes: int,
+        total_bytes: int,
+        current_file: str,
+    ) -> None:
+
+        if total_bytes > 0:
+            percent = int(
+                copied_bytes / total_bytes * 100
+            )
+        else:
+            percent = 100
+
+        self.sd_progress_dialog.setValue(percent)
+
+        copied_mb = copied_bytes / (1024 * 1024)
+        total_mb = total_bytes / (1024 * 1024)
+
+        self.sd_progress_dialog.setLabelText(
+            f"Copying:\n{current_file}\n\n"
+            f"{copied_mb:.1f} MB of {total_mb:.1f} MB"
+        )
+
+    # helpers for SD export
+    def on_sd_export_finished(
+        self,
+        export_directory: str,
+    ) -> None:
+
+        self.sd_progress_dialog.close()
+
+        QtWidgets.QMessageBox.information(
+            self,
+            "Export completed",
+            f"The preset was exported to:\n"
+            f"{export_directory}",
+        )
+
+    def on_sd_export_failed(
+        self,
+        error_message: str,
+    ) -> None:
+
+        self.sd_progress_dialog.close()
+
+        QtWidgets.QMessageBox.critical(
+            self,
+            "SD export failed",
+            error_message,
+        )
 
     # fins SD cards and populate combobox
     def refresh_sd_cards(self) -> None:
