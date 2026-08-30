@@ -17,7 +17,7 @@ def save_mms(file, musicBtn_lst, settingBtn_lst, weatherBtn_lst, specialBtn_lst,
                         song_path = Path(song_path).name
 
                     f.write(
-                        f"{channel_idx} {btn_idx}\t{song_path}\n"
+                        f"{channel_idx}{btn_idx}\t{song_path}\n"
                     )
 
 def load_mms(file):
