@@ -596,23 +596,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         Audio_Tab_Layout.addWidget(self.getRootFolderButton, 6, 0, 1, 1)
 
-        self.saveToSDButton = QtWidgets.QPushButton()
-        self.saveToSDButton.setStyleSheet(style.CSS_Save_SD_Btn)
-        self.saveToSDButton.setObjectName("saveToSDButton")
-        self.saveToSDButton.clicked.connect(self.on_saveToSDButton_clicked)
-
-        Audio_Tab_Layout.addWidget(self.saveToSDButton, 6, 2, 1, 1)
-
-        spacer = QtWidgets.QSpacerItem(10, 30, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum) 
-
-        Audio_Tab_Layout.addItem(spacer, 7, 0)
-
-        self.listOfFoundSDCardsCombobox = QtWidgets.QComboBox()
-        self.listOfFoundSDCardsCombobox.setStyleSheet(style.CSS_Found_SD_Combobox)
-        self.listOfFoundSDCardsCombobox.setObjectName("listOfFoundSDCardsCombobox")
-
-        Audio_Tab_Layout.addWidget(self.listOfFoundSDCardsCombobox, 8, 0, 1, 3)
-
         SDcardsLabel = QtWidgets.QLabel()
         SDcardsLabel.setStyleSheet(style.CSS_Label)
         SDcardsLabel.setTextFormat(QtCore.Qt.TextFormat.PlainText)
@@ -620,14 +603,34 @@ class Ui_MainWindow(QtWidgets.QWidget):
         SDcardsLabel.setObjectName("SDcardsLabel")
         SDcardsLabel.setText("SD cards")
 
-        Audio_Tab_Layout.addWidget(SDcardsLabel, 9, 0, 1, 1)
+        Audio_Tab_Layout.addWidget(SDcardsLabel, 7, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignBottom)
+
+        #spacer = QtWidgets.QSpacerItem(10, 30, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum) 
+
+        #Audio_Tab_Layout.addItem(spacer, 7, 0)
+
+        self.listOfFoundSDCardsCombobox = QtWidgets.QComboBox()
+        self.listOfFoundSDCardsCombobox.setStyleSheet(style.CSS_Found_SD_Combobox)
+        self.listOfFoundSDCardsCombobox.setObjectName("listOfFoundSDCardsCombobox")
+
+        Audio_Tab_Layout.addWidget(self.listOfFoundSDCardsCombobox, 8, 0, 1, 3)
+
+
 
         self.refreshButton = QtWidgets.QPushButton()
         self.refreshButton.setStyleSheet(style.CSS_Refresh_SD_Btn)
         self.refreshButton.setObjectName("refreshButton")
         self.refreshButton.clicked.connect(self.on_refreshButton_clicked)
 
-        Audio_Tab_Layout.addWidget(self.refreshButton, 9, 2, 1, 1)
+        Audio_Tab_Layout.addWidget(self.refreshButton, 9, 0, 1, 1)
+
+        self.saveToSDButton = QtWidgets.QPushButton()
+        self.saveToSDButton.setStyleSheet(style.CSS_Save_SD_Btn)
+        self.saveToSDButton.setObjectName("saveToSDButton")
+        self.saveToSDButton.clicked.connect(self.on_saveToSDButton_clicked)
+
+        Audio_Tab_Layout.addWidget(self.saveToSDButton, 9, 2, 1, 1)
+
         tab_widget.setLayout(Audio_Tab_Layout)
 
 
