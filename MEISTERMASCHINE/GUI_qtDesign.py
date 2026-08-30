@@ -620,6 +620,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.refreshButton = QtWidgets.QPushButton()
         self.refreshButton.setStyleSheet(style.CSS_Refresh_SD_Btn)
         self.refreshButton.setObjectName("refreshButton")
+        self.refreshButton.setFixedSize(50, 25)
         self.refreshButton.clicked.connect(self.on_refreshButton_clicked)
 
         Audio_Tab_Layout.addWidget(self.refreshButton, 9, 0, 1, 1)
