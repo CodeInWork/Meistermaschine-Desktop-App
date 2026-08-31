@@ -3,6 +3,7 @@ name = "meistermaschine-desktop-app"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "imageio-ffmpeg>=0.6.0",
     "pyqt6>=6.11.0",
 ]
 

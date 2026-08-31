@@ -1,3 +1,4 @@
+from email.mime import text
 from pathlib import Path
 
 from PyQt6 import QtCore
@@ -8,6 +9,7 @@ from MEISTERMASCHINE.sd_utilities.sd_export import export_preset_to_sd
 class SDExportWorker(QtCore.QObject):
 
     progress = QtCore.pyqtSignal(int, int, str)
+    status = QtCore.pyqtSignal(str)
     finished = QtCore.pyqtSignal(str)
     failed = QtCore.pyqtSignal(str)
 
@@ -46,6 +48,7 @@ class SDExportWorker(QtCore.QObject):
                 setting_buttons=self.setting_buttons,
                 weather_buttons=self.weather_buttons,
                 special_buttons=self.special_buttons,
+                status_callback=self._report_status,
                 progress_callback=self._report_progress,
                 replace_existing=self.replace_existing,
             )
@@ -68,3 +71,6 @@ class SDExportWorker(QtCore.QObject):
             total_bytes,
             current_file.name,
         )
+
+    def _report_status(self, text: str) -> None:
+        self.status.emit(text)
