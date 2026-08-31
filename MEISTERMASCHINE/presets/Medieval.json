@@ -5,45 +5,45 @@
       "buttons": [
         {
           "index": 0,
-          "icon": "icons\\smiley_star.png",
+          "icon": null,
           "playlist": [
             "sounds\\Musik\\medieval&fantasy\\Epic Medieval Fantasy Fanfare.mp3",
-            "sounds\\Musik\\medieval&fantasy\\Royal Fanfare The Entrance of The King.mp3"
+            "sounds\\Musik\\medieval&fantasy\\The Entrance of The King.mp3"
           ]
         },
         {
           "index": 1,
-          "icon": "icons\\smiley_grin.png",
+          "icon": null,
           "playlist": [
-            "sounds\\Musik\\medieval&fantasy\\World of Warcraft Music - Lion's Pride.mp3"
+            "sounds\\Musik\\medieval&fantasy\\Lion's Pride.mp3"
           ]
         },
         {
           "index": 2,
-          "icon": "icons\\smiley_neutral.png",
+          "icon": null,
           "playlist": [
             "sounds\\Musik\\medieval&fantasy\\Village-theme.mp3",
-            "sounds\\Musik\\medieval&fantasy\\Medieval Music Wild Boar's Inn.mp3",
-            "sounds\\Musik\\medieval&fantasy\\Medieval Music Troubadour.mp3",
-            "sounds\\Musik\\medieval&fantasy\\471510__shadydave__small-adventurers-music-loop.mp3"
+            "sounds\\Musik\\medieval&fantasy\\Wild Boar's Inn.mp3",
+            "sounds\\Musik\\medieval&fantasy\\small-adventurers.mp3",
+            "sounds\\Musik\\medieval&fantasy\\Troubadour.mp3"
           ]
         },
         {
           "index": 3,
-          "icon": "icons\\smiley_scary.png",
+          "icon": null,
           "playlist": [
-            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Evil Under The Surface.mp3",
-            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 The Lurking Horror.mp3",
-            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 How Deep Can We Go.mp3"
+            "sounds\\Musik\\DSA 3\\Evil Under The Surface.mp3",
+            "sounds\\Musik\\DSA 3\\The Lurking Horror.mp3",
+            "sounds\\Musik\\DSA 3\\How Deep Can We Go.mp3"
           ]
         },
         {
           "index": 4,
-          "icon": "icons\\smiley_death.png",
+          "icon": null,
           "playlist": [
-            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Unholy March.mp3",
-            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 Te Extinguo.mp3",
-            "sounds\\Musik\\DSA 3\\Realms of Arkania 3 To The Hilt.mp3"
+            "sounds\\Musik\\DSA 3\\Unholy March.mp3",
+            "sounds\\Musik\\DSA 3\\Te Extinguo.mp3",
+            "sounds\\Musik\\DSA 3\\To The Hilt.mp3"
           ]
         }
       ]
@@ -52,35 +52,35 @@
       "buttons": [
         {
           "index": 0,
-          "icon": "icons\\pub.png",
+          "icon": null,
           "playlist": [
             "sounds\\Setting\\tavern - pirates.wav"
           ]
         },
         {
           "index": 1,
-          "icon": "icons\\dorf.png",
+          "icon": null,
           "playlist": [
             "sounds\\Setting\\city - medieval.wav"
           ]
         },
         {
           "index": 2,
-          "icon": "icons\\landschaft.png",
+          "icon": null,
           "playlist": [
             "sounds\\Setting\\fields - medieval summerday.wav"
           ]
         },
         {
           "index": 3,
-          "icon": "icons\\hohle.png",
+          "icon": null,
           "playlist": [
             "sounds\\Setting\\dungeon-water-drops.mp3"
           ]
         },
         {
           "index": 4,
-          "icon": "icons\\kampf.png",
+          "icon": null,
           "playlist": [
             "sounds\\Setting\\fight - medieval.mp3"
           ]
@@ -91,35 +91,35 @@
       "buttons": [
         {
           "index": 0,
-          "icon": "icons\\nacht.png",
+          "icon": null,
           "playlist": [
             "sounds\\Weather\\nght - forest.mp3"
           ]
         },
         {
           "index": 1,
-          "icon": "icons\\welle.png",
+          "icon": null,
           "playlist": [
             "sounds\\Weather\\waves.mp3"
           ]
         },
         {
           "index": 2,
-          "icon": "icons\\wind.png",
+          "icon": null,
           "playlist": [
             "sounds\\Weather\\wind.ogg"
           ]
         },
         {
           "index": 3,
-          "icon": "icons\\sturm.png",
+          "icon": null,
           "playlist": [
             "sounds\\Weather\\thunder_storm-light.wav"
           ]
         },
         {
           "index": 4,
-          "icon": "icons\\schnee.png",
+          "icon": null,
           "playlist": [
             "sounds\\Weather\\blizzard.wav"
           ]
@@ -130,29 +130,29 @@
       "buttons": [
         {
           "index": 0,
-          "icon": "icons\\icon_square.png",
+          "icon": null,
           "playlist": [
             "sounds\\Special\\Monster roar.wav"
           ]
         },
         {
           "index": 1,
-          "icon": "icons\\icon_plus.png",
+          "icon": null,
           "playlist": []
         },
         {
           "index": 2,
-          "icon": "icons\\icon_triangle.png",
+          "icon": null,
           "playlist": []
         },
         {
           "index": 3,
-          "icon": "icons\\icon_minus.png",
+          "icon": null,
           "playlist": []
         },
         {
           "index": 4,
-          "icon": "icons\\icon_star.png",
+          "icon": null,
           "playlist": []
         }
       ]

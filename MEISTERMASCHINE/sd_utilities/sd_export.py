@@ -6,8 +6,10 @@ import os
 import subprocess
 import imageio_ffmpeg
 import tempfile
+import re
 
 from MEISTERMASCHINE.preset_utilities.preset_io import save_mms
+from MEISTERMASCHINE.sd_utilities.sd_audio import get_sd_audio_filename
 
 # Constants for MP3 conversion
 MP3_BITRATE = "192k"
@@ -356,8 +358,3 @@ def _convert_to_mp3(
             f"{source_path}\n\n"
             f"FFmpeg error:\n{result.stderr}"
         )
-
-# Warning: this method has to be identical to the one in preset_io.py, 
-# otherwise the exported mms file will not match the audio files on the SD card.
-def get_sd_audio_filename(source_path: str | Path) -> str:
-    return Path(source_path).with_suffix(".mp3").name

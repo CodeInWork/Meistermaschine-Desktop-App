@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+from MEISTERMASCHINE.sd_utilities.sd_audio import get_sd_audio_filename
+
 # *.mms files are for SD cards used in the physical Meistermaschine
 def save_mms(
     file,
@@ -10,7 +12,7 @@ def save_mms(
     settingBtn_lst,
     weatherBtn_lst,
     specialBtn_lst,
-    path_transform=None,
+    path_transform=get_sd_audio_filename,
 ):
     groups = [
         musicBtn_lst,
@@ -29,7 +31,7 @@ def save_mms(
                         track_path = path_transform(track_path)
 
                     f.write(
-                        f"{channel_idx} {button_idx}\t"
+                        f"{channel_idx}{button_idx}\t"
                         f"{track_path}\n"
                     )
 
@@ -39,7 +41,8 @@ def load_mms(file):
     with open(file, "r", encoding="utf-8") as f:
         for line in f:
             ids, path = line.split("\t")
-            t, idx = map(int, ids.split())
+            t = int(ids[0])
+            idx = int(ids[1])
             result[t].append((idx, path.strip()))
     return result
 
@@ -103,7 +106,3 @@ def _track_path_from_json(item):
             return p
 
     return None
-
-
-def get_sd_audio_filename(source_path: str | Path) -> str:
-    return Path(source_path).with_suffix(".mp3").name
