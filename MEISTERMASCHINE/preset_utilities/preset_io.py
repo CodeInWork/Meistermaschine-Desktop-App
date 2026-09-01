@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from MEISTERMASCHINE.sd_utilities.sd_audio import get_sd_audio_filename
+from MEISTERMASCHINE.sd_utilities.sd_audio import make_sd_audio_filename
 
 # *.mms files are for SD cards used in the physical Meistermaschine
 def save_mms(
@@ -12,7 +13,8 @@ def save_mms(
     settingBtn_lst,
     weatherBtn_lst,
     specialBtn_lst,
-    path_transform=get_sd_audio_filename,
+    application_path: str,
+    audio_file_names: dict[Path, str],
 ):
     groups = [
         musicBtn_lst,
@@ -21,29 +23,51 @@ def save_mms(
         specialBtn_lst,
     ]
 
+    application_dir = Path(application_path)
+
     with open(file, "w", encoding="utf-8") as f:
         for channel_idx, group in enumerate(groups):
             for button_idx, button in enumerate(group):
                 for song in button.playlist.tracks:
-                    track_path = song[0]
+                    stored_path = Path(song[0])
 
-                    if path_transform is not None:
-                        track_path = path_transform(track_path)
+                    if stored_path.is_absolute():
+                        source_path = stored_path
+                    else:
+                        source_path = application_dir / stored_path
 
+                    source_path = source_path.resolve()
+
+                    machine_name = audio_file_names[source_path]
+
+                    display_name = song[1]
+                    display_name = str(display_name).replace("\t", " ")
+                    display_name = display_name.replace("\r", " ").replace("\n", " ")
+
+                    if not display_name:
+                        display_name = source_path.stem
+
+                    # e.g. 01 T000001.MP3  My Song
                     f.write(
                         f"{channel_idx}{button_idx}\t"
-                        f"{track_path}\n"
+                        f"{machine_name}\t"
+                        f"{display_name}\n"
                     )
 
 def load_mms(file):
     result = {0: [], 1: [], 2: [], 3: []}
-    
+
     with open(file, "r", encoding="utf-8") as f:
         for line in f:
-            ids, path = line.split("\t")
-            t = int(ids[0])
+            ids, path, title = line.rstrip("\n").split("\t", 2)
+
+            channel = int(ids[0])
             idx = int(ids[1])
-            result[t].append((idx, path.strip()))
+
+            result[channel].append(
+                (idx, path, title)
+            )
+
     return result
 
 # *.json presets hold audio and icon information needed by the App

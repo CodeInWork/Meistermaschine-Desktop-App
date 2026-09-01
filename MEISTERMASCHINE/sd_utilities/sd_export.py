@@ -10,6 +10,7 @@ import re
 
 from MEISTERMASCHINE.preset_utilities.preset_io import save_mms
 from MEISTERMASCHINE.sd_utilities.sd_audio import get_sd_audio_filename
+from MEISTERMASCHINE.sd_utilities.sd_audio import make_sd_audio_filename
 
 # Constants for MP3 conversion
 MP3_BITRATE = "192k"
@@ -82,10 +83,15 @@ def export_preset_to_sd(
     )
 
     _validate_audio_files(audio_files)
-    _validate_unique_export_filenames(audio_files)
+
+    audio_file_names = {
+        source_path: make_sd_audio_filename(index)
+        for index, source_path in enumerate(audio_files, start=1)
+    }
 
     with tempfile.TemporaryDirectory() as temp_dir:
         temp_path = Path(temp_dir)
+
 
         converted_files = []
 
@@ -93,7 +99,7 @@ def export_preset_to_sd(
             status_callback("Converting audio files to MP3...")
 
         for source_path in audio_files:
-            destination_name = get_sd_audio_filename(source_path)
+            destination_name = audio_file_names[source_path]
             converted_path = temp_path / destination_name
 
             _convert_to_mp3(
@@ -117,7 +123,8 @@ def export_preset_to_sd(
             setting_buttons,
             weather_buttons,
             special_buttons,
-            path_transform=get_sd_audio_filename,
+            application_path=application_path,
+            audio_file_names=audio_file_names,
         )
 
         total_bytes = sum(
@@ -201,30 +208,6 @@ def _validate_audio_files(audio_files: list[Path]) -> None:
             "The following audio files could not be found:\n"
             f"{formatted}"
         )
-
-
-def _validate_unique_export_filenames(
-    audio_files: list[Path],
-) -> None:
-
-    filenames = {}
-
-    for path in audio_files:
-        export_name = get_sd_audio_filename(path)
-        normalized_name = export_name.casefold()
-
-        previous_path = filenames.get(normalized_name)
-
-        if previous_path is not None and previous_path != path:
-            raise ValueError(
-                "Two audio files would have the same filename "
-                "after MP3 conversion:\n\n"
-                f"{previous_path}\n"
-                f"{path}\n\n"
-                f"Both would become:\n{export_name}"
-            )
-
-        filenames[normalized_name] = path
 
 
 def sanitize_folder_name(name: str) -> str:

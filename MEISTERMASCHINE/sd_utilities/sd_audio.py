@@ -21,3 +21,7 @@ def get_sd_audio_filename(source_path: str | Path) -> str:
         safe_stem = "audio"
 
     return f"{safe_stem}.mp3"
+
+
+def make_sd_audio_filename(index: int) -> str:
+    return f"T{index:06d}.MP3"
