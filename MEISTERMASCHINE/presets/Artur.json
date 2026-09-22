@@ -1,0 +1,223 @@
+{
+  "version": 1,
+  "channels": {
+    "music": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": null,
+          "playlist": [
+            "G:/Paul/Musik/Musik/cat empire/01 Cities.mp3",
+            "G:/Paul/Musik/Musik/cat empire/01 How To Explain.mp3",
+            "G:/Paul/Musik/Musik/cat empire/01 So Many Nights.mp3",
+            "G:/Paul/Musik/Musik/cat empire/01 Wandering.mp3",
+            "G:/Paul/Musik/Musik/cat empire/02 Boogaloo.mp3",
+            "G:/Paul/Musik/Musik/cat empire/02 Days Like These.mp3",
+            "G:/Paul/Musik/Musik/cat empire/02 Panama.mp3",
+            "G:/Paul/Musik/Musik/cat empire/02 The Night That Never End.mp3",
+            "G:/Paul/Musik/Musik/cat empire/03 Fishies.mp3",
+            "G:/Paul/Musik/Musik/cat empire/03 Siente.mp3"
+          ]
+        },
+        {
+          "index": 1,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Alle Tiere haben einen Namen.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Auf der Mauer auf der Lauer.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Biberlieder.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Das Lied von Olderlissen.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Der Kuckuck und der Esel.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Der Tierpfleger Ottokar.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Die Hasen rasen durch den Wald.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Die Vogelhochzeit.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Die Waschb\u00e4rtrommel.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Drei Tierpfleger mit dem Futterfass.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Gute Nacht ihre Tiere.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Kommt ein Vogel geflogen.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Randale Tierparklieder aus Olderdissen\\Zwergenaufstand.mp3"
+          ]
+        },
+        {
+          "index": 2,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\01 Titelnummer 1.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\02 Titelnummer 2.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\03 Titelnummer 3.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\04 Titelnummer 4.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\05 Titelnummer 5.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\06 Titelnummer 6.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\07 Titelnummer 7.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\08 Titelnummer 8.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\09 Titelnummer 9.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\10 Titelnummer 10.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\11 Titelnummer 11.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\12 Titelnummer 12.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\13 Titelnummer 13.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\14 Titelnummer 14.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\15 Titelnummer 15.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Kinderlieder Buch zum H\u00f6ren\\16 Titelnummer 16.mp3"
+          ]
+        },
+        {
+          "index": 3,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\1 Der Mond ist aufgegangen.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\10 Still still still weils Kindlein schlafen will.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\11 M\u00fcde bin ich geh zur Ruh.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\12 Schlafe mein Prinzchen schlaf ein.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\13 Ade zur guten Nacht.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\14 Die Bl\u00fcmelein sie schlafen.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\15Abendstille \u00fcberall.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\16 Bist du m\u00fcde kleine Maus.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\17 Mein Kuscheltier.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\18 Kleine Taschenlampe brenn.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\19 Dein kleines Leben.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\2 La-Le-Lu.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\20 Kindlein mein.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\21 Wer hat die sch\u00f6nsten Sch\u00e4fchen.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\22 Es wird schon gleich dunkel.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Schlaflieder f\u00fcr Kinder\\23 Schlaf wohl du Himmelsknabe.mp3"
+          ]
+        },
+        {
+          "index": 4,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\01 - Das kleine bunte Trampeltier.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\02 - Die Zwerge.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\03 - Das W\u00fcrmchen.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\04 - Hau mich nicht-Lied.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\05 - Die Tante.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\06 - Die zwei Fl\u00f6he.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\07 - Der H\u00fchnerhof.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\08 - Das schnelle Lied.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\09 - Das Schweinelied.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\10 - Kitzelsteinlied.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\11 - Die Kr\u00e4he.mp3",
+            "..\\..\\..\\..\\Paul\\Music\\Fredrik Vahle - der Spatz\\12 - Die Katze Musulunga.mp3"
+          ]
+        }
+      ]
+    },
+    "setting": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Pippi Langstrumpf\\Pippi Langstrumpf.mp3"
+          ]
+        },
+        {
+          "index": 1,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Der Zauberer der Smaragdstadt\\Der Zauberer der Smaragdstadt.mp3"
+          ]
+        },
+        {
+          "index": 2,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Conni auf dem Bauernhof Conni und das neue Baby\\Conni 1.mp3"
+          ]
+        },
+        {
+          "index": 3,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Petterson und Findus - Schatzsuche und andere Geschichten\\Petterson&Findus - Schatzsuche und andere Geschichten.mp3"
+          ]
+        },
+        {
+          "index": 4,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Die Wikinger - V\u00f6lkerwanderung\\Die Wikinger.mp3"
+          ]
+        }
+      ]
+    },
+    "weather": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Traumreisen f\u00fcr mutige und selbstbewusste Kinder\\Traumreisen.mp3"
+          ]
+        },
+        {
+          "index": 1,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Yakari Folge 5 Freunde f\u00fcrs Leben\\Yakari Folge 5.mp3"
+          ]
+        },
+        {
+          "index": 2,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Grimms M\u00e4rchen\\Das tapfere Schneiderlein.mp3"
+          ]
+        },
+        {
+          "index": 3,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Conni \u00fcbernachtet bei Julia Conni geht nicht mit Fremden mit\\Conni 2.mp3"
+          ]
+        },
+        {
+          "index": 4,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Petterson und Findus - Wie Findus zu Petterson kam und andere Geschichten\\Petterson&Findus - Wie Findus zu Petersson kam und andere Geschichten.mp3"
+          ]
+        }
+      ]
+    },
+    "special": {
+      "buttons": [
+        {
+          "index": 0,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Leo Lesemaus 3\\Leo Lesemaus 3.mp3"
+          ]
+        },
+        {
+          "index": 1,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Leo Lesemaus 5\\Leo Lesemaus 5.mp3"
+          ]
+        },
+        {
+          "index": 2,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Grimms M\u00e4rchen\\Die Bienenk\u00f6nigin.mp3"
+          ]
+        },
+        {
+          "index": 3,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Grimms M\u00e4rchen\\Schneewei\u00dfchen und Rosenrot.mp3"
+          ]
+        },
+        {
+          "index": 4,
+          "icon": null,
+          "playlist": [
+            "..\\..\\..\\..\\Paul\\Music\\Grimms M\u00e4rchen\\Wolf und Fuchs.mp3"
+          ]
+        }
+      ]
+    }
+  }
+}

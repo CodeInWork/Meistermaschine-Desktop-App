@@ -37,7 +37,7 @@ CHANNEL_CONFIG = {
         "loop": True,
         "expose": True,
         "audio_index": 0,
-        "max_playlist_length": 10,
+        "max_playlist_length": 16,
     },
     "setting": {
         "buttons": lambda self: self.settingBtn_lst,
@@ -574,7 +574,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.fileModel.setNameFilters(["*.mp3","*.wav", "*.ogg"]) 
         self.fileModel.setNameFilterDisables(False)
         self.fileTreeListView = QtWidgets.QTreeView()
-        self.fileTreeListView.setSelectionMode(self.fileTreeListView.selectionMode().ExtendedSelection)
+        self.fileTreeListView.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
         self.fileTreeListView.setHeaderHidden(True)
         self.fileTreeListView.setDragEnabled(True)
         self.fileTreeListView.setStyleSheet(style.CSS_ListView)
@@ -1752,13 +1752,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 path = url.toLocalFile()
 
                 if path.lower().endswith(ICON_EXTS):
-                    try:
-                        icon_path = os.path.relpath(path, self.app_path)
-                    except ValueError:
-                        icon_path = path  # fallback to absolute (for different drive errors)
+                    icon_path = self._relative_path(url)
+
                 elif path.lower().endswith(AUDIO_EXTS):
-                    rel = os.path.relpath(path, self.app_path)
-                    audio_paths.append(rel)
+                    audio_paths.append(self._relative_path(url))
 
             if icon_path:
                 self.set_button_icon(icon_path)
@@ -1820,7 +1817,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # ---------- Helpers ----------
 
         def _relative_path(self, url):
-            return os.path.relpath(url.toLocalFile(), self.app_path)
+            path = url.toLocalFile()
+
+            try:
+                return os.path.relpath(path, self.app_path)
+            except ValueError:
+                return path
 
         def _filename(self, path):
             return os.path.splitext(os.path.basename(path))[0]
