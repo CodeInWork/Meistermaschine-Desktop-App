@@ -21,6 +21,7 @@ import random
 
 from pathlib import Path
 
+import MEISTERMASCHINE.config as cfg
 import MEISTERMASCHINE.stylesheet as style
 from MEISTERMASCHINE.audio.volume import dependent_volume
 from MEISTERMASCHINE.preset_utilities.preset_io import save_mms, load_mms, save_preset_json, load_preset_json
@@ -37,31 +38,27 @@ CHANNEL_CONFIG = {
         "loop": True,
         "expose": True,
         "audio_index": 0,
-        "max_playlist_length": 16,
+        "max_playlist_length": cfg.MAX_PLAYLIST_LENGTH,
     },
     "setting": {
         "buttons": lambda self: self.settingBtn_lst,
         "loop": True,
         "audio_index": 1,
-        "max_playlist_length": 1,
+        "max_playlist_length": cfg.MAX_PLAYLIST_LENGTH,
     },
     "weather": {
         "buttons": lambda self: self.weatherBtn_lst,
         "loop": True,
         "audio_index": 2,
-        "max_playlist_length": 1,
+        "max_playlist_length": cfg.MAX_PLAYLIST_LENGTH,
     },
     "special": {
         "buttons": lambda self: self.specialBtn_lst,
         "loop": False,
         "audio_index": 3,
-        "max_playlist_length": 1,
+        "max_playlist_length": cfg.MAX_PLAYLIST_LENGTH,
     },
 }
-
-# accepted audio and icon file types
-AUDIO_EXTS = (".mp3", ".wav", ".ogg", ".flac", ".m4a")
-ICON_EXTS = (".png", ".jpg", ".jpeg", ".svg")
 
 
 # ToDo: 
@@ -182,9 +179,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
             for b in range(self.btn_rows)
         ]
 
-
-        for ch in self.playerController.channels.values():
-            self.connect_player_signals(ch)
 
 
         ########################################################################################################
@@ -369,7 +363,39 @@ class Ui_MainWindow(QtWidgets.QWidget):
         Interface_Frame.setFrameShape(QtWidgets.QFrame.Shape.StyledPanel)
         Interface_Frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         Interface_Frame.setObjectName("interfaceFrame")   
-          
+
+        # create and set loop chackbox
+        self.channelOptionCheckboxes = {}
+
+        for column, (name, cfg) in enumerate(CHANNEL_CONFIG.items()):
+            loop_checkbox = QtWidgets.QCheckBox("Loop")
+
+            loop_checkbox.setChecked(
+                cfg.get("loop", False)
+            )
+
+            loop_checkbox.setStyleSheet(style.CSS_Channel_Checkbox)
+
+            self.channelOptionCheckboxes[name] = {
+                "loop": loop_checkbox,
+            }
+
+            channel = self.playerController.channels[name]
+
+            loop_checkbox.toggled.connect(
+                lambda checked, ch=channel:
+                    self.on_channel_loop_toggled(ch, checked)
+            )
+
+            Interface_Frame_Layout.addWidget(
+                loop_checkbox,
+                0,
+                column,
+                alignment=QtCore.Qt.AlignmentFlag.AlignCenter,
+            )
+
+        number_of_checkboxes = len(next(iter(self.channelOptionCheckboxes.values())))
+
         # music Buttons
         for btn in self.musicBtn_lst:
             curBtnIndex = self.musicBtn_lst.index(btn)
@@ -377,7 +403,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setText("")
             btn.setObjectName(f"musicBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
-            Interface_Frame_Layout.addWidget(btn, curBtnIndex, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+            Interface_Frame_Layout.addWidget(btn, curBtnIndex + number_of_checkboxes, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
 
         # setting Buttons
         for btn in self.settingBtn_lst:
@@ -387,7 +413,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setText("")
             btn.setObjectName(f"settingBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
-            Interface_Frame_Layout.addWidget(btn, curBtnIndex, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+            Interface_Frame_Layout.addWidget(btn, curBtnIndex + number_of_checkboxes, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
 
         # weather Buttons
         for btn in self.weatherBtn_lst:
@@ -397,7 +423,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setText("")
             btn.setObjectName(f"weatherBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
-            Interface_Frame_Layout.addWidget(btn, curBtnIndex, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
+            Interface_Frame_Layout.addWidget(btn, curBtnIndex + number_of_checkboxes, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
 
         # special Buttons
         for btn in self.specialBtn_lst:
@@ -407,7 +433,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             btn.setText("")
             btn.setObjectName(f"specialBtn_{curBtnIndex+1}")
             btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
-            Interface_Frame_Layout.addWidget(btn, curBtnIndex, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)    
+            Interface_Frame_Layout.addWidget(btn, curBtnIndex + number_of_checkboxes, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)    
 
         # individual volume sliders
         self.musicVolumeSlider = QtWidgets.QSlider()
@@ -416,7 +442,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.musicVolumeSlider.setObjectName("musicVolumeSlider")
         self.musicVolumeSlider.setValue(self.musicVolumeSlider.maximum())   #initial setting = max
         self.musicVolumeSlider.valueChanged.connect(self.on_musicVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.musicVolumeSlider, 5, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+        Interface_Frame_Layout.addWidget(self.musicVolumeSlider, self.btn_rows + number_of_checkboxes, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         self.settingVolumeSlider = QtWidgets.QSlider()
         self.settingVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
@@ -424,7 +450,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.settingVolumeSlider.setObjectName("settingVolumeSlider")
         self.settingVolumeSlider.setValue(self.settingVolumeSlider.maximum())   #initial setting = max
         self.settingVolumeSlider.valueChanged.connect(self.on_settingVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.settingVolumeSlider, 5, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+        Interface_Frame_Layout.addWidget(self.settingVolumeSlider, self.btn_rows + number_of_checkboxes, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         self.weatherVolumeSlider = QtWidgets.QSlider()
         self.weatherVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
@@ -432,7 +458,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.weatherVolumeSlider.setObjectName("weatherVolumeSlider")
         self.weatherVolumeSlider.setValue(self.weatherVolumeSlider.maximum())   #initial setting = max
         self.weatherVolumeSlider.valueChanged.connect(self.on_weatherVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.weatherVolumeSlider, 5, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+        Interface_Frame_Layout.addWidget(self.weatherVolumeSlider, self.btn_rows + number_of_checkboxes, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         self.specialVolumeSlider = QtWidgets.QSlider()
         self.specialVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
@@ -440,7 +466,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.specialVolumeSlider.setObjectName("specialVolumeSlider")
         self.specialVolumeSlider.setValue(self.specialVolumeSlider.maximum())   #initial setting = max
         self.specialVolumeSlider.valueChanged.connect(self.on_specialVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.specialVolumeSlider, 5, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+        Interface_Frame_Layout.addWidget(self.specialVolumeSlider, self.btn_rows + number_of_checkboxes, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         Interface_Frame.setLayout(Interface_Frame_Layout)
 
@@ -922,10 +948,30 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     # audio handlers
     def on_mediaStatusChanged(self, channel, status):
+        print(
+            "MEDIA STATUS:",
+            channel.name,
+            status,
+            "active:",
+            channel.active_button.playlist.active
+            if channel.active_button else None
+        )
+
         if status != QtMultimedia.QMediaPlayer.MediaStatus.EndOfMedia:
             return
 
         next_song = channel.get_next_track()
+
+        print(
+            "AFTER get_next_track:",
+            channel.name,
+            "active:",
+            channel.active_button.playlist.active
+            if channel.active_button else None,
+            "song:",
+            next_song
+        )
+
 
         if next_song:
             self.playerController.switch_track(
@@ -1332,8 +1378,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
         linDepVal = dependent_volume(masterValue, subValue)
         self.playerController.channels["special"].audio_output.setVolume(linDepVal)
         
-        
-        
+    # checkboxes for channel control
+    def on_channel_loop_toggled(self, channel: PlayerChannel, checked: bool) -> None:
+        channel.loop = checked
         
        
 
@@ -1720,9 +1767,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             for url in event.mimeData().urls():
                 path = url.toLocalFile().lower()
-                if path.endswith(ICON_EXTS):
+                if path.endswith(cfg.ICON_EXTS):
                     has_icon = True
-                elif path.endswith(AUDIO_EXTS):
+                elif path.endswith(cfg.AUDIO_EXTS):
                     has_audio = True
 
             if has_icon or has_audio:
@@ -1751,10 +1798,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
             for url in event.mimeData().urls():
                 path = url.toLocalFile()
 
-                if path.lower().endswith(ICON_EXTS):
+                if path.lower().endswith(cfg.ICON_EXTS):
                     icon_path = self._relative_path(url)
 
-                elif path.lower().endswith(AUDIO_EXTS):
+                elif path.lower().endswith(cfg.AUDIO_EXTS):
                     audio_paths.append(self._relative_path(url))
 
             if icon_path:

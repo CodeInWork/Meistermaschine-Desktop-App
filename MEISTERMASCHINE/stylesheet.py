@@ -77,12 +77,24 @@ CSS_Clear_Sum_Btn = f"""QPushButton{{
 
 # List of found SD cards Combo Box
 CSS_Found_SD_Combobox = f"""QComboBox {{
-    background-color: {dark_gray};
-    color: {white};
-}}"""
+        background-color: {dark_gray};
+        color: {white};
+    }}"""
 
 # Label
 CSS_Label = f"color: {white}"
+
+# checkboxes audio channels
+CSS_Channel_Checkbox = f"""QCheckBox {{
+        color: {white};
+        font-size: 10px;
+        spacing: 4px;
+    }}
+
+    QCheckBox::indicator {{
+        width: 12px;
+        height: 12px;
+    }}""" 
 
 # slider style sheet
 CSS_Slider = f"""QSlider::handle:horizontal {{
@@ -110,6 +122,10 @@ QListWidget::item:selected {{
 CSS_ListView = f"""QTreeView::item{{
     color: {white};
     background-color: transparent;
+}}
+QTreeView::item:selected {{
+    color: {white};
+    background-color: {green};
 }}
 QTreeView {{
     background-color: {dark_gray};
