@@ -22,6 +22,7 @@ class SDExportWorker(QtCore.QObject):
         setting_buttons,
         weather_buttons,
         special_buttons,
+        loop_states,
         replace_existing: bool = False,
     ):
         super().__init__()
@@ -34,6 +35,7 @@ class SDExportWorker(QtCore.QObject):
         self.setting_buttons = setting_buttons
         self.weather_buttons = weather_buttons
         self.special_buttons = special_buttons
+        self.loop_states = loop_states
 
         self.replace_existing = replace_existing
 
@@ -48,6 +50,7 @@ class SDExportWorker(QtCore.QObject):
                 setting_buttons=self.setting_buttons,
                 weather_buttons=self.weather_buttons,
                 special_buttons=self.special_buttons,
+                loop_states=self.loop_states,
                 status_callback=self._report_status,
                 progress_callback=self._report_progress,
                 replace_existing=self.replace_existing,

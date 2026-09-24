@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 
+import MEISTERMASCHINE.config as cfg
 from MEISTERMASCHINE.sd_utilities.sd_audio import get_sd_audio_filename
 from MEISTERMASCHINE.sd_utilities.sd_audio import make_sd_audio_filename
 
@@ -13,6 +14,7 @@ def save_mms(
     settingBtn_lst,
     weatherBtn_lst,
     specialBtn_lst,
+    loop_states: list[bool],
     application_path: str,
     audio_file_names: dict[Path, str],
 ):
@@ -53,13 +55,32 @@ def save_mms(
                         f"{machine_name}\t"
                         f"{display_name}\n"
                     )
+        # save metadata
+        f.write("#META\n")
+        f.write("loop=" + ",".join("1" if state else "0" for state in loop_states) + "\n")
 
-def load_mms(file):
+
+def load_mms(file) -> tuple[dict[int, list[tuple[int, str, str]]], list[bool]|None]:
     result = {0: [], 1: [], 2: [], 3: []}
+    loop_states = None
+
+    in_metadata = False
 
     with open(file, "r", encoding="utf-8") as f:
         for line in f:
-            ids, path, title = line.rstrip("\n").split("\t", 2)
+            line = line.rstrip("\n")
+
+            if line == "#META":
+                in_metadata = True
+                continue
+
+            if in_metadata:
+                if line.startswith("loop="):
+                    values = line.removeprefix("loop=").split(",")
+                    loop_states = [value == "1" for value in values]
+                continue
+
+            ids, path, title = line.split("\t", 2)
 
             channel = int(ids[0])
             idx = int(ids[1])
@@ -68,7 +89,7 @@ def load_mms(file):
                 (idx, path, title)
             )
 
-    return result
+    return result, loop_states
 
 # *.json presets hold audio and icon information needed by the App
 def save_preset_json(controller, path):
@@ -82,7 +103,10 @@ def save_preset_json(controller, path):
                 "icon": getattr(btn, "icon_path", None),
                 "playlist": [p for (p, _t) in btn.playlist.tracks],
             })
-        data["channels"][name] = {"buttons": buttons}
+        data["channels"][name] = {
+            "loop": channel.loop,
+            "buttons": buttons,
+        }
 
     with open(path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
@@ -96,6 +120,10 @@ def load_preset_json(controller, path):
         channel = controller.channels.get(name)
         if not channel:
             continue
+
+        default_loop = cfg.CHANNEL_CONFIG.get(name, {}).get("loop", channel.loop)
+
+        channel.loop = ch_data.get("loop", default_loop)
 
         for btn_data in ch_data["buttons"]:
             idx = btn_data["index"]

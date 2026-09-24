@@ -57,6 +57,7 @@ def export_preset_to_sd(
     setting_buttons,
     weather_buttons,
     special_buttons,
+    loop_states: list[bool],
     progress_callback: ProgressCallback | None = None,
     status_callback: StatusCallback | None = None,
     replace_existing: bool = False,
@@ -123,6 +124,7 @@ def export_preset_to_sd(
             setting_buttons,
             weather_buttons,
             special_buttons,
+            loop_states,
             application_path=application_path,
             audio_file_names=audio_file_names,
         )

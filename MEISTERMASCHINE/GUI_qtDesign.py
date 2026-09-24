@@ -32,40 +32,11 @@ from MEISTERMASCHINE.dice.dice_logic import roll_destiny
 from MEISTERMASCHINE.sd_utilities.sd_detection import find_removable_drives
 from MEISTERMASCHINE.sd_utilities.sd_worker import SDExportWorker
 
-CHANNEL_CONFIG = {
-    "music": {
-        "buttons": lambda self: self.musicBtn_lst,
-        "loop": True,
-        "expose": True,
-        "audio_index": 0,
-        "max_playlist_length": cfg.MAX_PLAYLIST_LENGTH,
-    },
-    "setting": {
-        "buttons": lambda self: self.settingBtn_lst,
-        "loop": True,
-        "audio_index": 1,
-        "max_playlist_length": cfg.MAX_PLAYLIST_LENGTH,
-    },
-    "weather": {
-        "buttons": lambda self: self.weatherBtn_lst,
-        "loop": True,
-        "audio_index": 2,
-        "max_playlist_length": cfg.MAX_PLAYLIST_LENGTH,
-    },
-    "special": {
-        "buttons": lambda self: self.specialBtn_lst,
-        "loop": False,
-        "audio_index": 3,
-        "max_playlist_length": cfg.MAX_PLAYLIST_LENGTH,
-    },
-}
 
 
 # ToDo: 
 #   Major:
-#   - implement icon tab and allow drag and drop of icons upon buttons to change them
-#       > ALLOW ICON TO BE SAVED
-#   - allow saving of complete presets WITH sound files so they are immune to soundfile path changes
+#   - improve app rescaling
 
 # Minor
 #   - change line when track ends and next is played (update display playlist)
@@ -84,14 +55,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
     
     def setupUi(self, MainWindow):
         ########################################################################################################
-        # variables and settings
-        self.btn_rows = 5
-        self.channel_count = 4
-        # default icons
-        self.musicIcon_lst = ["icons\\smiley_star.png","icons\\smiley_grin.png","icons\\smiley_neutral.png","icons\\smiley_scary.png","icons\\smiley_death.png"]
-        self.settingIcon_lst = ["icons\\pub.png","icons\\dorf.png","icons\\landschaft.png","icons\\hohle.png","icons\\kampf.png"]
-        self.weatherIcon_lst = ["icons\\nacht.png","icons\\welle.png","icons\\wind.png","icons\\sturm.png","icons\\schnee.png"]
-        self.specialIcon_lst = ["icons\\icon_square.png","icons\\icon_plus.png","icons\\icon_triangle.png","icons\\icon_minus.png","icons\\icon_star.png"]
+
 
         self.Btn_Display_Time = 20000   # how long is dice roll result displayed
 
@@ -127,56 +91,56 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # setting and weather are repeated upon end of media is reached
         # special is only played once
 
-        self.audio_output_lst = [QtMultimedia.QAudioOutput() for _ in range(self.channel_count)]
+        self.audio_output_lst = [QtMultimedia.QAudioOutput() for _ in cfg.CHANNEL_CONFIG]
         for ao in self.audio_output_lst: 
             ao.setVolume(1.0) # initial volume is max
 
-        for name, cfg in CHANNEL_CONFIG.items():
-            audio_output = self.audio_output_lst[cfg["audio_index"]]
+        for name, channel_cfg in cfg.CHANNEL_CONFIG.items():
+            audio_output = self.audio_output_lst[channel_cfg["audio_index"]]
 
             channel = self.create_channel(
                 name=name,
                 buttons=[], # initially set empty, will be when buttons are created
                 audio_output=audio_output,
-                loop=cfg.get("loop", False),
-                max_playlist_length=cfg.get("max_playlist_length", 40),
+                loop=channel_cfg["loop"],
+                max_playlist_length=channel_cfg["max_playlist_length"],
             )
 
-            if cfg.get("expose"):
-                setattr(self, f"{name}Channel", channel)
+
+        self.channel_buttons = {}
 
         # create sound buttons
         self.musicBtn_lst = [
             self.create_acceptDropButton(
                 channel=self.playerController.channels["music"],
                 styleSheet=style.CSS_PB_music,
-                icon_path=self.musicIcon_lst[b]
+                icon_path=cfg.musicIcon_lst[b]
             )
-            for b in range(self.btn_rows)
+            for b in range(cfg.btn_rows)
         ]
         self.settingBtn_lst = [
             self.create_acceptDropButton(
                 channel=self.playerController.channels["setting"], 
                 styleSheet=style.CSS_PB_setting,
-                icon_path=self.settingIcon_lst[b]
+                icon_path=cfg.settingIcon_lst[b]
             ) 
-            for b in range(self.btn_rows)
+            for b in range(cfg.btn_rows)
         ]
         self.weatherBtn_lst = [
             self.create_acceptDropButton(
                 channel=self.playerController.channels["weather"], 
                 styleSheet=style.CSS_PB_weather,
-                icon_path=self.weatherIcon_lst[b]
+                icon_path=cfg.weatherIcon_lst[b]
             ) 
-            for b in range(self.btn_rows)
+            for b in range(cfg.btn_rows)
         ]
         self.specialBtn_lst = [
             self.create_acceptDropButton(
                 channel=self.playerController.channels["special"], 
                 styleSheet=style.CSS_PB_special_lst[b],
-                icon_path=self.specialIcon_lst[b]
+                icon_path=cfg.specialIcon_lst[b]
             ) 
-            for b in range(self.btn_rows)
+            for b in range(cfg.btn_rows)
         ]
 
 
@@ -367,11 +331,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # create and set loop chackbox
         self.channelOptionCheckboxes = {}
 
-        for column, (name, cfg) in enumerate(CHANNEL_CONFIG.items()):
+        for column, (name, channel_cfg) in enumerate(cfg.CHANNEL_CONFIG.items()):
             loop_checkbox = QtWidgets.QCheckBox("Loop")
 
             loop_checkbox.setChecked(
-                cfg.get("loop", False)
+                channel_cfg.get("loop", False)
             )
 
             loop_checkbox.setStyleSheet(style.CSS_Channel_Checkbox)
@@ -442,7 +406,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.musicVolumeSlider.setObjectName("musicVolumeSlider")
         self.musicVolumeSlider.setValue(self.musicVolumeSlider.maximum())   #initial setting = max
         self.musicVolumeSlider.valueChanged.connect(self.on_musicVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.musicVolumeSlider, self.btn_rows + number_of_checkboxes, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+        Interface_Frame_Layout.addWidget(self.musicVolumeSlider, cfg.btn_rows + number_of_checkboxes, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         self.settingVolumeSlider = QtWidgets.QSlider()
         self.settingVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
@@ -450,7 +414,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.settingVolumeSlider.setObjectName("settingVolumeSlider")
         self.settingVolumeSlider.setValue(self.settingVolumeSlider.maximum())   #initial setting = max
         self.settingVolumeSlider.valueChanged.connect(self.on_settingVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.settingVolumeSlider, self.btn_rows + number_of_checkboxes, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+        Interface_Frame_Layout.addWidget(self.settingVolumeSlider, cfg.btn_rows + number_of_checkboxes, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         self.weatherVolumeSlider = QtWidgets.QSlider()
         self.weatherVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
@@ -458,7 +422,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.weatherVolumeSlider.setObjectName("weatherVolumeSlider")
         self.weatherVolumeSlider.setValue(self.weatherVolumeSlider.maximum())   #initial setting = max
         self.weatherVolumeSlider.valueChanged.connect(self.on_weatherVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.weatherVolumeSlider, self.btn_rows + number_of_checkboxes, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+        Interface_Frame_Layout.addWidget(self.weatherVolumeSlider, cfg.btn_rows + number_of_checkboxes, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         self.specialVolumeSlider = QtWidgets.QSlider()
         self.specialVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
@@ -466,7 +430,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.specialVolumeSlider.setObjectName("specialVolumeSlider")
         self.specialVolumeSlider.setValue(self.specialVolumeSlider.maximum())   #initial setting = max
         self.specialVolumeSlider.valueChanged.connect(self.on_specialVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.specialVolumeSlider, self.btn_rows + number_of_checkboxes, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+        Interface_Frame_Layout.addWidget(self.specialVolumeSlider, cfg.btn_rows + number_of_checkboxes, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
 
         Interface_Frame.setLayout(Interface_Frame_Layout)
 
@@ -544,7 +508,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         file_menu.addAction(save_as_action)
         # save as *.mms
         icon = QtGui.QIcon.fromTheme("document-save")
-        save_as_action = QtGui.QAction(icon, "&Esport to SD",MainWindow, triggered=self.save_as_mms) 
+        save_as_action = QtGui.QAction(icon, "&Esport to SD",MainWindow, triggered=self.save_SD_format) 
         file_menu.addAction(save_as_action)
         
         menuBar.setStyleSheet(style.CSS_menubar)
@@ -849,7 +813,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # 1) Reset current runtime state (stop audio, clear playlists, uncheck buttons, clear UI)
         self.playerController.stop_all_channels()
         self.playerController.clear_all_playlists()
-        #self.uncheckAllButtons()
+        self.resetChannelOptionsToDefaults()
         self.currentSoundFilesListWidget.clear()
 
         # 2) Save an empty preset to the chosen path
@@ -877,6 +841,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             return
 
         load_preset_json(self.playerController, file[0])
+        self.syncChannelOptionCheckboxes()  # checkboxes may have changed due to the loaded preset
         self._remember_last_preset(file[0])
         self.listPresets()
 
@@ -889,9 +854,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
     @Slot()
     def import_mms(self)->None:
         file = QtWidgets.QFileDialog.getOpenFileName(None, "Select a file...", self.default_preset_path, "*.mms")
-        if not file:
+        if not file[0]:
             return
-        self.btn_occupancy = load_mms(file[0])
+        self.btn_occupancy, loop_states = load_mms(file[0])
+        if loop_states is not None:
+            channel_names = ["music", "setting", "weather", "special"]
+
+            for channel_name, loop in zip(channel_names, loop_states):
+                self.playerController.channels[channel_name].loop = loop
+
+            self.syncChannelOptionCheckboxes()
+
         btn_assign_playlist(self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst, self.btn_occupancy)
 
     @Slot()
@@ -900,11 +873,17 @@ class Ui_MainWindow(QtWidgets.QWidget):
         save_preset_json(self.playerController, file)
 
     @Slot()
-    def save_as_mms(self)->None:
-        file = QtWidgets.QFileDialog.getSaveFileName(None, "Save SD format", self.default_preset_path, "*.mms")
-        if not file:
+    def save_SD_format(self)->None:
+        export_root = QtWidgets.QFileDialog.getExistingDirectory(
+            self,
+            "Select export location",
+            self.default_preset_path,
+        )
+
+        if not export_root:
             return
-        save_mms(file[0], self.musicBtn_lst, self.settingBtn_lst, self.weatherBtn_lst, self.specialBtn_lst)
+
+        self.export_to_sd(export_root)
         self.listPresets()
 
     @Slot()
@@ -944,6 +923,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.playerController.stop_all_channels()
         load_preset_json(self.playerController, path)
+        self.syncChannelOptionCheckboxes() # checkboxes may have changed due to the loaded preset
         self._remember_last_preset(path)
 
     # audio handlers
@@ -984,7 +964,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
     def on_playbackStateChanged(self, channel, state) -> None:
         print("playbackStateChanged", state)
 
-        if channel is not self.musicChannel:
+        if channel is not self.playerController.channels["music"]:
             return
 
         if state == QtMultimedia.QMediaPlayer.PlaybackState.StoppedState:
@@ -1073,118 +1053,18 @@ class Ui_MainWindow(QtWidgets.QWidget):
         if path:
            self.fileTreeListView.setRootIndex(self.fileModel.index(path)) 
 
-    def on_saveToSDButton_clicked(self)->None:
-        self.saveToSDButton.setDown(True)
+    def on_saveToSDButton_clicked(self) -> None:
         sd_root = self.listOfFoundSDCardsCombobox.currentData()
 
         if not sd_root:
             QtWidgets.QMessageBox.warning(
-                None,
+                self,
                 "No SD card selected",
                 "Please select an SD card before exporting.",
             )
             return
 
-        preset_name = self.presetCombobox.currentText().strip()
-        export_dir = Path(sd_root) / preset_name
-
-        replace_existing = False
-
-        if export_dir.exists():
-            answer = QtWidgets.QMessageBox.question(
-                self,
-                "Preset already exists",
-                (
-                    f'A preset named "{preset_name}" already exists '
-                    "on the selected SD card.\n\n"
-                    "Do you want to replace it?"
-                ),
-                QtWidgets.QMessageBox.StandardButton.Yes
-                | QtWidgets.QMessageBox.StandardButton.No,
-                QtWidgets.QMessageBox.StandardButton.No,
-            )
-
-            if answer != QtWidgets.QMessageBox.StandardButton.Yes:
-                return
-
-            replace_existing = True
-
-        if not preset_name:
-            QtWidgets.QMessageBox.warning(
-                None,
-                "No preset selected",
-                "Please select or create a preset before exporting.",
-            )
-            return
-
-        self.sd_export_thread = QtCore.QThread()
-
-        self.sd_export_worker = SDExportWorker(
-            sd_root=sd_root,
-            preset_name=preset_name,
-            application_path=self.application_path,
-            music_buttons=self.musicBtn_lst,
-            setting_buttons=self.settingBtn_lst,
-            weather_buttons=self.weatherBtn_lst,
-            special_buttons=self.specialBtn_lst,
-            replace_existing=replace_existing,
-        )
-
-        self.sd_export_worker.moveToThread(
-            self.sd_export_thread
-        )
-
-        self.sd_export_thread.started.connect(
-            self.sd_export_worker.run
-        )
-
-        self.sd_export_worker.finished.connect(
-            self.on_sd_export_finished
-        )
-
-        self.sd_export_worker.failed.connect(
-            self.on_sd_export_failed
-        )
-
-        self.sd_export_worker.finished.connect(
-            self.sd_export_thread.quit
-        )
-
-        self.sd_export_worker.failed.connect(
-            self.sd_export_thread.quit
-        )
-
-        self.sd_export_thread.finished.connect(
-            self.sd_export_worker.deleteLater
-        )
-
-        self.sd_export_thread.finished.connect(
-            self.sd_export_thread.deleteLater
-        )
-
-        self.sd_progress_dialog = QtWidgets.QProgressDialog(
-            "Preparing audio files...",
-            None,   # no Cancel button for now
-            0,
-            100,
-            self,
-        )
-
-        self.sd_progress_dialog.setWindowTitle("Exporting preset")
-        self.sd_progress_dialog.setWindowModality(
-            QtCore.Qt.WindowModality.WindowModal
-        )
-
-        self.sd_progress_dialog.setAutoClose(False)
-        self.sd_progress_dialog.setAutoReset(False)
-        self.sd_progress_dialog.setValue(0)
-        self.sd_progress_dialog.show()
-
-        self.sd_export_worker.progress.connect(self.on_sd_export_progress)
-        self.sd_export_worker.status.connect(self.on_sd_export_status)
-
-        self.sd_export_thread.start()
-        self.saveToSDButton.setDown(False)
+        self.export_to_sd(sd_root)
             
     def on_refreshButton_clicked(self) -> None:
         self.refreshButton.setDown(True)
@@ -1226,24 +1106,24 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.currentSoundFilesListWidget.clear()    # clear playlist
 
     def on_trackBackwardClicked(self)->None:
-        activeBtn = self.musicChannel.active_button
+        activeBtn = self.playerController.channels["music"].active_button
         if activeBtn:
             previousSong = activeBtn.playlist.previous()
-            self.playerController.switch_track(self.musicChannel, previousSong, self.application_path)
+            self.playerController.switch_track(self.playerController.channels["music"], previousSong, self.application_path)
             self.select_active_track()
 
     def on_trackForwardClicked(self)->None:
-        activeBtn = self.musicChannel.active_button
+        activeBtn = self.playerController.channels["music"].active_button
         if activeBtn:
             nextSong = activeBtn.playlist.next()
-            self.playerController.switch_track(self.musicChannel, nextSong, self.application_path)
+            self.playerController.switch_track(self.playerController.channels["music"], nextSong, self.application_path)
             self.select_active_track()
     
     def on_playPauseBtnClicked(self) -> None:
         # only music reacts to it. Make all channels react???
         # if so, a global paused state has to be introduced which leads to an un-pause in 
         # the event of an addistional channel being activated while some are paused. -> checking states must be handled
-        channel = self.musicChannel
+        channel = self.playerController.channels["music"]
         player = channel.player
 
         state = player.playbackState()
@@ -1278,7 +1158,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             return
 
         index = self.currentSoundFilesListWidget.row(item)
-        self.musicChannel.play_track_at_index(
+        self.playerController.channels["music"].play_track_at_index(
             index, self.application_path, self.playerController
         )
 
@@ -1289,10 +1169,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         index = self.currentSoundFilesListWidget.row(item)
         self.playerController.remove_track_from_channel(
-            self.musicChannel, index, self.application_path
+            self.playerController.channels["music"], index, self.application_path
         )
 
-        self.displayPlaylist(self.musicChannel.active_button)
+        self.displayPlaylist(self.playerController.channels["music"].active_button)
     
     def currentSoundFilesListWidget_itemMoved(self, old_index, new_index) -> None:
         btn = self.playerController.channels["music"].active_button
@@ -1300,7 +1180,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             return
 
         # Reorder in controller without stopping playback
-        self.playerController.reorder_playlist(self.musicChannel, old_index, new_index, self.application_path)
+        self.playerController.reorder_playlist(self.playerController.channels["music"], old_index, new_index, self.application_path)
 
         # Update UI selection without re-triggering playback logic
         self.currentSoundFilesListWidget.blockSignals(True)
@@ -1314,28 +1194,28 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
     # soundSlider
     def on_durationChanged(self, channel, duration) -> None:
-        if channel is not self.musicChannel:
+        if channel is not self.playerController.channels["music"]:
             return
 
         self.soundSlider.setMaximum(int(duration))
 
     def on_positionChanged(self, channel, position) -> None:
-        if channel is not self.musicChannel:
+        if channel is not self.playerController.channels["music"]:
             return
 
         self.soundSlider.setValue(int(position))
 
     def on_soundSliderPressed(self) -> None:
-        self.playerController.pause_channel(self.musicChannel)
+        self.playerController.pause_channel(self.playerController.channels["music"])
 
 
     def on_soundSliderReleased(self) -> None:
         position = self.soundSlider.sliderPosition()
 
-        player = self.musicChannel.player
+        player = self.playerController.channels["music"].player
         player.setPosition(position)
 
-        self.playerController.resume_channel(self.musicChannel)
+        self.playerController.resume_channel(self.playerController.channels["music"])
 
 
     # master volume slider
@@ -1495,6 +1375,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             # Actually load it once
             load_preset_json(self.playerController, last)
+            self.syncChannelOptionCheckboxes() # restore checkbox states
 
 
     def _populate_icon_list(self, iconList):
@@ -1518,7 +1399,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
 
     def select_active_track(self):
-        btn = self.musicChannel.active_button
+        btn = self.playerController.channels["music"].active_button
         if not btn:
             return
 
@@ -1592,7 +1473,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             self.currentSoundFilesListWidget.setCurrentRow(-1)
 
     def displayActivePlaylist(self)->None:
-        activeBtn = self.musicChannel.active_button
+        activeBtn = self.playerController.channels["music"].active_button
         if activeBtn:
             self.displayPlaylist(activeBtn)
         else:
@@ -1615,6 +1496,145 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         return channel
 
+    # make checkbox states reflect the current channel settings (e.g. after loading a preset)
+    def syncChannelOptionCheckboxes(self) -> None:
+        for name, options in self.channelOptionCheckboxes.items():
+            channel = self.playerController.channels[name]
+
+            options["loop"].setChecked(channel.loop)
+
+    # reset channel options to their default values (e.g. when creating a new preset)
+    def resetChannelOptionsToDefaults(self) -> None:
+        for name, channel in self.playerController.channels.items():
+            config = cfg.CHANNEL_CONFIG.get(name, {})
+            channel.loop = config.get("loop", channel.loop)
+
+        self.syncChannelOptionCheckboxes()
+
+    # get list of current loop states for all channels (for saving to preset)
+    def get_loop_states(self) -> list[bool]:
+        loop_states = [
+            self.playerController.channels["music"].loop,
+            self.playerController.channels["setting"].loop,
+            self.playerController.channels["weather"].loop,
+            self.playerController.channels["special"].loop,
+        ]
+        return loop_states
+
+    # export the current preset to a given root folder (e.g. SD card) in the MMS format
+    # implicit conversion to generic MP3 format is done in the SDExportWorker class
+    def export_to_sd(self, export_root: str) -> None:
+        preset_name = self.presetCombobox.currentText().strip()
+
+        if not preset_name:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "No preset selected",
+                "Please select or create a preset before exporting.",
+            )
+            return
+
+        export_dir = Path(export_root) / preset_name
+
+        replace_existing = False
+
+        if export_dir.exists():
+            answer = QtWidgets.QMessageBox.question(
+                self,
+                "Preset already exists",
+                (
+                    f'A preset named "{preset_name}" already exists '
+                    "at the selected location.\n\n"
+                    "Do you want to replace it?"
+                ),
+                QtWidgets.QMessageBox.StandardButton.Yes
+                | QtWidgets.QMessageBox.StandardButton.No,
+                QtWidgets.QMessageBox.StandardButton.No,
+            )
+
+            if answer != QtWidgets.QMessageBox.StandardButton.Yes:
+                return
+
+            replace_existing = True
+
+        loop_states = [
+            self.playerController.channels["music"].loop,
+            self.playerController.channels["setting"].loop,
+            self.playerController.channels["weather"].loop,
+            self.playerController.channels["special"].loop,
+        ]
+
+        self.sd_export_thread = QtCore.QThread()
+
+        self.sd_export_worker = SDExportWorker(
+            sd_root=export_root,
+            preset_name=preset_name,
+            application_path=self.application_path,
+            music_buttons=self.musicBtn_lst,
+            setting_buttons=self.settingBtn_lst,
+            weather_buttons=self.weatherBtn_lst,
+            special_buttons=self.specialBtn_lst,
+            loop_states=loop_states,
+            replace_existing=replace_existing,
+        )
+
+        self.sd_export_worker.moveToThread(self.sd_export_thread)
+
+        self.sd_export_thread.started.connect(
+            self.sd_export_worker.run
+        )
+
+        self.sd_export_worker.finished.connect(
+            self.on_sd_export_finished
+        )
+        self.sd_export_worker.failed.connect(
+            self.on_sd_export_failed
+        )
+
+        self.sd_export_worker.finished.connect(
+            self.sd_export_thread.quit
+        )
+        self.sd_export_worker.failed.connect(
+            self.sd_export_thread.quit
+        )
+
+        self.sd_export_thread.finished.connect(
+            self.sd_export_worker.deleteLater
+        )
+        self.sd_export_thread.finished.connect(
+            self.sd_export_thread.deleteLater
+        )
+
+        self.sd_progress_dialog = QtWidgets.QProgressDialog(
+            "Preparing audio files...",
+            None,
+            0,
+            100,
+            self,
+        )
+
+        self.sd_progress_dialog.setWindowTitle("Exporting preset")
+        self.sd_progress_dialog.setWindowModality(
+            QtCore.Qt.WindowModality.WindowModal
+        )
+        self.sd_progress_dialog.setAutoClose(False)
+        self.sd_progress_dialog.setAutoReset(False)
+        self.sd_progress_dialog.setValue(0)
+        self.sd_progress_dialog.show()
+
+        self.sd_export_worker.progress.connect(
+            self.on_sd_export_progress
+        )
+        self.sd_export_worker.status.connect(
+            self.on_sd_export_status
+        )
+
+        self.sd_export_thread.start()
+
+
+################################################################################################################
+#   class definitions
+################################################################################################################
     
     class RearrangeListWidget(QtWidgets.QListWidget):
         '''
