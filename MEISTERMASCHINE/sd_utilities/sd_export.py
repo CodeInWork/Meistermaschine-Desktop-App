@@ -96,10 +96,14 @@ def export_preset_to_sd(
 
         converted_files = []
 
-        if status_callback is not None:
-            status_callback("Converting audio files to MP3...")
+        total_files = len(audio_files)
 
-        for source_path in audio_files:
+        for index, source_path in enumerate(audio_files, start=1):
+            if status_callback is not None:
+                status_callback(
+                    f"Converting MP3 {index}/{total_files}..."
+                )
+
             destination_name = audio_file_names[source_path]
             converted_path = temp_path / destination_name
 
