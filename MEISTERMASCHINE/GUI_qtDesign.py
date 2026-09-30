@@ -37,6 +37,8 @@ from MEISTERMASCHINE.sd_utilities.sd_worker import SDExportWorker
 # ToDo: 
 #   Major:
 #   - improve app rescaling
+#   - make mp3-conversion parallel (e.g. ThreadPoolExecutor)
+#   - check mp3-files if conversion is necessary and skip them if not
 
 # Minor
 #   - change line when track ends and next is played (update display playlist)
@@ -83,67 +85,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.mediaDevices = QtMultimedia.QMediaDevices()
         self.mediaDevices.audioOutputsChanged.connect(self.on_audio_outputs_changed)
 
-        # Create Players and add it to Channel Controller
-        self.playerController = PlayerController()
-        # Create Player Objects for Button Columns
-        
-        # music player enables position change and is displayed on interface (playlist and position)
-        # setting and weather are repeated upon end of media is reached
-        # special is only played once
-
-        self.audio_output_lst = [QtMultimedia.QAudioOutput() for _ in cfg.CHANNEL_CONFIG]
-        for ao in self.audio_output_lst: 
-            ao.setVolume(1.0) # initial volume is max
-
-        for name, channel_cfg in cfg.CHANNEL_CONFIG.items():
-            audio_output = self.audio_output_lst[channel_cfg["audio_index"]]
-
-            channel = self.create_channel(
-                name=name,
-                buttons=[], # initially set empty, will be when buttons are created
-                audio_output=audio_output,
-                loop=channel_cfg["loop"],
-                max_playlist_length=channel_cfg["max_playlist_length"],
-            )
-
-
-        self.channel_buttons = {}
-
-        # create sound buttons
-        self.musicBtn_lst = [
-            self.create_acceptDropButton(
-                channel=self.playerController.channels["music"],
-                styleSheet=style.CSS_PB_music,
-                icon_path=cfg.musicIcon_lst[b]
-            )
-            for b in range(cfg.btn_rows)
-        ]
-        self.settingBtn_lst = [
-            self.create_acceptDropButton(
-                channel=self.playerController.channels["setting"], 
-                styleSheet=style.CSS_PB_setting,
-                icon_path=cfg.settingIcon_lst[b]
-            ) 
-            for b in range(cfg.btn_rows)
-        ]
-        self.weatherBtn_lst = [
-            self.create_acceptDropButton(
-                channel=self.playerController.channels["weather"], 
-                styleSheet=style.CSS_PB_weather,
-                icon_path=cfg.weatherIcon_lst[b]
-            ) 
-            for b in range(cfg.btn_rows)
-        ]
-        self.specialBtn_lst = [
-            self.create_acceptDropButton(
-                channel=self.playerController.channels["special"], 
-                styleSheet=style.CSS_PB_special_lst[b],
-                icon_path=cfg.specialIcon_lst[b]
-            ) 
-            for b in range(cfg.btn_rows)
-        ]
-
-
+        self.create_channels_and_buttons()
 
         ########################################################################################################
 
@@ -276,7 +218,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Utilitiey frame
         # Tab 1: Dice roll interface
         # Tab 2: Audio file system and SD card management
-        # Tab 3: Icon file system and interface -> ToDo
+        # Tab 3: Icon file system and interface
 
         Utility_Frame = QtWidgets.QFrame()
         Utility_Frame.setStyleSheet(style.CSS_Utility_Frame)
@@ -308,7 +250,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         # Tab 2: Audio file system and SD card
         self.create_Audio_Tab_Layout(audioTab)
 
-        # Teb 3: Icons
+        # Tab 3: Icons
         self.create_Icons_Tab_Layout(iconsTab)
         
         # Add the tab widget to the frame's layout
@@ -328,109 +270,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         Interface_Frame.setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
         Interface_Frame.setObjectName("interfaceFrame")   
 
-        # create and set loop chackbox
-        self.channelOptionCheckboxes = {}
-
-        for column, (name, channel_cfg) in enumerate(cfg.CHANNEL_CONFIG.items()):
-            loop_checkbox = QtWidgets.QCheckBox("Loop")
-
-            loop_checkbox.setChecked(
-                channel_cfg.get("loop", False)
-            )
-
-            loop_checkbox.setStyleSheet(style.CSS_Channel_Checkbox)
-
-            self.channelOptionCheckboxes[name] = {
-                "loop": loop_checkbox,
-            }
-
-            channel = self.playerController.channels[name]
-
-            loop_checkbox.toggled.connect(
-                lambda checked, ch=channel:
-                    self.on_channel_loop_toggled(ch, checked)
-            )
-
-            Interface_Frame_Layout.addWidget(
-                loop_checkbox,
-                0,
-                column,
-                alignment=QtCore.Qt.AlignmentFlag.AlignCenter,
-            )
-
-        number_of_checkboxes = len(next(iter(self.channelOptionCheckboxes.values())))
-
-        # music Buttons
-        for btn in self.musicBtn_lst:
-            curBtnIndex = self.musicBtn_lst.index(btn)
-            btn.setCheckable(True)
-            btn.setText("")
-            btn.setObjectName(f"musicBtn_{curBtnIndex+1}")
-            btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
-            Interface_Frame_Layout.addWidget(btn, curBtnIndex + number_of_checkboxes, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
-
-        # setting Buttons
-        for btn in self.settingBtn_lst:
-            curBtnIndex = self.settingBtn_lst.index(btn)
-            btn.setCheckable(True)
-            btn.setMaximumSize(QtCore.QSize(75, 75))
-            btn.setText("")
-            btn.setObjectName(f"settingBtn_{curBtnIndex+1}")
-            btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
-            Interface_Frame_Layout.addWidget(btn, curBtnIndex + number_of_checkboxes, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
-
-        # weather Buttons
-        for btn in self.weatherBtn_lst:
-            curBtnIndex = self.weatherBtn_lst.index(btn)
-            btn.setCheckable(True)
-            btn.setMaximumSize(QtCore.QSize(75, 75))
-            btn.setText("")
-            btn.setObjectName(f"weatherBtn_{curBtnIndex+1}")
-            btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
-            Interface_Frame_Layout.addWidget(btn, curBtnIndex + number_of_checkboxes, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
-
-        # special Buttons
-        for btn in self.specialBtn_lst:
-            curBtnIndex = self.specialBtn_lst.index(btn)
-            btn.setCheckable(True)
-            btn.setMaximumSize(QtCore.QSize(75, 75))
-            btn.setText("")
-            btn.setObjectName(f"specialBtn_{curBtnIndex+1}")
-            btn.toggled.connect(lambda checked, b = btn: self.on_soundButtonClicked(b))
-            Interface_Frame_Layout.addWidget(btn, curBtnIndex + number_of_checkboxes, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)    
-
-        # individual volume sliders
-        self.musicVolumeSlider = QtWidgets.QSlider()
-        self.musicVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.musicVolumeSlider.setStyleSheet(style.CSS_Slider)
-        self.musicVolumeSlider.setObjectName("musicVolumeSlider")
-        self.musicVolumeSlider.setValue(self.musicVolumeSlider.maximum())   #initial setting = max
-        self.musicVolumeSlider.valueChanged.connect(self.on_musicVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.musicVolumeSlider, cfg.btn_rows + number_of_checkboxes, 0, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
-
-        self.settingVolumeSlider = QtWidgets.QSlider()
-        self.settingVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.settingVolumeSlider.setStyleSheet(style.CSS_Slider)
-        self.settingVolumeSlider.setObjectName("settingVolumeSlider")
-        self.settingVolumeSlider.setValue(self.settingVolumeSlider.maximum())   #initial setting = max
-        self.settingVolumeSlider.valueChanged.connect(self.on_settingVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.settingVolumeSlider, cfg.btn_rows + number_of_checkboxes, 1, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
-
-        self.weatherVolumeSlider = QtWidgets.QSlider()
-        self.weatherVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.weatherVolumeSlider.setStyleSheet(style.CSS_Slider)
-        self.weatherVolumeSlider.setObjectName("weatherVolumeSlider")
-        self.weatherVolumeSlider.setValue(self.weatherVolumeSlider.maximum())   #initial setting = max
-        self.weatherVolumeSlider.valueChanged.connect(self.on_weatherVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.weatherVolumeSlider, cfg.btn_rows + number_of_checkboxes, 2, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
-
-        self.specialVolumeSlider = QtWidgets.QSlider()
-        self.specialVolumeSlider.setOrientation(QtCore.Qt.Orientation.Horizontal)
-        self.specialVolumeSlider.setStyleSheet(style.CSS_Slider)
-        self.specialVolumeSlider.setObjectName("specialVolumeSlider")
-        self.specialVolumeSlider.setValue(self.specialVolumeSlider.maximum())   #initial setting = max
-        self.specialVolumeSlider.valueChanged.connect(self.on_specialVolumeSliderChanged)
-        Interface_Frame_Layout.addWidget(self.specialVolumeSlider, cfg.btn_rows + number_of_checkboxes, 3, 1, 1, alignment=QtCore.Qt.AlignmentFlag.AlignHCenter)
+        self.create_channel_controls(Interface_Frame_Layout)
 
         Interface_Frame.setLayout(Interface_Frame_Layout)
 
@@ -536,6 +376,82 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
     
+    def create_channels_and_buttons(self):
+        """Create each audio channel and its buttons from shared configuration."""
+        # Keep presentation settings here, separate from audio defaults in config.
+        button_config = {
+            "music": (cfg.musicIcon_lst, [style.CSS_PB_music] * cfg.btn_rows, None),
+            "setting": (cfg.settingIcon_lst, [style.CSS_PB_setting] * cfg.btn_rows, 75),
+            "weather": (cfg.weatherIcon_lst, [style.CSS_PB_weather] * cfg.btn_rows, 75),
+            "special": (cfg.specialIcon_lst, style.CSS_PB_special_lst, 75),
+        }
+        self.playerController = PlayerController()
+        self.audio_output_lst = [QtMultimedia.QAudioOutput() for _ in cfg.CHANNEL_CONFIG]
+        for audio_output in self.audio_output_lst:
+            audio_output.setVolume(1.0)
+
+        self.channel_buttons = {}
+        for name, channel_cfg in cfg.CHANNEL_CONFIG.items():
+            channel = self.create_channel(
+                name=name,
+                audio_output=self.audio_output_lst[channel_cfg["audio_index"]],
+                loop=channel_cfg["loop"],
+                max_playlist_length=channel_cfg["max_playlist_length"],
+            )
+            icons, stylesheets, maximum_size = button_config[name]
+            for row in range(cfg.btn_rows):
+                btn = self.create_acceptDropButton(
+                    channel=channel,
+                    styleSheet=stylesheets[row],
+                    icon_path=icons[row],
+                )
+                btn.setCheckable(True)
+                if maximum_size is not None:
+                    btn.setMaximumSize(QtCore.QSize(maximum_size, maximum_size))
+                btn.setText("")
+                btn.setObjectName(f"{name}Btn_{row + 1}")
+                btn.toggled.connect(lambda checked, b=btn: self.on_soundButtonClicked(b))
+
+            self.channel_buttons[name] = channel.buttons
+            # Preserve the attributes used by preset loading, saving and export.
+            setattr(self, f"{name}Btn_lst", channel.buttons)
+
+    def create_channel_controls(self, layout):
+        """Lay out the loop option, sound buttons and volume for each channel."""
+        self.channelOptionCheckboxes = {}
+        for column, (name, buttons) in enumerate(self.channel_buttons.items()):
+            channel = self.playerController.channels[name]
+            loop_checkbox = QtWidgets.QCheckBox("Loop")
+            loop_checkbox.setChecked(channel.loop)
+            loop_checkbox.setStyleSheet(style.CSS_Channel_Checkbox)
+            loop_checkbox.toggled.connect(
+                lambda checked, ch=channel: self.on_channel_loop_toggled(ch, checked)
+            )
+            self.channelOptionCheckboxes[name] = {"loop": loop_checkbox}
+            layout.addWidget(
+                loop_checkbox, 0, column,
+                alignment=QtCore.Qt.AlignmentFlag.AlignCenter,
+            )
+
+            button_start_row = len(self.channelOptionCheckboxes[name])
+            for row, btn in enumerate(buttons, start=button_start_row):
+                layout.addWidget(
+                    btn, row, column, 1, 1,
+                    alignment=QtCore.Qt.AlignmentFlag.AlignCenter,
+                )
+
+            slider = QtWidgets.QSlider()
+            slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
+            slider.setStyleSheet(style.CSS_Slider)
+            slider.setObjectName(f"{name}VolumeSlider")
+            slider.setValue(slider.maximum())
+            slider.valueChanged.connect(getattr(self, f"on_{name}VolumeSliderChanged"))
+            setattr(self, f"{name}VolumeSlider", slider)
+            layout.addWidget(
+                slider, cfg.btn_rows + button_start_row, column, 1, 1,
+                alignment=QtCore.Qt.AlignmentFlag.AlignHCenter,
+            )
+
     def create_Icons_Tab_Layout(self, iconsTab: QtWidgets.QTabWidget)->None:
         layout = QtWidgets.QVBoxLayout(iconsTab)
         layout.setContentsMargins(6, 6, 6, 6)
@@ -1479,7 +1395,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         else:
             self.currentSoundFilesListWidget.clear()
 
-    def create_channel(self, name, buttons, audio_output, loop=True, max_playlist_length=40)->PlayerChannel:
+    def create_channel(self, name, audio_output, loop=True, max_playlist_length=40)->PlayerChannel:
         player = QtMultimedia.QMediaPlayer()
         player.setAudioOutput(audio_output)
 

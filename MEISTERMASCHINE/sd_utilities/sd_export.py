@@ -13,7 +13,7 @@ from MEISTERMASCHINE.sd_utilities.sd_audio import get_sd_audio_filename
 from MEISTERMASCHINE.sd_utilities.sd_audio import make_sd_audio_filename
 
 # Constants for MP3 conversion
-MP3_BITRATE = "192k"
+MP3_BITRATE = "192k"    # try 256k, 320k
 MP3_SAMPLE_RATE = 44100
 MP3_CHANNELS = 2
 
