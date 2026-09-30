@@ -380,10 +380,10 @@ class Ui_MainWindow(QtWidgets.QWidget):
         """Create each audio channel and its buttons from shared configuration."""
         # Keep presentation settings here, separate from audio defaults in config.
         button_config = {
-            "music": (cfg.musicIcon_lst, [style.CSS_PB_music] * cfg.btn_rows, None),
-            "setting": (cfg.settingIcon_lst, [style.CSS_PB_setting] * cfg.btn_rows, 75),
-            "weather": (cfg.weatherIcon_lst, [style.CSS_PB_weather] * cfg.btn_rows, 75),
-            "special": (cfg.specialIcon_lst, style.CSS_PB_special_lst, 75),
+            "music": (cfg.musicIcon_lst, [style.CSS_PB_music] * cfg.btn_rows),
+            "setting": (cfg.settingIcon_lst, [style.CSS_PB_setting] * cfg.btn_rows),
+            "weather": (cfg.weatherIcon_lst, [style.CSS_PB_weather] * cfg.btn_rows),
+            "special": (cfg.specialIcon_lst, style.CSS_PB_special_lst),
         }
         self.playerController = PlayerController()
         self.audio_output_lst = [QtMultimedia.QAudioOutput() for _ in cfg.CHANNEL_CONFIG]
@@ -398,7 +398,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
                 loop=channel_cfg["loop"],
                 max_playlist_length=channel_cfg["max_playlist_length"],
             )
-            icons, stylesheets, maximum_size = button_config[name]
+            icons, stylesheets = button_config[name]
             for row in range(cfg.btn_rows):
                 btn = self.create_acceptDropButton(
                     channel=channel,
@@ -406,8 +406,6 @@ class Ui_MainWindow(QtWidgets.QWidget):
                     icon_path=icons[row],
                 )
                 btn.setCheckable(True)
-                if maximum_size is not None:
-                    btn.setMaximumSize(QtCore.QSize(maximum_size, maximum_size))
                 btn.setText("")
                 btn.setObjectName(f"{name}Btn_{row + 1}")
                 btn.toggled.connect(lambda checked, b=btn: self.on_soundButtonClicked(b))
@@ -435,10 +433,9 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             button_start_row = len(self.channelOptionCheckboxes[name])
             for row, btn in enumerate(buttons, start=button_start_row):
-                layout.addWidget(
-                    btn, row, column, 1, 1,
-                    alignment=QtCore.Qt.AlignmentFlag.AlignCenter,
-                )
+                layout.addWidget(btn, row, column, 1, 1)
+                layout.setRowStretch(row, 1)
+            layout.setColumnStretch(column, 1)
 
             slider = QtWidgets.QSlider()
             slider.setOrientation(QtCore.Qt.Orientation.Horizontal)
@@ -1674,7 +1671,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
             return QtCore.QSize(75, 75)
 
         def minimumSizeHint(self):
-            return QtCore.QSize(50, 50)
+            return QtCore.QSize(30, 30)
 
         def _init_context_menu(self):
             self.menu = QtWidgets.QMenu(self)
@@ -1759,8 +1756,29 @@ class Ui_MainWindow(QtWidgets.QWidget):
             if abs_path and not os.path.isabs(abs_path):
                 abs_path = os.path.join(self.app_path, abs_path)
 
-            self.setIcon(QtGui.QIcon(abs_path))
-            self.setIconSize(QtCore.QSize(50, 50))
+            self._source_icon = QtGui.QIcon(abs_path)
+            self._resize_icon()
+
+        def resizeEvent(self, event):
+            super().resizeEvent(event)
+            self._resize_icon()
+
+        def _resize_icon(self):
+            # Keep the original 50:75 icon/button ratio and preserve aspect ratio.
+            side = max(1, min(self.contentsRect().width(), self.contentsRect().height()) * 2 // 3)
+            size = QtCore.QSize(side, side)
+            ratio = self.devicePixelRatioF()
+            pixmap = self._source_icon.pixmap(size * ratio)
+            if not pixmap.isNull():
+                # QIcon alone does not enlarge small raster images.
+                pixmap = pixmap.scaled(
+                    size * ratio,
+                    QtCore.Qt.AspectRatioMode.KeepAspectRatio,
+                    QtCore.Qt.TransformationMode.SmoothTransformation,
+                )
+                pixmap.setDevicePixelRatio(ratio)
+            self.setIcon(QtGui.QIcon(pixmap))
+            self.setIconSize(size)
 
         def _set_drag_highlight(self, enabled, mode=None):
             if not enabled:
