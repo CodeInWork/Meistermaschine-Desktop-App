@@ -61,14 +61,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
         self.Btn_Display_Time = 20000   # how long is dice roll result displayed
 
-        # get sys path depending on build condition (as *.exe or as script)
-        if getattr(sys, 'frozen', False):
-            # If the application is run as a bundle, the PyInstaller bootloader
-            # extends the sys module by a flag frozen=True and sets the app 
-            # path into variable _MEIPASS'.
-            self.application_path = sys._MEIPASS
-        else:
-            self.application_path = os.path.dirname(__file__)
+        # PyInstaller preserves this package location inside the bundle.
+        self.application_path = str(Path(__file__).resolve().parent)
 
         self.srcFolder = '/Meistermaschine-Desktop-App'        # name of root directory
         self.default_soundFile_path = os.path.join(self.application_path, "sounds")

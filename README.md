@@ -15,8 +15,14 @@ in the project root folder
 
 ## Requirements
 
-- Python 3.11 or newer
+- Python 3.12 or newer
 - uv
+
+## Windows executable
+
+Run `.\build.ps1` in PowerShell to build the one-folder Windows distribution using
+the existing uv lockfile. See [BUILDING.md](BUILDING.md) for resource layout,
+distribution instructions, and packaged smoke tests.
 
 Install uv:
 
