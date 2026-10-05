@@ -1,4 +1,10 @@
 # Byte-compiled / optimized / DLL files
+# Personal libraries and presets stay on disk, outside the distribution boundary.
+/MEISTERMASCHINE/sounds/
+/MEISTERMASCHINE/presets/
+/Sounds - Napoleon/
+/sounds/
+
 __pycache__/
 *.py[cod]
 *$py.class

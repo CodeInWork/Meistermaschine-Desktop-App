@@ -67,6 +67,11 @@ class Ui_MainWindow(QtWidgets.QWidget):
         self.srcFolder = '/Meistermaschine-Desktop-App'        # name of root directory
         self.default_soundFile_path = os.path.join(self.application_path, "sounds")
         self.default_preset_path = os.path.join(self.application_path, "presets")
+        self.example_preset_path = os.path.join(self.application_path, "assets", "examples", "presets")
+        if getattr(sys, "frozen", False) or not os.path.isdir(self.default_soundFile_path):
+            self.default_soundFile_path = os.path.join(self.application_path, "assets", "examples", "audio")
+        if getattr(sys, "frozen", False) or not os.path.isdir(self.default_preset_path):
+            self.default_preset_path = self.example_preset_path
         default_icon_path = os.path.join(self.application_path, "icons")
 
         self.preset_lst=[]
@@ -468,7 +473,7 @@ class Ui_MainWindow(QtWidgets.QWidget):
         
         self.fileModel = QtGui.QFileSystemModel()
         self.fileModel.setRootPath(self.default_soundFile_path)
-        self.fileModel.setNameFilters(["*.mp3","*.wav", "*.ogg"]) 
+        self.fileModel.setNameFilters(["*" + ext for ext in cfg.AUDIO_EXTS])
         self.fileModel.setNameFilterDisables(False)
         self.fileTreeListView = QtWidgets.QTreeView()
         self.fileTreeListView.setSelectionMode(QtWidgets.QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -1337,11 +1342,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
 
             pattern = os.path.join(self.default_preset_path, "*.json")
             presets = gl.glob(pattern)
+            if self.default_preset_path != self.example_preset_path:
+                presets += gl.glob(os.path.join(self.example_preset_path, "*.json"))
             presets.sort(key=os.path.getmtime, reverse=True)
 
             for file_path in presets:
-                file_path = os.path.normcase(os.path.abspath(file_path))
                 base = os.path.splitext(os.path.basename(file_path))[0]
+                file_path = os.path.normcase(os.path.abspath(file_path))
+                if Path(file_path).parent == Path(self.example_preset_path):
+                    base += " (Example)"
                 self.presetCombobox.addItem(base, file_path)
 
 

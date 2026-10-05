@@ -1,17 +1,17 @@
 # -*- mode: python ; coding: utf-8 -*-
 """Windows one-folder build. Run through build.ps1 with the uv environment."""
 from pathlib import Path
+import runpy
 
 import imageio_ffmpeg
 from PyInstaller.utils.hooks import collect_data_files
 
 root = Path(SPECPATH)
 package = root / "MEISTERMASCHINE"
+runpy.run_path(str(package / "example_assets.py"))["validate_examples"](package)
 datas = [(str(package / name), f"MEISTERMASCHINE/{name}")
-         for name in ("icons", "sounds", "presets")]
+         for name in ("icons", "assets/examples")]
 datas += [(str(root / "LICENSE"), ".")]
-# Preserve the additional sound collection in the portable distribution.
-datas += [(str(root / "Sounds - Napoleon"), "Sounds - Napoleon")]
 # Include the wheel's FFmpeg, never a developer-machine/PATH executable.
 ffmpeg_dir = Path(imageio_ffmpeg.__file__).parent / "binaries"
 if not list(ffmpeg_dir.glob("ffmpeg*.exe")):

@@ -33,13 +33,34 @@ FFmpeg playback libraries. UPX is disabled.
 Resources under `_internal/MEISTERMASCHINE` mirror the source package:
 
 - `icons`: all button and control images.
-- `sounds`: the full bundled sound library, including subdirectories.
-- `presets`: existing JSON and MMS presets.
+- `assets/examples/audio`: the 24 audio files used by the Medieval example.
+- `assets/examples/presets`: only `Medieval.json`.
 
-The additional `Sounds - Napoleon` collection and project license are included
-under `_internal`. The top-level source `sounds` directory is empty; the app uses
-`MEISTERMASCHINE/sounds`. Resource paths resolve relative to the package, independent
-of the process working directory, in both development and the frozen app.
+The project license is included under `_internal`. The curated
+`MEISTERMASCHINE/assets/examples/` directory is the explicit distribution boundary:
+the spec bundles that directory, not a file list generated from the preset.
+Before packaging, `example_assets.py` validates that every example audio reference
+exists below `assets/examples/audio/`; absolute paths, escaped paths, missing files,
+and links escaping the example directory fail the build.
+
+`MEISTERMASCHINE/sounds/`, `MEISTERMASCHINE/presets/`, `Sounds - Napoleon/`, and
+the root `sounds/` directory are personal, ignored directories. They are never
+included by the spec. Keep distributable assets only inside `assets/examples/`;
+anything added there will be bundled, so review its contents before a release.
+Git ignore rules do not control PyInstaller inclusion.
+
+Development defaults to the existing local sound library when present. The frozen
+app (or a fresh checkout without local sounds) defaults to example audio. Use the
+existing folder picker to browse any other library, including `Sounds - Napoleon`.
+The development preset list includes local JSON presets and `Medieval (Example)`.
+Only the example is supplied in a fresh checkout or distribution.
+
+Playback and SD-export path resolution remain unchanged: relative paths resolve
+against `MEISTERMASCHINE`, independently of the working directory, and absolute
+user paths remain supported. The example stores `assets/examples/audio/...` paths;
+existing local presets keep their `sounds/...` paths. Personal files were copied
+where needed and removed from Git's index with `git rm --cached`, not deleted.
+Untracking does not remove earlier committed copies from Git history.
 
 Extract the portable folder to a writable location, such as a folder under your
 user profile. Presets retain the existing behavior: the default preset folder
@@ -52,7 +73,10 @@ source files or make machine-specific absolute paths portable.
 ## Smoke test
 
 The opt-in diagnostic starts Qt offscreen, creates all 20 sound buttons, checks
-icons/resource folders, finds bundled FFmpeg without relying on PATH, converts a
+icons/resource folders, loads the Medieval preset, and opens every one of its 24
+tracks through the application's playback code with silent output. It checks the
+SD-export source paths and, when available, the original local Medieval preset.
+It finds bundled FFmpeg without relying on PATH and converts a
 generated WAV to MP3 using the application's conversion function, and loads that
 MP3 through QtMultimedia. It skips saved-preset restoration and removable-drive
 scanning. It writes a JSON report and returns a nonzero exit code on failure.
@@ -85,25 +109,39 @@ References: [PyInstaller spec files](https://pyinstaller.org/en/stable/spec-file
 [resource paths](https://pyinstaller.org/en/stable/runtime-information.html),
 [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg).
 
-## Validation of this build
+## Asset verification and migration build
 
-Built on Windows 11 x64 with Python 3.12.0, uv 0.11.21, PyInstaller 6.21.0,
-and hooks 2026.6 using the existing lockfile. The output contains 378 files
-(approximately 1,001 MiB). All source icons, sounds, and presets were checked
-against the distribution for presence and file size.
+Run the path-validation and local-preset compatibility tests:
 
-Both development and frozen smoke tests passed. The executable was tested with
-the temporary directory as its working directory, found its own bundled FFmpeg,
-created 20 buttons, found 96 sound files, and converted/loaded a 1,044 ms MP3.
-Reports are in `build/development-smoke.json` and `build/packaged-smoke.json`.
+```powershell
+.venv/Scripts/python.exe -m unittest discover -s tests -v
+```
+
+The migration build uses separate output to preserve previous build artifacts:
+
+```powershell
+.venv/Scripts/python.exe -m PyInstaller --noconfirm --clean --distpath dist/example-release --workpath build/example-release cli.spec
+.venv/Scripts/python.exe tools/audit_example_distribution.py dist/example-release/Meistermaschine build/audio-migration/distribution-inventory.json
+```
+
+The audit compares every bundled example and icon by SHA-256, requires exactly the
+audio referenced by the example, rejects local-library directories, and writes a
+complete distribution file inventory with sizes and hashes. This is a release
+check; it does not change the spec's directory-based inclusion policy.
+
+Migration reports are in `build/audio-migration/`: development and packaged smoke
+reports, the distribution inventory, local-file integrity report, build log, and
+`history-audio.md` listing all 95 removed audio paths and their Git blob IDs.
+All 109 local library/preset files retain their original contents. The 95 audio
+files remain in Git history: 24 also have curated example copies, while 71 are
+excluded from the new distribution. No history rewrite was performed.
+
+The previous `dist/Meistermaschine` output may still contain personal audio.
+Use only the newly audited `dist/example-release/Meistermaschine` for this migration.
+Ordinary `build.ps1` builds use the updated spec but retain their usual output path.
+Staged Git deletion entries record untracking and remain visible until committed;
+the ignored local files themselves are no longer tracked or listed as untracked.
+
 Audible playback and operation on a separate clean Windows machine remain manual
-release checks.
-
-There were no PyInstaller build errors. The initial sandboxed invocation could
-not access uv's user cache; rerunning with permission resolved it. Analysis warnings
-concern optional/platform-specific modules and PyInstaller/Python runtime modules;
-none prevented the frozen smoke test.
-
-Existing presets contain some unavailable relative sound paths and machine-specific
-absolute paths (including paths on `G:`). Those presets were preserved unchanged.
-Bundling the available sound library does not repair those references.
+release checks. Existing unrelated local presets with missing or machine-specific
+paths are preserved; this migration does not repair those references.

@@ -19,6 +19,9 @@ def run(report_path):
         from PyQt6 import QtCore, QtGui, QtMultimedia, QtWidgets
         from MEISTERMASCHINE.GUI_qtDesign import Ui_MainWindow
         from MEISTERMASCHINE.sd_utilities.sd_export import _convert_to_mp3
+        from MEISTERMASCHINE.sd_utilities.sd_export import collect_audio_files
+        from MEISTERMASCHINE.example_assets import validate_examples
+        from MEISTERMASCHINE.preset_utilities.preset_io import load_preset_json
 
         class CheckUi(Ui_MainWindow):
             def restore_last_preset(self):
@@ -34,7 +37,7 @@ def run(report_path):
         window.show()
         app.processEvents()
         resources = Path(ui.application_path)
-        for name in ("icons", "sounds", "presets"):
+        for name in ("icons", "assets/examples/audio", "assets/examples/presets"):
             assert (resources / name).is_dir(), f"Missing resource folder: {name}"
         assert not QtGui.QIcon(str(resources / "icons/icon_circle.png")).isNull()
         buttons = list(ui.playerController.all_buttons())
@@ -42,7 +45,44 @@ def run(report_path):
         assert all(not button.icon().isNull() for button in buttons)
         report["resources"] = str(resources)
         report["buttons"] = len(buttons)
-        report["sound_files"] = len(list((resources / "sounds").rglob("*.*")))
+        expected_audio = validate_examples(resources)
+        load_preset_json(ui.playerController, resources / "assets/examples/presets/Medieval.json")
+        actual_audio = set(collect_audio_files([buttons], ui.application_path))
+        assert actual_audio == expected_audio
+        report["sound_files"] = len(actual_audio)
+        report["audio_browser_root"] = ui.default_soundFile_path
+        assert any(ui.presetCombobox.itemText(i) == "Medieval (Example)"
+                   for i in range(ui.presetCombobox.count()))
+        if report["frozen"]:
+            assert not (resources / "sounds").exists()
+            assert not (resources / "presets").exists()
+        # Exercise the application's playback path for every example track.
+        checked = []
+        channel = ui.playerController.channels["music"]
+        channel.player.setAudioOutput(None)  # Silent automated playback.
+        for source in sorted(actual_audio):
+            relative = str(source.relative_to(resources))
+            ui.playerController.play_channel(channel, (relative, source.stem), ui.application_path)
+            deadline = time.monotonic() + 15
+            while channel.player.duration() == 0 and time.monotonic() < deadline:
+                app.processEvents()
+                if channel.player.error() != QtMultimedia.QMediaPlayer.Error.NoError:
+                    raise RuntimeError(f"{source}: {channel.player.errorString()}")
+                time.sleep(0.02)
+            assert channel.player.duration() > 0, f"Qt could not load {source}"
+            assert Path(channel.player.source().toLocalFile()).resolve() == source
+            checked.append(relative)
+            channel.player.stop()
+            channel.player.setSource(QtCore.QUrl())
+            app.processEvents()
+        report["example_tracks_loaded"] = checked
+        if not report["frozen"] and (resources / "presets/Medieval.json").is_file():
+            load_preset_json(ui.playerController, resources / "presets/Medieval.json")
+            local_audio = collect_audio_files([buttons], ui.application_path)
+            assert len(local_audio) == len(expected_audio)
+            assert all(path.is_file() and path.is_relative_to(resources / "sounds") for path in local_audio)
+            assert Path(ui.default_soundFile_path) == resources / "sounds"
+            report["legacy_local_tracks_resolved"] = len(local_audio)
 
         ffmpeg = Path(imageio_ffmpeg.get_ffmpeg_exe()).resolve()
         assert ffmpeg.is_file()
