@@ -43,9 +43,9 @@ class Playlist:
         return 0 <= self.active + 1 < len(self.tracks)
 
     def next(self):
-        if not self.has_next():
+        if not self.tracks:
             return None
-        self.active += 1
+        self.active = (self.active + 1) % len(self.tracks)
         return self.current()
 
     def previous(self):

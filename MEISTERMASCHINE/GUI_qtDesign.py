@@ -1021,6 +1021,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         activeBtn = self.playerController.channels["music"].active_button
         if activeBtn:
             previousSong = activeBtn.playlist.previous()
+            if previousSong is None:
+                return
             self.playerController.switch_track(self.playerController.channels["music"], previousSong, self.application_path)
             self.select_active_track()
 
@@ -1028,6 +1030,8 @@ class Ui_MainWindow(QtWidgets.QWidget):
         activeBtn = self.playerController.channels["music"].active_button
         if activeBtn:
             nextSong = activeBtn.playlist.next()
+            if nextSong is None:
+                return
             self.playerController.switch_track(self.playerController.channels["music"], nextSong, self.application_path)
             self.select_active_track()
     

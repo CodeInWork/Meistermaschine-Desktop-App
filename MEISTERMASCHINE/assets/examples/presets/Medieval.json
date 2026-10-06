@@ -1,169 +1,165 @@
 {
-    "version":  1,
-    "channels":  {
-                     "music":  {
-                                   "buttons":  [
-                                                   {
-                                                       "index":  0,
-                                                       "icon":  null,
-                                                       "playlist":  [
-                                                                        "assets/examples/audio/Musik/medieval\u0026fantasy/Epic Medieval Fantasy Fanfare.mp3",
-                                                                        "assets/examples/audio/Musik/medieval\u0026fantasy/The Entrance of The King.mp3"
-                                                                    ]
-                                                   },
-                                                   {
-                                                       "index":  1,
-                                                       "icon":  null,
-                                                       "playlist":  [
-                                                                        "assets/examples/audio/Musik/medieval\u0026fantasy/Lion\u0027s Pride.mp3"
-                                                                    ]
-                                                   },
-                                                   {
-                                                       "index":  2,
-                                                       "icon":  null,
-                                                       "playlist":  [
-                                                                        "assets/examples/audio/Musik/medieval\u0026fantasy/Village-theme.mp3",
-                                                                        "assets/examples/audio/Musik/medieval\u0026fantasy/Wild Boar\u0027s Inn.mp3",
-                                                                        "assets/examples/audio/Musik/medieval\u0026fantasy/small-adventurers.mp3",
-                                                                        "assets/examples/audio/Musik/medieval\u0026fantasy/Troubadour.mp3"
-                                                                    ]
-                                                   },
-                                                   {
-                                                       "index":  3,
-                                                       "icon":  null,
-                                                       "playlist":  [
-                                                                        "assets/examples/audio/Musik/DSA 3/Evil Under The Surface.mp3",
-                                                                        "assets/examples/audio/Musik/DSA 3/The Lurking Horror.mp3",
-                                                                        "assets/examples/audio/Musik/DSA 3/How Deep Can We Go.mp3"
-                                                                    ]
-                                                   },
-                                                   {
-                                                       "index":  4,
-                                                       "icon":  null,
-                                                       "playlist":  [
-                                                                        "assets/examples/audio/Musik/DSA 3/Unholy March.mp3",
-                                                                        "assets/examples/audio/Musik/DSA 3/Te Extinguo.mp3",
-                                                                        "assets/examples/audio/Musik/DSA 3/To The Hilt.mp3"
-                                                                    ]
-                                                   }
-                                               ]
-                               },
-                     "setting":  {
-                                     "buttons":  [
-                                                     {
-                                                         "index":  0,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Setting/tavern - pirates.wav"
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  1,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Setting/city - medieval.wav"
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  2,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Setting/fields - medieval summerday.wav"
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  3,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Setting/dungeon-water-drops.mp3"
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  4,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Setting/fight - medieval.mp3"
-                                                                      ]
-                                                     }
-                                                 ]
-                                 },
-                     "weather":  {
-                                     "buttons":  [
-                                                     {
-                                                         "index":  0,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Weather/nght - forest.mp3"
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  1,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Weather/waves.mp3"
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  2,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Weather/wind.ogg"
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  3,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Weather/thunder_storm-light.wav"
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  4,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Weather/blizzard.wav"
-                                                                      ]
-                                                     }
-                                                 ]
-                                 },
-                     "special":  {
-                                     "buttons":  [
-                                                     {
-                                                         "index":  0,
-                                                         "icon":  null,
-                                                         "playlist":  [
-                                                                          "assets/examples/audio/Special/Monster roar.wav"
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  1,
-                                                         "icon":  null,
-                                                         "playlist":  [
-
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  2,
-                                                         "icon":  null,
-                                                         "playlist":  [
-
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  3,
-                                                         "icon":  null,
-                                                         "playlist":  [
-
-                                                                      ]
-                                                     },
-                                                     {
-                                                         "index":  4,
-                                                         "icon":  null,
-                                                         "playlist":  [
-
-                                                                      ]
-                                                     }
-                                                 ]
-                                 }
-                 }
+  "version": 1,
+  "channels": {
+    "music": {
+      "loop": true,
+      "buttons": [
+        {
+          "index": 0,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Musik\\medieval&fantasy\\Epic Medieval Fantasy Fanfare.mp3",
+            "assets\\examples\\audio\\Musik\\medieval&fantasy\\The Entrance of The King.mp3"
+          ]
+        },
+        {
+          "index": 1,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Musik\\medieval&fantasy\\Wild Boar's Inn.mp3",
+            "assets\\examples\\audio\\Musik\\medieval&fantasy\\Lion's Pride.mp3"
+          ]
+        },
+        {
+          "index": 2,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Musik\\medieval&fantasy\\Village-theme.mp3",
+            "assets\\examples\\audio\\Musik\\medieval&fantasy\\small-adventurers.mp3",
+            "assets\\examples\\audio\\Musik\\medieval&fantasy\\Troubadour.mp3"
+          ]
+        },
+        {
+          "index": 3,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Musik\\DSA 3\\The Lurking Horror.mp3",
+            "assets\\examples\\audio\\Musik\\DSA 3\\Evil Under The Surface.mp3",
+            "assets\\examples\\audio\\Musik\\DSA 3\\How Deep Can We Go.mp3"
+          ]
+        },
+        {
+          "index": 4,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Musik\\DSA 3\\Te Extinguo.mp3",
+            "assets\\examples\\audio\\Musik\\DSA 3\\Unholy March.mp3",
+            "assets\\examples\\audio\\Musik\\DSA 3\\To The Hilt.mp3"
+          ]
+        }
+      ]
+    },
+    "setting": {
+      "loop": true,
+      "buttons": [
+        {
+          "index": 0,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Setting\\tavern - pirates.wav"
+          ]
+        },
+        {
+          "index": 1,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Setting\\city - medieval.wav"
+          ]
+        },
+        {
+          "index": 2,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Setting\\fields - medieval summerday.wav"
+          ]
+        },
+        {
+          "index": 3,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Setting\\dungeon-water-drops.mp3"
+          ]
+        },
+        {
+          "index": 4,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Setting\\fight - medieval.mp3"
+          ]
+        }
+      ]
+    },
+    "weather": {
+      "loop": true,
+      "buttons": [
+        {
+          "index": 0,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Weather\\nght - forest.mp3"
+          ]
+        },
+        {
+          "index": 1,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Weather\\waves.mp3"
+          ]
+        },
+        {
+          "index": 2,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Weather\\wind.ogg"
+          ]
+        },
+        {
+          "index": 3,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Weather\\thunder_storm-light.wav"
+          ]
+        },
+        {
+          "index": 4,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Weather\\blizzard.wav"
+          ]
+        }
+      ]
+    },
+    "special": {
+      "loop": false,
+      "buttons": [
+        {
+          "index": 0,
+          "icon": null,
+          "playlist": [
+            "assets\\examples\\audio\\Special\\Monster roar.wav"
+          ]
+        },
+        {
+          "index": 1,
+          "icon": null,
+          "playlist": []
+        },
+        {
+          "index": 2,
+          "icon": null,
+          "playlist": []
+        },
+        {
+          "index": 3,
+          "icon": null,
+          "playlist": []
+        },
+        {
+          "index": 4,
+          "icon": null,
+          "playlist": []
+        }
+      ]
+    }
+  }
 }
