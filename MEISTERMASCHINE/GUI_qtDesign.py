@@ -350,6 +350,15 @@ class Ui_MainWindow(QtWidgets.QWidget):
         save_as_action = QtGui.QAction(icon, "&Esport to SD",MainWindow, triggered=self.save_SD_format) 
         file_menu.addAction(save_as_action)
         
+        # edit menu
+        edit_menu = menuBar.addMenu("&Edit")
+        icon = QtGui.QIcon.fromTheme("edit-clear")
+        clear_all_action = QtGui.QAction(
+            icon, "&Clear all playlists", MainWindow,
+            triggered=self.clear_all_playlists,
+        )
+        edit_menu.addAction(clear_all_action)
+
         menuBar.setStyleSheet(style.CSS_menubar)
         MainWindow.setMenuBar(menuBar)
         toolBar.addWidget(menuBar)
@@ -707,6 +716,12 @@ class Ui_MainWindow(QtWidgets.QWidget):
     #############################################################################################################################
     # event handlers
     # Slots
+    @Slot()
+    def clear_all_playlists(self) -> None:
+        self.playerController.stop_all_channels()
+        self.playerController.clear_all_playlists()
+        self.currentSoundFilesListWidget.clear()
+
     @Slot()
     def new(self) -> None:
         path, _ = QtWidgets.QFileDialog.getSaveFileName(
